@@ -1,0 +1,202 @@
+# sample files.
+# for every file, there is an entry here specifying what the output of the scanning
+# should be.
+
+[[sample]]
+file = "image1.jpg"
+media = "image"
+format = "jpg"
+width = 300
+height = 300
+
+[[sample]]
+file = "image2.jpg"
+media = "image"
+format = "jpg"
+width = 313
+height = 234
+
+[[sample]]
+file = "image3.jpg"
+media = "image"
+format = "jpg"
+width = 480
+height = 360
+
+[[sample]]
+file = "image1.png"
+media = "image"
+format = "png"
+width = 200
+height = 150
+
+[[sample]]
+file = "image2.png"
+media = "image"
+format = "png"
+width = 100
+height = 100
+
+[[sample]]
+file = "image3.png"
+media = "image"
+format = "png"
+width = 400
+height = 300
+
+[[sample]]
+file = "image1.webp"
+media = "image"
+format = "webp"
+width = 1280
+height = 853
+
+[[sample]]
+file = "image2.webp"
+media = "image"
+format = "webp"
+width = 4275
+height = 2451
+
+[[sample]]
+file = "image3.webp"
+media = "image"
+format = "webp"
+width = 550
+height = 368
+
+[[sample]]
+file = "video1.gif"
+media = "video"
+format = "gif"
+width = 640
+height = 426
+duration = 1
+
+[[sample]]
+file = "video2.gif"
+media = "video"
+format = "gif"
+width = 300
+height = 225
+duration = 10
+
+[[sample]]
+file = "video3.gif"
+media = "video"
+format = "gif"
+width = 350
+height = 197
+duration = 3
+
+[[sample]]
+file = "video1.ts"
+media = "video"
+format = "ts"
+width = 960
+height = 540
+duration = 14
+
+[[sample]]
+file = "video2.ts"
+media = "video"
+format = "ts"
+width = 640
+height = 360
+duration = 14
+
+[[sample]]
+file = "video1.3gp"
+media = "video"
+format = "mov"
+width = 640
+height = 360
+duration = 14
+
+[[sample]]
+file = "video1.avi"
+media = "video"
+format = "avi"
+width = 480
+height = 270
+duration = 31
+
+[[sample]]
+file = "video2.avi"
+media = "video"
+format = "avi"
+width = 256
+height = 240
+duration = 4
+
+[[sample]]
+file = "video1.mkv"
+media = "video"
+format = "mkv"
+width = 640
+height = 360
+duration = 13
+
+[[sample]]
+file = "video1.mov"
+media = "video"
+format = "mov"
+width = 480
+height = 270
+duration = 31
+
+[[sample]]
+file = "video1.mp4"
+media = "video"
+format = "mov"
+width = 640
+height = 360
+duration = 14
+
+[[sample]]
+file = "video1.mpeg"
+media = "video"
+format = "mpeg"
+width = 960
+height = 540
+duration = 14
+
+[[sample]]
+file = "video1.mts"
+media = "video"
+format = "ts"
+width = 640
+height = 360
+duration = 14
+
+[[sample]]
+file = "video1.ogx"
+media = "video"
+format = "ogg"
+width = 960
+height = 540
+duration = 14
+
+[[sample]]
+file = "video1.webm"
+media = "video"
+format = "mkv"
+width = 480
+height = 270
+duration = 30
+
+[[sample]]
+file = "video1.wmv"
+media = "video"
+format = "wmv"
+width = 640
+height = 360
+duration = 14
+
+[[sample]]
+file = "video1.m4v"
+media = "video"
+format = "mov"
+width = 320
+height = 240
+duration = 31

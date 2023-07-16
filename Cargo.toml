@@ -1,0 +1,27 @@
+[package]
+name = "cindy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.72"
+blake2 = "0.10.6"
+bytes = "1.4.0"
+chrono = "0.4.26"
+clap = { version = "4.3.12", features = ["derive", "env"] }
+digest = "0.10.7"
+ffmpeg-next = { version = "6.0.0", default-features = false, features = ["codec", "format"] }
+flume = "0.10.14"
+futures = "0.3.28"
+gtk = { version = "0.6.6", package = "gtk4", features = ["v4_8"] }
+hex = "0.4.3"
+rusqlite = "0.29.0"
+serde = { version = "1.0.171", features = ["derive"] }
+strum = { version = "0.25.0", features = ["derive"] }
+thiserror = "1.0.43"
+tokio = { version = "1.29.1", features = ["full"] }
+toml = "0.7.6"
+
+[dev-dependencies]
+proptest = "1.2.0"
+tempfile = "3.6.0"
