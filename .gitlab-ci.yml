@@ -16,6 +16,12 @@ docker:
     - docker push "$CI_REGISTRY_IMAGE/builder"
   only:
     refs:
-      - ci
+      - main
     changes:
       - Dockerfile
+
+test:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE/builder"
+  script:
+    - cargo test
