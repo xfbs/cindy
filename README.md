@@ -29,12 +29,26 @@ To be able to build Cindy, you need some dependencies. To install them on a
 recent Debian system, you can run this:
 
 ```
-apt install libsqlite3-dev gtk-4-dev libavcodec-dev libav
+apt install libsqlite3-dev libavcodec-dev libgtk-4-dev clang pkg-config libavformat-dev
 ```
 
-You will also need `cargo`, which you can install using rustup.
+You will also need `cargo`, which you can install using [rustup](https://rustup.rs):
 
-Use `cargo` to test and build Cindy.
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+If you do not like to install things on your system, you can also use the
+provided `Dockerfile` to get an environment set up where you can build and run
+tests. To do this, for build an image using the provided `Dockerfile` and then
+run a container with the repository mapped into it.
+
+```
+docker build . -t cindy-builder
+docker run -it --rm -v $(pwd):/code --workdir /code --user $(id -u):$(id -g) cindy-builder
+```
+
+Finally, use `cargo` to test and build Cindy:
 
 ```
 cargo test
