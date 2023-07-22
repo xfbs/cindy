@@ -25,3 +25,12 @@ test:
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
     - cargo test
+
+build:
+  stage: build
+  image: "$CI_REGISTRY_IMAGE/builder"
+  script:
+    - cargo test --release
+  artifacts:
+    paths:
+      - target/release/cindy
