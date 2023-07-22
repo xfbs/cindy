@@ -37,7 +37,7 @@ pub enum HashAlgorithm {
 impl Default for IndexConfig {
     fn default() -> Self {
         Self {
-            path: "cindy.db".into(),
+            path: "index.db".into(),
         }
     }
 }
@@ -45,7 +45,7 @@ impl Default for IndexConfig {
 impl Default for DataConfig {
     fn default() -> Self {
         Self {
-            path: ".data".into(),
+            path: "data".into(),
             hash: Default::default(),
             prefix: vec![2, 2],
         }
@@ -70,7 +70,7 @@ impl DataConfig {
 impl Default for ThumbsConfig {
     fn default() -> Self {
         Self {
-            path: ".thumbs".into(),
+            path: "thumbs".into(),
         }
     }
 }
@@ -109,15 +109,15 @@ mod tests {
     fn test_parse() {
         let config_str = r#"
 [data]
-path = ".data"
+path = "data"
 hash = "blake2b512"
 prefix = [2, 2]
 
 [index]
-path = "cindy.db"
+path = "index.db"
 
 [thumbs]
-path = ".thumbs"
+path = "thumbs"
         "#;
         let _config: Config = toml::from_str(config_str).unwrap();
     }
@@ -127,6 +127,6 @@ path = ".thumbs"
         let data = DataConfig::default();
         let hash = [0x9a, 0xbc, 0xde, 0xf0];
         let path = data.data_path(&hash);
-        assert_eq!(path, Path::new(".data/9a/bc/def0"));
+        assert_eq!(path, Path::new("data/9a/bc/def0"));
     }
 }

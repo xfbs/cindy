@@ -18,7 +18,8 @@ use tokio::{
 
 mod command;
 
-const CINDY_CONFIG: &str = "cindy.toml";
+const CINDY_CONFIG: &str = "config.toml";
+const CINDY_FOLDER: &str = ".cindy";
 
 #[derive(Clone, Debug)]
 pub struct Cindy {
@@ -49,6 +50,27 @@ impl Cindy {
         &self.root
     }
 
+    /// Cindy folder
+    pub fn cindy_folder(&self) -> PathBuf {
+        self.root.join(CINDY_FOLDER)
+    }
+
+    pub fn config_path(&self) -> PathBuf {
+        self.cindy_folder().join(CINDY_CONFIG)
+    }
+
+    pub fn database_path(&self) -> PathBuf {
+        self.cindy_folder().join(&self.config.index.path)
+    }
+
+    pub fn data_path(&self) -> PathBuf {
+        self.cindy_folder().join(&self.config.data.path)
+    }
+
+    pub fn thumbs_path(&self) -> PathBuf {
+        self.cindy_folder().join(&self.config.thumbs.path)
+    }
+
     /// Config of Cindy.
     pub fn config(&self) -> &Arc<Config> {
         &self.config
@@ -66,37 +88,26 @@ impl Cindy {
 
     /// Given a hash, determine a path.
     pub fn hash_path(&self, hash: &Hash) -> PathBuf {
-        self.root.join(self.config.data.data_path(hash))
+        self.cindy_folder().join(self.config.data.data_path(hash))
     }
 
     /// Initialize new Cindy project.
     pub async fn initialize(path: &Path, config: &Config) -> Result<Self> {
-        let exists = match metadata(path).await {
-            Ok(info) if info.is_dir() => true,
-            Ok(info) => bail!(
-                "Path {path:?} exists but is not a directory ({:?})",
-                info.file_type()
-            ),
-            Err(error) if error.kind() == ErrorKind::NotFound => false,
-            Err(error) => return Err(error.into()),
-        };
-
-        if exists {
-            if try_exists(path.join(CINDY_CONFIG)).await? {
-                bail!("Cindy is already initialized");
-            }
-        } else {
+        if !try_exists(path).await? {
             create_dir(path).await?;
         }
 
+        let cindy_dir = path.join(CINDY_FOLDER);
+        create_dir(&cindy_dir).await?;
+
         // write config
         let config_string = toml::to_string(config)?;
-        write(path.join(CINDY_CONFIG), config_string).await?;
+        write(cindy_dir.join(CINDY_CONFIG), config_string).await?;
 
-        create_dir_all(path.join(&config.data.path)).await?;
-        create_dir_all(path.join(&config.thumbs.path)).await?;
+        create_dir_all(cindy_dir.join(&config.data.path)).await?;
+        create_dir_all(cindy_dir.join(&config.thumbs.path)).await?;
 
-        let database: Database = Connection::open(path.join(&config.index.path))?.into();
+        let database: Database = Connection::open(cindy_dir.join(&config.index.path))?.into();
         database.migrate()?;
 
         Ok(Self {
@@ -108,16 +119,15 @@ impl Cindy {
     }
 
     /// Load Cindy project, will parse Config file.
-    pub async fn load(config: &Path) -> Result<Self> {
-        let path = config.parent().ok_or(anyhow!("Path has no parent"))?;
-        let config_string = read_to_string(config).await?;
+    pub async fn load(path: &Path) -> Result<Self> {
+        let config_string = read_to_string(&path.join(CINDY_FOLDER).join(CINDY_CONFIG)).await?;
         let config: Config = toml::from_str(&config_string)?;
         Self::open(path, &config).await
     }
 
     /// Open Cindy project with supplied configuration.
     pub async fn open(path: &Path, config: &Config) -> Result<Self> {
-        let database = Connection::open(path.join(&config.index.path))?;
+        let database = Connection::open(path.join(CINDY_FOLDER).join(&config.index.path))?;
         Ok(Self {
             root: path.into(),
             config: config.clone().into(),
@@ -130,9 +140,8 @@ impl Cindy {
     pub async fn discover(path: &Path) -> Result<Self> {
         let path = path.canonicalize()?;
         for ancestor in path.ancestors() {
-            let path = ancestor.join(CINDY_CONFIG);
-            if try_exists(&path).await? {
-                return Self::load(&path).await;
+            if try_exists(&ancestor.join(CINDY_FOLDER)).await? {
+                return Self::load(&ancestor).await;
             }
         }
         bail!("No cindy project found");

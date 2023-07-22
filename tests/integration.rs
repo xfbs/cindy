@@ -22,12 +22,27 @@ fn assert_config(path: &Path, config: &Config) {
 async fn test_initialize() {
     let dir = tempdir().unwrap();
     let config = Config::default();
-    let _cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
 
-    assert_dir(&dir.path());
-    assert_dir(&dir.path().join(&config.data.path));
-    assert_dir(&dir.path().join(&config.thumbs.path));
-    assert_config(&dir.path().join("cindy.toml"), &config);
+    assert_eq!(cindy.root(), dir.path());
+    assert_eq!(cindy.cindy_folder(), dir.path().join(".cindy"));
+    assert_eq!(
+        cindy.data_path(),
+        dir.path().join(".cindy").join(&config.data.path)
+    );
+    assert_eq!(
+        cindy.thumbs_path(),
+        dir.path().join(".cindy").join(&config.thumbs.path)
+    );
+    assert_eq!(
+        cindy.config_path(),
+        dir.path().join(".cindy").join("config.toml")
+    );
+
+    assert_dir(cindy.root());
+    assert_dir(&cindy.data_path());
+    assert_dir(&cindy.thumbs_path());
+    assert_config(&cindy.config_path(), &config);
 }
 
 #[tokio::test]
@@ -57,7 +72,7 @@ async fn test_load() {
     let dir = tempdir().unwrap();
     let config = Config::default();
     let _cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
-    let cindy = Cindy::load(&dir.path().join("cindy.toml")).await.unwrap();
+    let cindy = Cindy::load(&dir.path()).await.unwrap();
     assert_eq!(cindy.config().as_ref(), &config);
     assert_eq!(cindy.root(), dir.path());
 }
@@ -83,12 +98,17 @@ async fn test_add_file() {
         .await
         .unwrap();
 
+    // determine hash of file
     let hash = cindy.hasher().hash_data(content.as_bytes());
 
+    // make sure the path is in the data index
+    let path = cindy.hash_path(&hash);
+    assert_eq!(path.exists(), true);
+
+    // make sure the tags are in the database
     let database = cindy.database().await;
     let tags = database.hash_tags(&hash).unwrap();
     drop(database);
-
     assert_eq!(
         tags,
         [
@@ -131,6 +151,12 @@ async fn test_add_files_recursively() {
     let file2 = cindy.hasher().hash_data(&file2.as_bytes());
     let file3 = cindy.hasher().hash_data(&file3.as_bytes());
 
+    // make sure that the files are in the data index
+    assert!(cindy.hash_path(&file1).exists());
+    assert!(cindy.hash_path(&file2).exists());
+    assert!(cindy.hash_path(&file3).exists());
+
+    // make sure the right tags are in the database
     let database = cindy.database().await;
     let tags = database.hash_tags(&file1).unwrap();
     drop(database);
@@ -178,4 +204,33 @@ async fn test_add_files_recursively() {
     drop(database);
 
     assert_eq!(hashes, [file2].into());
+}
+
+#[cfg(feature = "ffmpeg")]
+#[tokio::test]
+async fn test_media_info_tags() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    // copy media
+    copy("samples/image1.jpg", dir.path().join("image.jpg")).unwrap();
+    copy("samples/image1.png", dir.path().join("image.png")).unwrap();
+    copy("samples/video1.avi", dir.path().join("image.avi")).unwrap();
+
+    // add media
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![dir.path().into()],
+            recursive: true,
+        }))
+        .await
+        .unwrap();
+
+    let database = cindy.database().await;
+    let hashes = database
+        .hash_query(&mut [TagFilter::new(Some("media"), Some("image")).into()].iter())
+        .unwrap();
+    drop(database);
+    assert_eq!(hashes.len(), 2);
 }

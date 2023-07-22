@@ -156,14 +156,21 @@ impl Cindy {
             .map(|_| {
                 let files = files.clone();
                 let hashes = hashes.clone();
+                let cindy = self.clone();
                 spawn_blocking(move || {
                     for (hash, metadata, paths) in files.iter() {
                         let filesize = Tag::new("filesize".into(), metadata.len().to_string());
                         let mut tags = vec![filesize];
+                        let path = cindy.hash_path(&hash);
                         #[cfg(feature = "ffmpeg")]
-                        if let Ok(info) = crate::media::media_info(&paths.first().unwrap()) {
-                            for tag in info.tags() {
-                                tags.push(tag);
+                        match crate::media::media_info(&path) {
+                            Ok(info) => {
+                                for tag in info.tags() {
+                                    tags.push(tag);
+                                }
+                            }
+                            Err(error) => {
+                                println!("Error checking media info: {error}");
                             }
                         }
                         hashes.send((hash, tags, paths))?;
@@ -362,14 +369,9 @@ impl Cindy {
                 let cindy = self.clone();
                 spawn_blocking(move || {
                     // make sure we don't recurse into our own data or thumbs paths
-                    let data_path = cindy.root().join(&cindy.config().data.path);
-                    let thumbs_path = cindy.root().join(&cindy.config().thumbs.path);
+                    let cindy_folder = cindy.cindy_folder();
                     let filter = |path: &Path| {
-                        if path == data_path {
-                            return false;
-                        }
-
-                        if path == thumbs_path {
+                        if path == cindy_folder {
                             return false;
                         }
 
@@ -380,9 +382,6 @@ impl Cindy {
                     for result in scan_files(&path, &filter) {
                         let (path, metadata) = result?;
                         let path = path.strip_prefix(&root)?.to_path_buf();
-                        if path == Path::new("cindy.toml") || path == cindy.config().index.path {
-                            continue;
-                        }
                         let sender = sender.clone();
                         sender.blocking_send((path, metadata))?;
                     }
@@ -393,7 +392,6 @@ impl Cindy {
             } else {
                 let metadata = tokio::fs::metadata(&path).await?;
                 let path = path.strip_prefix(self.root())?.to_path_buf();
-                println!("sending path {path:?}");
                 sender.send((path, metadata)).await?;
             }
         }
