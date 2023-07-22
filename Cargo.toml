@@ -10,10 +10,10 @@ bytes = "1.4.0"
 chrono = "0.4.26"
 clap = { version = "4.3.12", features = ["derive", "env"] }
 digest = "0.10.7"
-ffmpeg-next = { version = "6.0.0", default-features = false, features = ["codec", "format"] }
+ffmpeg-next = { version = "6.0.0", default-features = false, features = ["codec", "format"], optional = true }
 flume = "0.10.14"
 futures = "0.3.28"
-gtk = { version = "0.6.6", package = "gtk4", features = ["v4_8"] }
+gtk4 = { version = "0.6.6", features = ["v4_8"], optional = true }
 hex = "0.4.3"
 rusqlite = "0.29.0"
 serde = { version = "1.0.171", features = ["derive"] }
@@ -25,3 +25,8 @@ toml = "0.7.6"
 [dev-dependencies]
 proptest = "1.2.0"
 tempfile = "3.6.0"
+
+[features]
+default = ["gtk4", "ffmpeg"]
+gtk4 = ["dep:gtk4"]
+ffmpeg = ["dep:ffmpeg-next"]

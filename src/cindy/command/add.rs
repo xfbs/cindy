@@ -3,7 +3,6 @@ use crate::{
     cli::AddCommand,
     database::{Database, Handle},
     hash::{BoxHash, Hash, ReadDigester},
-    media::media_info,
     Cindy, Tag,
 };
 use anyhow::{Context, Result};
@@ -161,7 +160,8 @@ impl Cindy {
                     for (hash, metadata, paths) in files.iter() {
                         let filesize = Tag::new("filesize".into(), metadata.len().to_string());
                         let mut tags = vec![filesize];
-                        if let Ok(info) = media_info(&paths.first().unwrap()) {
+                        #[cfg(feature = "ffmpeg")]
+                        if let Ok(info) = crate::media::media_info(&paths.first().unwrap()) {
                             for tag in info.tags() {
                                 tags.push(tag);
                             }

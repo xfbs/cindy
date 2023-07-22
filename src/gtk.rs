@@ -1,6 +1,6 @@
-use gtk::prelude::*;
-use gtk::{glib, Application, ApplicationWindow};
 use crate::Cindy;
+use gtk4::prelude::*;
+use gtk4::{glib, Application, ApplicationWindow};
 
 const APP_ID: &str = "org.xfbs.Cindy";
 

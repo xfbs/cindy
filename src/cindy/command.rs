@@ -15,12 +15,11 @@ impl Cindy {
             Command::Add(command) => self.command_add(&command).await,
             Command::Query(command) => self.command_query(&command).await,
             Command::Tags(command) => self.command_tags(&command).await,
+            #[cfg(feature = "gtk4")]
             Command::Ui => {
-                block_in_place(|| {
-                    crate::gtk::main(self.clone())
-                });
+                block_in_place(|| crate::gtk::main(self.clone()));
                 Ok(())
-            },
+            }
             _ => Ok(()),
         }
     }
