@@ -14,6 +14,7 @@ docker:
     - docker build . -t "$CI_REGISTRY_IMAGE/builder"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - docker push "$CI_REGISTRY_IMAGE/builder"
+  interruptible: true
   only:
     refs:
       - main
@@ -23,6 +24,7 @@ docker:
 test:
   stage: test
   image: "$CI_REGISTRY_IMAGE/builder"
+  interruptible: true
   script:
     - cargo test
 
@@ -31,6 +33,7 @@ build:
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
     - cargo test --release
+  interruptible: true
   artifacts:
     paths:
       - target/release/cindy
