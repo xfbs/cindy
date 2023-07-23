@@ -6,7 +6,7 @@ impl Cindy {
         let database = self.database().await;
         let command = command.clone();
         tokio::task::spawn_blocking(move || {
-            let hashes = database.hash_query(&mut command.tags.iter())?;
+            let hashes = database.hash_query(&mut command.filters.iter())?;
             for hash in &hashes {
                 println!("{}", hex::encode(&hash));
             }

@@ -11,6 +11,14 @@ pub struct Options {
     #[clap(long, env, global = true)]
     pub config: Option<PathBuf>,
 
+    /// Turn on verbose output.
+    #[clap(long, short, global = true)]
+    pub verbose: bool,
+
+    /// Turn on verbose output.
+    #[clap(long, short = 'j', global = true, default_value = "16")]
+    pub threads: u64,
+
     #[clap(subcommand)]
     pub command: Command,
 }
@@ -23,6 +31,7 @@ pub struct InitCommand {
 
 #[derive(Parser, Clone, Debug)]
 pub struct AddCommand {
+    /// Add files recursively.
     #[clap(long, short)]
     pub recursive: bool,
 
@@ -32,7 +41,15 @@ pub struct AddCommand {
 
 #[derive(Parser, Clone, Debug)]
 pub struct QueryCommand {
-    pub tags: Vec<TagPredicate<'static>>,
+    /// Show tags of each media.
+    #[clap(long)]
+    pub tags: bool,
+
+    /// Show paths instead of the hashes.
+    #[clap(long)]
+    pub paths: bool,
+
+    pub filters: Vec<TagPredicate<'static>>,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -46,15 +63,19 @@ pub struct ListCommand {
 
 #[derive(Parser, Clone, Debug)]
 pub struct EditCommand {
+    /// Tag to add.
     #[clap(long, short)]
     pub add: Vec<Tag>,
 
+    /// Tag to remove.
     #[clap(long, short = 'd')]
     pub remove: Vec<Tag>,
 
+    /// Apply to files recursively.
     #[clap(long, short)]
     pub recursive: bool,
 
+    /// List of files to apply it to.
     pub files: Vec<PathBuf>,
 }
 
@@ -151,6 +172,8 @@ mod tests {
 
     fn arb_options() -> impl Strategy<Value = Options> {
         arb_command().prop_map(|command| Options {
+            threads: 16,
+            verbose: false,
             config: None,
             command,
         })
@@ -198,9 +221,11 @@ mod tests {
     }
 
     prop_compose! {
-        fn arb_query_command()(tags in prop::collection::vec(arb_tag_predicate(), 0..10)) -> QueryCommand {
+        fn arb_query_command()(filters in prop::collection::vec(arb_tag_predicate(), 0..10)) -> QueryCommand {
             QueryCommand {
-                tags,
+                filters,
+                tags: false,
+                paths: false,
             }
         }
     }
