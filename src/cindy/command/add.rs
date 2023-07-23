@@ -11,7 +11,7 @@ use futures::StreamExt;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{create_dir_all, hard_link, File, Metadata},
-    io::{stdout, Write},
+    io::{stdout, Write, ErrorKind},
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -118,7 +118,10 @@ impl Cindy {
         if !path.exists() {
             let file = self.root().join(file);
             create_dir_all(path.parent().unwrap())?;
-            hard_link(file, path)?;
+            hard_link(file, path).or_else(|error| match error {
+                error if error.kind() == ErrorKind::AlreadyExists => Ok(()),
+                error => Err(error),
+            })?
         }
         Ok(())
     }
@@ -170,7 +173,7 @@ impl Cindy {
                                 }
                             }
                             Err(error) => {
-                                println!("Error checking media info: {error}");
+                                println!("{paths:?}: {error:#}");
                             }
                         }
                         hashes.send((hash, tags, paths))?;
