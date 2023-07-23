@@ -11,7 +11,7 @@ mod tags;
 impl Cindy {
     pub async fn command(&self, command: &Command) -> Result<()> {
         match command {
-            Command::Initialize(_) => Ok(()),
+            Command::Init(_) => Ok(()),
             Command::Add(command) => self.command_add(&command).await,
             Command::Query(command) => self.command_query(&command).await,
             Command::Tags(command) => self.command_tags(&command).await,

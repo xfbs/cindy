@@ -107,8 +107,7 @@ pub enum TagsCommand {
 #[derive(Parser, Clone, Debug)]
 pub enum Command {
     /// Initialize new Cindy project.
-    #[clap(alias = "init")]
-    Initialize(InitCommand),
+    Init(InitCommand),
     /// Add files to the Cindy index.
     Add(AddCommand),
     /// Remove files from the Cindy index.
@@ -242,7 +241,7 @@ mod tests {
 
     fn arb_command() -> impl Strategy<Value = Command> {
         prop_oneof![
-            arb_init_command().prop_map(Command::Initialize),
+            arb_init_command().prop_map(Command::Init),
             arb_add_command().prop_map(Command::Add),
             arb_remove_command().prop_map(Command::Remove),
             arb_query_command().prop_map(Command::Query),
@@ -278,8 +277,6 @@ mod tests {
         // initialize new project
         Options::try_parse_from(&["cindy", "init"]).unwrap();
         Options::try_parse_from(&["cindy", "init", "folder"]).unwrap();
-        Options::try_parse_from(&["cindy", "initialize"]).unwrap();
-        Options::try_parse_from(&["cindy", "initialize", "folder"]).unwrap();
 
         // add files (recursively)
         Options::try_parse_from(&["cindy", "add", "file1", "file2"]).unwrap();

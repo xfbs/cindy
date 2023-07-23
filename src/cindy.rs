@@ -37,7 +37,7 @@ impl Cindy {
     /// Create or open Cindy project, depending on command.
     pub async fn new(options: &Options) -> Result<Self> {
         match &options.command {
-            Command::Initialize(command) => {
+            Command::Init(command) => {
                 let config = Config::default();
                 Cindy::initialize(&command.path, &config).await
             }
