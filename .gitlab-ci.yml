@@ -1,10 +1,16 @@
-
+# CI configuration.
 
 stages:
   - docker
   - test
   - build
+  - publish
 
+
+# Build and publish utility Docker container. This is only rebuilt whenever
+# the Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
+# This utility Docker container contains all dependencies (ffmpeg, gtk4, rust)
+# needed to test and build Cindy.
 docker:
   stage: docker
   image: docker
@@ -21,6 +27,7 @@ docker:
     changes:
       - Dockerfile
 
+# Run unit tests on project. These should be fairly exhaustive.
 test:
   stage: test
   image: "$CI_REGISTRY_IMAGE/builder"
@@ -28,12 +35,27 @@ test:
   script:
     - cargo test
 
-build:
+# Build Cindy for Linux amd64
+build-amd64:
   stage: build
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
-    - cargo test --release
+    - cargo build --release
   interruptible: true
   artifacts:
     paths:
       - target/release/cindy
+
+# Publish all build binaries for Cindy on GitLab Pages.
+pages:
+  stage: publish
+  image: alpine
+  dependencies:
+    - build-amd64
+  script:
+    - mkdir -p public
+    - mv target/release/cindy public/cindy-linux-amd64
+  artifacts:
+    paths:
+      - public
+
