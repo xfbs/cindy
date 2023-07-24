@@ -2,8 +2,6 @@ pub mod cindy;
 pub mod cli;
 pub mod config;
 mod database;
-#[cfg(feature = "gtk4")]
-pub mod gtk;
 pub mod hash;
 #[cfg(feature = "ffmpeg")]
 mod media;

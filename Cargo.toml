@@ -13,7 +13,6 @@ digest = "0.10.7"
 ffmpeg-next = { version = "6.0.0", default-features = false, features = ["codec", "format"], optional = true }
 flume = "0.10.14"
 futures = "0.3.28"
-gtk4 = { version = "0.6.6", features = ["v4_8"], optional = true }
 hex = "0.4.3"
 rusqlite = "0.29.0"
 serde = { version = "1.0.171", features = ["derive"] }
@@ -27,6 +26,5 @@ proptest = "1.2.0"
 tempfile = "3.6.0"
 
 [features]
-default = ["gtk4", "ffmpeg"]
-gtk4 = ["dep:gtk4"]
+default = ["ffmpeg"]
 ffmpeg = ["dep:ffmpeg-next"]

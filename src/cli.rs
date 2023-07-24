@@ -144,10 +144,6 @@ pub enum Command {
     /// Manage tags
     #[clap(subcommand)]
     Tags(TagsCommand),
-    //#[clap(subcommand)]
-    //Info(InfoCommand),
-    #[cfg(feature = "gtk4")]
-    Ui,
 }
 
 #[cfg(test)]

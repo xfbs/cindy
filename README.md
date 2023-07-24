@@ -21,7 +21,6 @@ Run-time dependencies:
 
 - sqlite3
 - ffmpeg
-- gtk4
 
 ## Development
 
@@ -29,7 +28,7 @@ To be able to build Cindy, you need some dependencies. To install them on a
 recent Debian system, you can run this:
 
 ```
-apt install libsqlite3-dev libavcodec-dev libgtk-4-dev clang pkg-config libavformat-dev
+apt install libsqlite3-dev libavcodec-dev clang pkg-config libavformat-dev
 ```
 
 You will also need `cargo`, which you can install using [rustup](https://rustup.rs):
