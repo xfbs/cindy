@@ -91,9 +91,14 @@ fn FileCard() -> Html {
             <a href="#">
                 <img class="rounded-lg" src="https://images.unsplash.com/photo-1488372759477-a7f4aa078cb6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="" />
             </a>
-            <div class="absolute bottom-0 left-0 p-2 w-max">
-                <span class="block bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"media:image"}</span>
-                <span class="block bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"media:image"}</span>
+            <div class="absolute bottom-0 left-0 p-2 min-w-full">
+                <div class="flex flex-wrap">
+                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"video"}</span>
+                    <span class="bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"image"}</span>
+                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"hd"}</span>
+                    <span class="bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"test.jpg"}</span>
+                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"jpg"}</span>
+                </div>
             </div>
         </div>
     }

@@ -11,7 +11,7 @@ use futures::StreamExt;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{create_dir_all, hard_link, File, Metadata},
-    io::{stdout, Write, ErrorKind},
+    io::{stdout, ErrorKind, Write},
     path::{Path, PathBuf},
     time::Instant,
 };

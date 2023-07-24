@@ -1,3 +1,4 @@
+mod api;
 pub mod cindy;
 pub mod cli;
 pub mod config;
