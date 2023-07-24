@@ -14,16 +14,21 @@ enum Route {
 #[function_component]
 fn NavBar() -> Html {
     html! {
-        <nav class="bg-white border-gray-200 bg-white dark:bg-gray-900 sticky top-0 z-10 border">
+        <nav class="bg-gray-200 border-gray-200 dark:bg-gray-900 sticky top-0 z-10 border">
             <div class="max-w-screen-4xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <a href="/" class="flex items-center">
                     <img src="/cindy.svg" class="h-8 mr-3" alt="Flowbite Logo" />
                     <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">{"Cindy"}</span>
                 </a>
-                <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-                    <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+                <div class="w-auto" id="navbar-default">
+                    <ul class="font-medium flex flex-col p-0 flex-row space-x-8 mt-0">
                         <li>
-                            <a href="#" class="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">{"Settings"}</a>
+                            <a href="#" class="flex items-center text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">
+                                <img src="/gear.svg" class="h-8 mr-3" alt="Settings icon" />
+                                <span class="hidden md:block p-0">
+                                    {"Settings"}
+                                </span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -82,13 +87,13 @@ fn TagsList() -> Html {
 #[function_component]
 fn FileCard() -> Html {
     html! {
-        <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
+        <div class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
             <a href="#">
                 <img class="rounded-lg" src="https://images.unsplash.com/photo-1488372759477-a7f4aa078cb6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="" />
             </a>
             <div class="absolute bottom-0 left-0 p-2 w-max">
-                <span class="block bg-white rounded p-1">{"media:image"}</span>
-                <span class="block bg-white rounded p-1">{"media:image"}</span>
+                <span class="block bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"media:image"}</span>
+                <span class="block bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"media:image"}</span>
             </div>
         </div>
     }
@@ -98,7 +103,7 @@ fn FileCard() -> Html {
 fn Files() -> Html {
     html! {
         <div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-3">
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 p-3">
                 <FileCard />
                 <FileCard />
                 <FileCard />
