@@ -50,7 +50,7 @@ ui:
 # Build Cindy for Linux amd64
 build-amd64:
   stage: build
-  depenencies:
+  dependencies:
     - ui
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
