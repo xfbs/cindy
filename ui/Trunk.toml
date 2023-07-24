@@ -1,0 +1,5 @@
+# rebuild tailwind before build.
+[[hooks]]
+stage = "pre_build"
+command = "./target/tailwindcss"
+command_arguments = ["-c", "tailwind.config.js", "-o", "static/tailwind.css"]

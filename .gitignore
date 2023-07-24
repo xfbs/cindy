@@ -1,2 +1,5 @@
 /target
 /cindy
+/ui/target
+/ui/dist
+/ui/static/tailwind.css
