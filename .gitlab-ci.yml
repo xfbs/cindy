@@ -3,6 +3,7 @@
 stages:
   - docker
   - test
+  - ui
   - build
   - publish
 
@@ -35,9 +36,22 @@ test:
   script:
     - cargo test
 
+# Build UI. This needs to be done first as the frontend is embedded into the binary.
+ui:
+  stage: ui
+  image: "$CI_REGISTRY_IMAGE/builder"
+  script:
+    - cd ui && trunk build --release
+  interruptible: true
+  artifacts:
+    paths:
+      - ui/dist
+
 # Build Cindy for Linux amd64
 build-amd64:
   stage: build
+  depenencies:
+    - ui
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
     - cargo build --release
