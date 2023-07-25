@@ -163,6 +163,7 @@ pub enum Command {
     #[clap(subcommand)]
     Tags(TagsCommand),
     /// Serve Cindy UI.
+    #[cfg(feature = "server")]
     #[clap(alias = "server")]
     Serve(ServeCommand),
 }

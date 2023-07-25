@@ -7,6 +7,7 @@ pub mod hash;
 #[cfg(feature = "ffmpeg")]
 mod media;
 mod plugins;
+#[cfg(feature = "server")]
 mod server;
 mod tag;
 
