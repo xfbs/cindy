@@ -1,5 +1,5 @@
-mod api;
-pub mod cindy;
+mod server;
+mod cindy;
 pub mod cli;
 pub mod config;
 mod database;
@@ -8,6 +8,7 @@ pub mod hash;
 mod media;
 mod plugins;
 mod tag;
+mod command;
 
 pub use crate::cindy::Cindy;
 pub use cli::{Command, Options};

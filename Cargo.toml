@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
-axum = "0.6.19"
+axum = { version = "0.6.19", optional = true }
 blake2 = "0.10.6"
 bytes = "1.4.0"
 chrono = "0.4.26"
@@ -15,6 +15,9 @@ ffmpeg-next = { version = "6.0.0", default-features = false, features = ["codec"
 flume = "0.10.14"
 futures = "0.3.28"
 hex = "0.4.3"
+include_dir = { version = "0.7.3", optional = true }
+mime = "0.3.17"
+mime_guess = "2.0.4"
 rusqlite = "0.29.0"
 serde = { version = "1.0.171", features = ["derive"] }
 strum = { version = "0.25.0", features = ["derive"] }
@@ -27,5 +30,6 @@ proptest = "1.2.0"
 tempfile = "3.6.0"
 
 [features]
-default = ["ffmpeg"]
+default = ["ffmpeg", "ui"]
 ffmpeg = ["dep:ffmpeg-next"]
+ui = ["dep:axum", "dep:include_dir"]

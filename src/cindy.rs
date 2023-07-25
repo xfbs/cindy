@@ -4,19 +4,16 @@ use crate::{
     database::Database,
     hash::{Digester, Hash},
 };
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use rusqlite::Connection;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
 use tokio::{
-    fs::{create_dir, create_dir_all, metadata, read_to_string, try_exists, write},
-    io::ErrorKind,
+    fs::{create_dir, create_dir_all, read_to_string, try_exists, write},
     sync::{Mutex, OwnedMutexGuard},
 };
-
-mod command;
 
 const CINDY_CONFIG: &str = "config.toml";
 const CINDY_FOLDER: &str = ".cindy";

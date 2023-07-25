@@ -12,7 +12,7 @@ async fn query() -> String {
     String::default()
 }
 
-fn router() -> Router<Cindy> {
+pub fn router() -> Router<Cindy> {
     Router::new()
         .route("/api/v1/file/:hash", get(get_file))
         .route("/api/v1/file/:hash/tags", get(get_file))

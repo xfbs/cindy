@@ -1,9 +1,10 @@
 use crate::tag::{Tag, TagFilter, TagPredicate};
 use clap::Parser;
-use std::path::PathBuf;
+use std::{net::SocketAddr, path::PathBuf};
 
-#[derive(Parser, Clone, Debug)]
-pub struct Options {
+/// Global options.
+#[derive(Parser, Clone, Debug, Default)]
+pub struct GlobalOptions {
     /// Configuration file.
     ///
     /// By default, Cindy will automatically discover this by walking up the current working
@@ -16,17 +17,34 @@ pub struct Options {
     pub verbose: bool,
 
     /// Turn on verbose output.
-    #[clap(long, short = 'j', global = true, default_value = "16")]
-    pub threads: u64,
+    #[clap(long, short = 'j', global = true)]
+    pub threads: Option<u64>,
+}
 
+/// Cindy command-line options.
+#[derive(Parser, Clone, Debug)]
+pub struct Options {
+    /// Global options, shared by all subcommands.
+    #[clap(flatten)]
+    pub global: GlobalOptions,
+
+    /// Subcommand to run.
     #[clap(subcommand)]
     pub command: Command,
 }
 
+/// Initialize new Cindy project.
 #[derive(Parser, Clone, Debug)]
 pub struct InitCommand {
     #[clap(default_value = ".")]
     pub path: PathBuf,
+}
+
+/// Serve Cindy web user interface.
+#[derive(Parser, Clone, Debug)]
+pub struct ServeCommand {
+    #[clap(short, long, default_value = "127.0.0.1:8000")]
+    pub listen: SocketAddr,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -144,6 +162,9 @@ pub enum Command {
     /// Manage tags
     #[clap(subcommand)]
     Tags(TagsCommand),
+    /// Serve Cindy UI.
+    #[clap(alias = "server")]
+    Serve(ServeCommand),
 }
 
 #[cfg(test)]
@@ -168,9 +189,7 @@ mod tests {
 
     fn arb_options() -> impl Strategy<Value = Options> {
         arb_command().prop_map(|command| Options {
-            threads: 16,
-            verbose: false,
-            config: None,
+            global: Default::default(),
             command,
         })
     }
