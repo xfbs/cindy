@@ -1,10 +1,7 @@
 use crate::config::HashAlgorithm;
+pub use cindy_common::{ArcHash, BoxHash, Hash};
 use digest::DynDigest;
-use std::{
-    io::{Read, Result as IoResult},
-    sync::Arc,
-};
-pub use cindy_common::{Hash, BoxHash, ArcHash};
+use std::io::{Read, Result as IoResult};
 
 pub trait Digester: std::fmt::Debug {
     /// Create new Hasher
@@ -66,7 +63,6 @@ impl<T: Digester + ?Sized> ReadDigester for T {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ops::Deref;
 
     /// Test vector that is longer than the default buffer size
     const LONG_DATA: &[u8] = &[17; 5 * DEFAULT_BUFFER_SIZE / 2];
@@ -95,24 +91,24 @@ mod tests {
     #[test]
     fn can_hash_data_blake2b() {
         let algorithm = HashAlgorithm::Blake2b512;
-        assert_eq!(algorithm.hash_data(b"").deref(), BLAKE2B512_HASH_EMPTY);
-        assert_eq!(algorithm.hash_data(b"hello").deref(), BLAKE2B512_HASH_HELLO);
-        assert_eq!(algorithm.hash_data(b"world").deref(), BLAKE2B512_HASH_WORLD);
+        assert_eq!(algorithm.hash_data(b""), BLAKE2B512_HASH_EMPTY);
+        assert_eq!(algorithm.hash_data(b"hello"), BLAKE2B512_HASH_HELLO);
+        assert_eq!(algorithm.hash_data(b"world"), BLAKE2B512_HASH_WORLD);
     }
 
     #[test]
     fn can_hash_read_blake2b() {
         let algorithm = HashAlgorithm::Blake2b512;
         assert_eq!(
-            algorithm.hash_read(&mut &b""[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b""[..]).unwrap(),
             BLAKE2B512_HASH_EMPTY
         );
         assert_eq!(
-            algorithm.hash_read(&mut &b"hello"[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b"hello"[..]).unwrap(),
             BLAKE2B512_HASH_HELLO
         );
         assert_eq!(
-            algorithm.hash_read(&mut &b"world"[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b"world"[..]).unwrap(),
             BLAKE2B512_HASH_WORLD
         );
     }
@@ -135,24 +131,24 @@ mod tests {
     #[test]
     fn can_hash_data_blake2s() {
         let algorithm = HashAlgorithm::Blake2s256;
-        assert_eq!(algorithm.hash_data(b"").deref(), BLAKE2S256_HASH_EMPTY);
-        assert_eq!(algorithm.hash_data(b"hello").deref(), BLAKE2S256_HASH_HELLO);
-        assert_eq!(algorithm.hash_data(b"world").deref(), BLAKE2S256_HASH_WORLD);
+        assert_eq!(algorithm.hash_data(b""), BLAKE2S256_HASH_EMPTY);
+        assert_eq!(algorithm.hash_data(b"hello"), BLAKE2S256_HASH_HELLO);
+        assert_eq!(algorithm.hash_data(b"world"), BLAKE2S256_HASH_WORLD);
     }
 
     #[test]
     fn can_hash_read_blake2s() {
         let algorithm = HashAlgorithm::Blake2s256;
         assert_eq!(
-            algorithm.hash_read(&mut &b""[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b""[..]).unwrap(),
             BLAKE2S256_HASH_EMPTY
         );
         assert_eq!(
-            algorithm.hash_read(&mut &b"hello"[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b"hello"[..]).unwrap(),
             BLAKE2S256_HASH_HELLO
         );
         assert_eq!(
-            algorithm.hash_read(&mut &b"world"[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &b"world"[..]).unwrap(),
             BLAKE2S256_HASH_WORLD
         );
     }
@@ -166,15 +162,14 @@ mod tests {
     fn can_hash_read() {
         let algorithm = HashAlgorithm::Blake2s256;
         assert_eq!(
-            algorithm.hash_read(&mut &LONG_DATA[..]).unwrap().deref(),
+            algorithm.hash_read(&mut &LONG_DATA[..]).unwrap(),
             BLAKE2B512_HASH_LONG
         );
         for bufsize in [1, 2, 5, 12, 33] {
             assert_eq!(
                 algorithm
                     .hash_read_bufsize(&mut &LONG_DATA[..], bufsize)
-                    .unwrap()
-                    .deref(),
+                    .unwrap(),
                 BLAKE2B512_HASH_LONG
             );
         }

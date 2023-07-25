@@ -72,10 +72,9 @@ mod tests {
             cause: Some(root.into()),
         };
 
-        assert_eq!(response.description(), "Test");
         assert_eq!(response.to_string(), "Test");
-        assert_eq!(response.cause().unwrap().description(), "Root");
-        assert_eq!(response.cause().unwrap().to_string(), "Root");
-        assert_eq!(response.cause().unwrap().cause().is_none(), true);
+        assert_eq!(response.source().unwrap().to_string(), "Root");
+        assert_eq!(response.source().unwrap().source().is_none(), true);
     }
 }
+

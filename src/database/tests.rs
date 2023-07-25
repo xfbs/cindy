@@ -11,7 +11,7 @@ fn test_migrate() {
 fn can_manage_files() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+    let hash = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash).unwrap();
     database.hash_remove(&hash).unwrap();
 }
@@ -226,8 +226,8 @@ fn can_tags_delete_by_value() {
 fn can_manage_file_tags() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
-    let hash2 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0x01];
+    let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
+    let hash2 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0x01]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
     database.tag_add("name", "value").unwrap();
@@ -242,7 +242,7 @@ fn can_manage_file_tags() {
 fn can_delete_file_tags_all() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+    let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
     database.tag_add("name", "value").unwrap();
     database.tag_add("name", "other").unwrap();
@@ -260,7 +260,7 @@ fn can_delete_file_tags_all() {
 fn can_delete_file_tags_name() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+    let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
     database.tag_add("name", "value").unwrap();
     database.tag_add("name", "other").unwrap();
@@ -290,7 +290,7 @@ fn can_delete_file_tags_name() {
 fn can_delete_file_tags_individual() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+    let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
     database.tag_add("name", "value").unwrap();
     database.tag_add("name", "other").unwrap();
@@ -327,8 +327,8 @@ fn can_delete_file_tags_individual() {
 fn empty_query_list_returns_all() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
-    let hash2 = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0x04];
+    let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
+    let hash2 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0x04]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
 
@@ -340,9 +340,9 @@ fn empty_query_list_returns_all() {
 fn can_query_files_by_tag_name() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01];
-    let hash2 = [0x02];
-    let hash3 = [0x03];
+    let hash1 = Hash::new(&[0x01]);
+    let hash2 = Hash::new(&[0x02]);
+    let hash3 = Hash::new(&[0x03]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
     database.hash_add(&hash3).unwrap();
@@ -401,8 +401,8 @@ fn can_query_files_by_tag_name() {
 fn can_query_files_by_tag_name_value() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    let hash1 = [0x01];
-    let hash2 = [0x02];
+    let hash1 = Hash::new(&[0x01]);
+    let hash2 = Hash::new(&[0x02]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
     database.tag_add("name", "a").unwrap();
@@ -513,7 +513,7 @@ fn stress_test() {
         .map(|i| format!("{i}").into_bytes())
         .collect::<Vec<_>>();
     for hash in hash.iter() {
-        database.hash_add(hash).unwrap();
+        database.hash_add(Hash::new(&hash)).unwrap();
     }
     let tags = [("a", 5), ("b", 7), ("c", 13)]
         .into_iter()
@@ -531,7 +531,9 @@ fn stress_test() {
             database.tag_add(name, &value).unwrap();
         }
         for (hash, value) in hash.iter().zip(values.iter().cycle()) {
-            database.hash_tag_add(&hash, &name, &value).unwrap();
+            database
+                .hash_tag_add(Hash::new(&hash), &name, &value)
+                .unwrap();
         }
     }
     let hashes = database.hash_query(&mut [].iter()).unwrap();
@@ -551,7 +553,7 @@ fn stress_test() {
             hashes,
             hash.iter()
                 .step_by(values.len())
-                .map(|v| &v[..])
+                .map(|v| Box::<[u8]>::from(v[..].to_vec()))
                 .map(BoxHash::from)
                 .collect()
         );

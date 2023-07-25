@@ -1,5 +1,5 @@
 use serde::{
-    de::{Error, Visitor},
+    de::Error,
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::{
@@ -56,6 +56,12 @@ impl<T: ?Sized + AsRef<[u8]>> Display for Hash<T> {
 impl<T: ?Sized + AsRef<[u8]>> AsRef<[u8]> for Hash<T> {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
+    }
+}
+
+impl<T: AsRef<[u8]> + From<Vec<u8>>> From<&Hash> for Hash<T> {
+    fn from(hash: &Hash) -> Self {
+        Self(hash.0.to_vec().into())
     }
 }
 

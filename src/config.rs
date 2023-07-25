@@ -125,8 +125,8 @@ path = "thumbs"
     #[test]
     fn test_data_path() {
         let data = DataConfig::default();
-        let hash = [0x9a, 0xbc, 0xde, 0xf0];
-        let path = data.data_path(&hash);
+        let hash = Hash::new(&[0x9a, 0xbc, 0xde, 0xf0]);
+        let path = data.data_path(hash);
         assert_eq!(path, Path::new("data/9a/bc/def0"));
     }
 }
