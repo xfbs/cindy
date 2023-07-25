@@ -34,6 +34,7 @@ test:
   image: "$CI_REGISTRY_IMAGE/builder"
   interruptible: true
   script:
+    - mkdir -p ui/dist
     - cargo test
 
 # Build UI. This needs to be done first as the frontend is embedded into the binary.
