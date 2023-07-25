@@ -11,20 +11,20 @@ pub type ArcHash = Arc<[u8]>;
 
 pub trait Digester: std::fmt::Debug {
     /// Create new Hasher
-    fn new(&self) -> Box<dyn DynDigest + Send>;
+    fn create(&self) -> Box<dyn DynDigest + Send>;
 
     /// Determine Hash output size.
     fn output_size(&self) -> usize {
-        self.new().output_size()
+        self.create().output_size()
     }
 }
 
 impl Digester for HashAlgorithm {
-    fn new(&self) -> Box<dyn DynDigest + Send> {
+    fn create(&self) -> Box<dyn DynDigest + Send> {
         use HashAlgorithm::*;
         match self {
-            Blake2b512 => Box::new(blake2::Blake2b512::default()) as Box<dyn DynDigest + Send>,
-            Blake2s256 => Box::new(blake2::Blake2s256::default()) as Box<dyn DynDigest + Send>,
+            Blake2b512 => Box::<blake2::Blake2b512>::default() as _,
+            Blake2s256 => Box::<blake2::Blake2s256>::default() as _,
         }
     }
 }
@@ -36,7 +36,7 @@ pub trait DataHasher {
 
 impl<T: Digester + ?Sized> DataHasher for T {
     fn hash_data(&self, data: &[u8]) -> BoxHash {
-        let mut hasher = self.new();
+        let mut hasher = self.create();
         hasher.update(data);
         hasher.finalize()
     }
@@ -54,9 +54,8 @@ pub trait ReadDigester {
 
 impl<T: Digester + ?Sized> ReadDigester for T {
     fn hash_read_bufsize(&self, reader: &mut dyn Read, buffer_size: usize) -> IoResult<BoxHash> {
-        let mut hasher = self.new();
-        let mut buffer = Vec::with_capacity(buffer_size);
-        buffer.resize(buffer_size, 0u8);
+        let mut hasher = self.create();
+        let mut buffer = vec![0; buffer_size];
         loop {
             let read = reader.read(&mut buffer[..])?;
             if read == 0 {
@@ -170,13 +169,13 @@ mod tests {
     fn can_hash_read() {
         let algorithm = HashAlgorithm::Blake2s256;
         assert_eq!(
-            algorithm.hash_read(&mut LONG_DATA).unwrap().deref(),
+            algorithm.hash_read(&mut &LONG_DATA[..]).unwrap().deref(),
             BLAKE2B512_HASH_LONG
         );
         for bufsize in [1, 2, 5, 12, 33] {
             assert_eq!(
                 algorithm
-                    .hash_read_bufsize(&mut LONG_DATA, bufsize)
+                    .hash_read_bufsize(&mut &LONG_DATA[..], bufsize)
                     .unwrap()
                     .deref(),
                 BLAKE2B512_HASH_LONG

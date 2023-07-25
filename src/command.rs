@@ -13,10 +13,10 @@ impl Cindy {
     pub async fn command(&self, command: &Command) -> Result<()> {
         match command {
             Command::Init(_) => Ok(()),
-            Command::Add(command) => self.command_add(&command).await,
-            Command::Query(command) => self.command_query(&command).await,
-            Command::Tags(command) => self.command_tags(&command).await,
-            Command::Serve(command) => self.command_serve(&command).await,
+            Command::Add(command) => self.command_add(command).await,
+            Command::Query(command) => self.command_query(command).await,
+            Command::Tags(command) => self.command_tags(command).await,
+            Command::Serve(command) => self.command_serve(command).await,
             _ => Ok(()),
         }
     }

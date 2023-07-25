@@ -1,14 +1,14 @@
-mod server;
 mod cindy;
 pub mod cli;
+mod command;
 pub mod config;
 mod database;
 pub mod hash;
 #[cfg(feature = "ffmpeg")]
 mod media;
 mod plugins;
+mod server;
 mod tag;
-mod command;
 
 pub use crate::cindy::Cindy;
 pub use cli::{Command, Options};

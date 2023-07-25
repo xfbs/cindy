@@ -42,6 +42,7 @@ async fn test_initialize() {
     assert_dir(cindy.root());
     assert_dir(&cindy.data_path());
     assert_dir(&cindy.thumbs_path());
+    assert_file(&cindy.database_path());
     assert_config(&cindy.config_path(), &config);
 }
 

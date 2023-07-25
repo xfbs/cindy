@@ -20,7 +20,7 @@ pub trait Handle {
 
 impl Handle for Connection {
     fn connection(&self) -> &Connection {
-        &self
+        self
     }
 }
 

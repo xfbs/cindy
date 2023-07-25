@@ -42,11 +42,11 @@ fn add_file<H: Handle>(
     tags: &[Tag],
     paths: &mut dyn Iterator<Item = &Path>,
 ) -> Result<()> {
-    database.hash_add(&hash)?;
+    database.hash_add(hash)?;
 
     for tag in tags {
         database.tag_add(tag.name(), tag.value())?;
-        database.hash_tag_add(&hash, tag.name(), tag.value())?;
+        database.hash_tag_add(hash, tag.name(), tag.value())?;
     }
 
     add_path_tags(database, hash, paths)?;
@@ -60,9 +60,9 @@ fn add_path_tags<H: Handle>(
     paths: &mut dyn Iterator<Item = &Path>,
 ) -> Result<()> {
     for path in paths {
-        for tag in path_tags(&path) {
+        for tag in path_tags(path) {
             database.tag_add(tag.name(), tag.value())?;
-            database.hash_tag_add(&hash, tag.name(), tag.value())?;
+            database.hash_tag_add(hash, tag.name(), tag.value())?;
         }
     }
     Ok(())
@@ -75,7 +75,7 @@ impl Cindy {
 
     pub async fn add_files(&self, files: &[PathBuf], recursive: bool) -> Result<()> {
         let files = self
-            .list_files(&files, recursive)
+            .list_files(files, recursive)
             .await
             .context("Listing files")?;
         let hashes = self.hash_files(files).await.context("Hashing files")?;
@@ -94,7 +94,7 @@ impl Cindy {
                 add_file(
                     &transaction,
                     &hash[..],
-                    &metadata,
+                    metadata,
                     &mut paths.iter().map(|p| p.as_path()),
                 )?;
             }
@@ -107,7 +107,7 @@ impl Cindy {
 
     /// Given a file, compute it's hash.
     pub fn hash_file(&self, path: &Path) -> Result<BoxHash> {
-        let mut file = File::open(&self.root().join(&path))?;
+        let mut file = File::open(self.root().join(path))?;
         let hash = self.hasher().hash_read(&mut file)?;
         Ok(hash)
     }
@@ -233,7 +233,7 @@ impl Cindy {
             task.await??;
         }
         sender.await??;
-        Ok(collect.await??)
+        collect.await?
     }
 
     /// Skip known files
@@ -259,7 +259,7 @@ impl Cindy {
                 }
 
                 // if a file already exists, just save the paths
-                if transaction.hash_exists(&hash)? {
+                if transaction.hash_exists(hash)? {
                     exists.insert(hash.clone());
                     add_path_tags(&transaction, hash, &mut paths.iter().map(PathBuf::as_path))?;
                 }
@@ -285,7 +285,7 @@ impl Cindy {
         files: BTreeMap<PathBuf, Metadata>,
     ) -> Result<BTreeMap<BoxHash, (Metadata, BTreeSet<PathBuf>)>> {
         let total_files = files.len();
-        let total_bytes: u64 = files.iter().map(|(_, metadata)| metadata.len()).sum();
+        let total_bytes: u64 = files.values().map(|metadata| metadata.len()).sum();
 
         // task submitting files to queue
         let (file_sender, file_receiver) = flume::bounded::<(PathBuf, Metadata)>(1024);
@@ -333,7 +333,7 @@ impl Cindy {
             task.await??;
         }
         sender.await??;
-        Ok(collect.await??)
+        collect.await?
     }
 
     /// List files (recursively)
@@ -365,7 +365,7 @@ impl Cindy {
         });
 
         for path in paths {
-            let path = std::fs::canonicalize(&path)?;
+            let path = std::fs::canonicalize(path)?;
             if recursive {
                 let sender = sender.clone();
                 let root = self.root().to_path_buf();
@@ -408,7 +408,7 @@ fn scan_files<'a>(
     path: &Path,
     filter: &'a dyn Fn(&Path) -> bool,
 ) -> impl Iterator<Item = Result<(PathBuf, Metadata)>> + 'a {
-    let files = std::fs::read_dir(&path).unwrap();
+    let files = std::fs::read_dir(path).unwrap();
     files
         .map(move |entry| {
             let entry = entry?;
@@ -416,7 +416,7 @@ fn scan_files<'a>(
             let metadata = entry.metadata()?;
             Ok((path, metadata))
         })
-        .map(|result| {
+        .flat_map(|result| {
             let result: Box<dyn Iterator<Item = Result<(PathBuf, Metadata)>> + 'a> = match result {
                 Ok((path, metadata)) if metadata.is_dir() && filter(&path) => {
                     Box::new(scan_files(&path, filter))
@@ -426,7 +426,6 @@ fn scan_files<'a>(
             };
             result
         })
-        .flatten()
 }
 
 #[cfg(test)]

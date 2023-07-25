@@ -59,8 +59,8 @@ impl<'a> TagPredicate<'a> {
 
     pub fn filter(&self) -> &TagFilter<'a> {
         match self {
-            Self::Exists(filter) => &filter,
-            Self::Missing(filter) => &filter,
+            Self::Exists(filter) => filter,
+            Self::Missing(filter) => filter,
         }
     }
 }
@@ -75,7 +75,7 @@ impl FromStr for TagPredicate<'static> {
     type Err = ParseError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        match input.starts_with("!") {
+        match input.starts_with('!') {
             false => input.parse().map(TagPredicate::Exists),
             true => input
                 .trim_start_matches('!')
@@ -124,7 +124,7 @@ impl FromStr for Tag {
     type Err = ParseError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        match input.split_once(":") {
+        match input.split_once(':') {
             Some((tag, value)) => Ok(Tag::new(tag.into(), value.into())),
             None => Err(ParseError::MissingColon),
         }
@@ -148,7 +148,7 @@ impl FromStr for TagFilter<'static> {
     type Err = ParseError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let Some((name, value)) = input.split_once(":") else {
+        let Some((name, value)) = input.split_once(':') else {
             return Err(ParseError::MissingColon);
         };
         Ok(TagFilter(

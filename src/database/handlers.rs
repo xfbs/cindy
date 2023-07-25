@@ -6,21 +6,21 @@ impl<T: Handle> Database<T> {
     /// Add hash to database.
     pub fn hash_add(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("INSERT OR IGNORE INTO files(hash) VALUES (?)")?;
-        query.execute(&[hash])?;
+        query.execute([hash])?;
         Ok(())
     }
 
     /// Remove file hash from database, including all tags.
     pub fn hash_remove(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("DELETE FROM files WHERE hash = ?")?;
-        query.execute(&[hash])?;
+        query.execute([hash])?;
         Ok(())
     }
 
     /// Check if a hash exists.
     pub fn hash_exists(&self, hash: &Hash) -> Result<bool> {
         let mut query = self.prepare_cached("SELECT * FROM files WHERE hash = ?")?;
-        let mut rows = query.query(&[hash])?;
+        let mut rows = query.query([hash])?;
         Ok(rows.next()?.is_some())
     }
 
@@ -30,7 +30,7 @@ impl<T: Handle> Database<T> {
             FROM file_tags
             WHERE hash = ?",
         )?;
-        let rows = query.query(&[&hash])?;
+        let rows = query.query([&hash])?;
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)
@@ -40,7 +40,7 @@ impl<T: Handle> Database<T> {
     pub fn tag_add(&self, tag: &str, value: &str) -> Result<()> {
         let mut query =
             self.prepare_cached("INSERT OR IGNORE INTO tags(name, value) VALUES (?, ?)")?;
-        query.execute(&[&tag, &value])?;
+        query.execute([&tag, &value])?;
         Ok(())
     }
 
@@ -52,7 +52,7 @@ impl<T: Handle> Database<T> {
             WHERE coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
-        let rows = query.query(&[&name, &value])?;
+        let rows = query.query([&name, &value])?;
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)
@@ -61,7 +61,7 @@ impl<T: Handle> Database<T> {
     /// Rename tag name.
     pub fn tag_name_rename(&self, old: &str, new: &str) -> Result<()> {
         let mut query = self.prepare_cached("UPDATE tag_names SET name = ? WHERE name = ?")?;
-        query.execute(&[&new, &old])?;
+        query.execute([&new, &old])?;
         Ok(())
     }
 
@@ -84,7 +84,7 @@ impl<T: Handle> Database<T> {
             WHERE coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
-        query.execute(&[&name, &value])?;
+        query.execute([&name, &value])?;
         Ok(())
     }
 
@@ -123,15 +123,14 @@ impl<T: Handle> Database<T> {
         let mut segments = vec![];
         for predicate in query {
             let filter = predicate.filter();
-            let segment = format!(
-                "
+            let segment = "
                 (EXISTS (SELECT file_id FROM file_tags
                     WHERE files.id = file_tags.file_id
                     AND coalesce(name = ?, true)
                     AND coalesce(value = ?, true)
                     ))
             "
-            );
+            .to_string();
             let segment = match predicate {
                 TagPredicate::Missing(_) => format!("(NOT {segment})"),
                 _other => segment,
@@ -141,7 +140,7 @@ impl<T: Handle> Database<T> {
             segments.push(segment);
         }
         let query_string = match segments.len() {
-            0 => format!("SELECT hash FROM files"),
+            0 => "SELECT hash FROM files".into(),
             _ => format!("SELECT hash FROM files WHERE {}", segments.join(" AND ")),
         };
         let mut query = self.prepare(&query_string)?;

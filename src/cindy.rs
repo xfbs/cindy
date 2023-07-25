@@ -138,7 +138,7 @@ impl Cindy {
         let path = path.canonicalize()?;
         for ancestor in path.ancestors() {
             if try_exists(&ancestor.join(CINDY_FOLDER)).await? {
-                return Self::load(&ancestor).await;
+                return Self::load(ancestor).await;
             }
         }
         bail!("No cindy project found");

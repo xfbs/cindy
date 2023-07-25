@@ -48,11 +48,7 @@ impl Cindy {
                     .iter()
                     .map(|filter| database.tag_list(filter.name(), filter.value()))
                     .collect::<Result<Vec<BTreeSet<Tag>>>>()?;
-                results
-                    .into_iter()
-                    .map(|i| i.into_iter())
-                    .flatten()
-                    .collect()
+                results.into_iter().flat_map(|i| i.into_iter()).collect()
             };
             for tag in tags.iter() {
                 println!("{tag}");

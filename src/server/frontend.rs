@@ -13,7 +13,7 @@ const DEFAULT_FILE: &str = "index.html";
 
 /// Serve frontend static file.
 async fn static_file(uri: Uri) -> ([(HeaderName, HeaderValue); 1], &'static [u8]) {
-    let file = match FRONTEND_FILES.get_file(uri.path().trim_start_matches("/")) {
+    let file = match FRONTEND_FILES.get_file(uri.path().trim_start_matches('/')) {
         Some(file) => file,
         None => FRONTEND_FILES.get_file(DEFAULT_FILE).unwrap(),
     };
