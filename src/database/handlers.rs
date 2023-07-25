@@ -24,13 +24,20 @@ impl<T: Handle> Database<T> {
         Ok(rows.next()?.is_some())
     }
 
-    pub fn hash_tags(&self, hash: &Hash) -> Result<BTreeSet<Tag>> {
+    pub fn hash_tags(
+        &self,
+        hash: &Hash,
+        name: Option<&str>,
+        value: Option<&str>,
+    ) -> Result<BTreeSet<Tag>> {
         let mut query = self.prepare_cached(
             "SELECT name, value
             FROM file_tags
-            WHERE hash = ?",
+            WHERE hash = ?
+            AND coalesce(name = ?, true)
+            AND coalesce(value = ?, true)",
         )?;
-        let rows = query.query([hash.as_ref()])?;
+        let rows = query.query((hash.as_ref(), name, value))?;
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)

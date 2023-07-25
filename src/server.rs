@@ -2,7 +2,10 @@ use crate::Cindy;
 use axum::Router;
 
 mod api;
+mod error;
 mod frontend;
+
+pub use error::Error;
 
 pub fn router() -> Router<Cindy> {
     Router::new()

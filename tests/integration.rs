@@ -108,7 +108,7 @@ async fn test_add_file() {
 
     // make sure the tags are in the database
     let database = cindy.database().await;
-    let tags = database.hash_tags(&hash).unwrap();
+    let tags = database.hash_tags(&hash, None, None).unwrap();
     drop(database);
     assert_eq!(
         tags,
@@ -159,7 +159,7 @@ async fn test_add_files_recursively() {
 
     // make sure the right tags are in the database
     let database = cindy.database().await;
-    let tags = database.hash_tags(&file1).unwrap();
+    let tags = database.hash_tags(&file1, None, None).unwrap();
     drop(database);
 
     assert_eq!(
@@ -175,7 +175,7 @@ async fn test_add_files_recursively() {
     );
 
     let database = cindy.database().await;
-    let tags = database.hash_tags(&file2).unwrap();
+    let tags = database.hash_tags(&file2, None, None).unwrap();
     drop(database);
 
     assert_eq!(

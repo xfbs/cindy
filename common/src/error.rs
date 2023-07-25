@@ -28,6 +28,15 @@ impl Error for ErrorResponse {
     }
 }
 
+impl ErrorResponse {
+    pub fn new(error: &dyn Error) -> Self {
+        Self {
+            error: error.to_string(),
+            cause: error.source().map(|error| Box::new(ErrorResponse::new(&error)))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

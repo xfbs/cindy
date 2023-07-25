@@ -233,9 +233,9 @@ fn can_manage_file_tags() {
     database.tag_add("name", "value").unwrap();
     database.tag_add("name", "other").unwrap();
     database.hash_tag_add(&hash1, "name", "value").unwrap();
-    let tags = database.hash_tags(&hash1).unwrap();
+    let tags = database.hash_tags(&hash1, None, None).unwrap();
     assert_eq!(tags, [Tag::new("name".into(), "value".into()),].into());
-    assert_eq!(database.hash_tags(&hash2).unwrap(), [].into());
+    assert_eq!(database.hash_tags(&hash2, None, None).unwrap(), [].into());
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn can_delete_file_tags_all() {
     database.hash_tag_add(&hash1, "other", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "that").unwrap();
     database.hash_tag_remove(&hash1, None, None).unwrap();
-    let tags = database.hash_tags(&hash1).unwrap();
+    let tags = database.hash_tags(&hash1, None, None).unwrap();
     assert_eq!(tags, [].into());
 }
 
@@ -273,7 +273,7 @@ fn can_delete_file_tags_name() {
         .hash_tag_remove(&hash1, Some("name"), None)
         .unwrap();
     assert_eq!(
-        database.hash_tags(&hash1).unwrap(),
+        database.hash_tags(&hash1, None, None).unwrap(),
         [
             Tag::new("other".into(), "value".into()),
             Tag::new("other".into(), "that".into()),
@@ -283,7 +283,7 @@ fn can_delete_file_tags_name() {
     database
         .hash_tag_remove(&hash1, Some("other"), None)
         .unwrap();
-    assert_eq!(database.hash_tags(&hash1).unwrap(), [].into());
+    assert_eq!(database.hash_tags(&hash1, None, None).unwrap(), [].into());
 }
 
 #[test]
@@ -303,7 +303,7 @@ fn can_delete_file_tags_individual() {
         .hash_tag_remove(&hash1, Some("other"), Some("value"))
         .unwrap();
     assert_eq!(
-        database.hash_tags(&hash1).unwrap(),
+        database.hash_tags(&hash1, None, None).unwrap(),
         [
             Tag::new("name".into(), "value".into()),
             Tag::new("other".into(), "that".into()),
@@ -314,13 +314,13 @@ fn can_delete_file_tags_individual() {
         .hash_tag_remove(&hash1, Some("name"), Some("value"))
         .unwrap();
     assert_eq!(
-        database.hash_tags(&hash1).unwrap(),
+        database.hash_tags(&hash1, None, None).unwrap(),
         [Tag::new("other".into(), "that".into()),].into()
     );
     database
         .hash_tag_remove(&hash1, Some("other"), Some("that"))
         .unwrap();
-    assert_eq!(database.hash_tags(&hash1).unwrap(), [].into());
+    assert_eq!(database.hash_tags(&hash1, None, None).unwrap(), [].into());
 }
 
 #[test]
