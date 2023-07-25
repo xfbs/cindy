@@ -5,10 +5,16 @@ mod api;
 mod error;
 mod frontend;
 
-pub use error::Error;
+use error::Error;
 
-pub fn router() -> Router<Cindy> {
+fn router() -> Router<Cindy> {
     Router::new()
         .nest("/api/v1", api::router())
         .merge(frontend::router())
+}
+
+impl Cindy {
+    pub fn router(&self) -> Router {
+        router().with_state(self.clone())
+    }
 }

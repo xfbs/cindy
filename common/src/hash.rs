@@ -1,8 +1,6 @@
-use serde::{
-    de::Error,
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
+    borrow::{Borrow, ToOwned},
     fmt::{Display, Formatter, Result as FmtResult},
     ops::Deref,
     str::FromStr,
@@ -110,6 +108,20 @@ impl<'de, T: AsRef<[u8]> + From<Vec<u8>>> Deserialize<'de> for Hash<T> {
             let data: Vec<u8> = <Vec<u8>>::deserialize(deserializer)?;
             Ok(Self(data.into()))
         }
+    }
+}
+
+impl<T: AsRef<[u8]>> Borrow<Hash> for Hash<T> {
+    fn borrow(&self) -> &Hash {
+        Hash::new(self.as_ref())
+    }
+}
+
+impl ToOwned for Hash {
+    type Owned = Hash<Box<[u8]>>;
+
+    fn to_owned(&self) -> Self::Owned {
+        Hash(Box::from(self.0.to_vec()))
     }
 }
 

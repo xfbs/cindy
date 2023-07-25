@@ -15,6 +15,8 @@ pub enum Error {
     Other(#[from] anyhow::Error),
     #[error(transparent)]
     IO(#[from] std::io::Error),
+    #[error("not found")]
+    NotFound,
 }
 
 impl Error {

@@ -32,7 +32,9 @@ impl ErrorResponse {
     pub fn new(error: &dyn Error) -> Self {
         Self {
             error: error.to_string(),
-            cause: error.source().map(|error| Box::new(ErrorResponse::new(&error)))
+            cause: error
+                .source()
+                .map(|error| Box::new(ErrorResponse::new(&error))),
         }
     }
 }
@@ -86,4 +88,3 @@ mod tests {
         assert_eq!(response.source().unwrap().source().is_none(), true);
     }
 }
-

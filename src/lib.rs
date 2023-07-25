@@ -12,6 +12,7 @@ mod server;
 mod tag;
 
 pub use crate::cindy::Cindy;
+pub use cindy_common as common;
 pub use cli::{Command, Options};
 pub use config::Config;
 #[cfg(feature = "ffmpeg")]

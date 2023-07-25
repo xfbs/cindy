@@ -28,8 +28,11 @@ toml = "0.7.6"
 tokio-util = { version = "0.7.8", features = ["io"] }
 
 [dev-dependencies]
+async-trait = "0.1.72"
+hyper = "0.14.27"
 proptest = "1.2.0"
 tempfile = "3.6.0"
+tower = "0.4.13"
 
 [features]
 default = ["ffmpeg", "server"]

@@ -318,6 +318,7 @@ name = "cindy"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum",
  "blake2",
  "bytes",
@@ -329,6 +330,7 @@ dependencies = [
  "flume",
  "futures",
  "hex",
+ "hyper",
  "include_dir",
  "mime",
  "mime_guess",
@@ -341,14 +343,18 @@ dependencies = [
  "tokio",
  "tokio-util",
  "toml",
+ "tower",
 ]
 
 [[package]]
 name = "cindy-common"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "hex",
  "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
