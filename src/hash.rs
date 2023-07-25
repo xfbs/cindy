@@ -4,10 +4,7 @@ use std::{
     io::{Read, Result as IoResult},
     sync::Arc,
 };
-
-pub type Hash = [u8];
-pub type BoxHash = Box<[u8]>;
-pub type ArcHash = Arc<[u8]>;
+pub use cindy_common::{Hash, BoxHash, ArcHash};
 
 pub trait Digester: std::fmt::Debug {
     /// Create new Hasher
@@ -38,7 +35,7 @@ impl<T: Digester + ?Sized> DataHasher for T {
     fn hash_data(&self, data: &[u8]) -> BoxHash {
         let mut hasher = self.create();
         hasher.update(data);
-        hasher.finalize()
+        hasher.finalize().into()
     }
 }
 
@@ -59,7 +56,7 @@ impl<T: Digester + ?Sized> ReadDigester for T {
         loop {
             let read = reader.read(&mut buffer[..])?;
             if read == 0 {
-                return Ok(hasher.finalize());
+                return Ok(hasher.finalize().into());
             }
             hasher.update(&buffer[0..read]);
         }

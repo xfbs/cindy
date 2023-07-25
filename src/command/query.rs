@@ -8,7 +8,7 @@ impl Cindy {
         tokio::task::spawn_blocking(move || {
             let hashes = database.hash_query(&mut command.filters.iter())?;
             for hash in &hashes {
-                println!("{}", hex::encode(hash));
+                println!("{hash}");
             }
             Ok(()) as Result<()>
         })

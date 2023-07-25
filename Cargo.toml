@@ -8,6 +8,7 @@ anyhow = "1.0.72"
 axum = { version = "0.6.19", optional = true }
 blake2 = "0.10.6"
 bytes = "1.4.0"
+cindy-common = { path = "./common" }
 chrono = "0.4.26"
 clap = { version = "4.3.12", features = ["derive", "env"] }
 digest = "0.10.7"
@@ -24,6 +25,7 @@ strum = { version = "0.25.0", features = ["derive"] }
 thiserror = "1.0.43"
 tokio = { version = "1.29.1", features = ["full"] }
 toml = "0.7.6"
+tokio-util = { version = "0.7.8", features = ["io"] }
 
 [dev-dependencies]
 proptest = "1.2.0"

@@ -1,0 +1,11 @@
+[package]
+name = "cindy-common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hex = "0.4.3"
+serde = { version = "1.0.175", features = ["derive"] }
+
+[dev-dependencies]
+serde_test = "1.0.175"

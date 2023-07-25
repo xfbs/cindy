@@ -93,7 +93,7 @@ impl Cindy {
             for (hash, (metadata, paths)) in hashes.iter() {
                 add_file(
                     &transaction,
-                    &hash[..],
+                    Hash::new(&hash[..]),
                     metadata,
                     &mut paths.iter().map(|p| p.as_path()),
                 )?;

@@ -1,24 +1,13 @@
 use crate::Cindy;
-use axum::{
-    routing::{get, post},
-    Router,
-};
+use axum::Router;
 
-async fn get_file() -> String {
-    String::default()
-}
-
-async fn query() -> String {
-    String::default()
-}
+mod file;
+mod query;
+mod tags;
 
 pub fn router() -> Router<Cindy> {
     Router::new()
-        .route("/api/v1/file/:hash", get(get_file))
-        .route("/api/v1/file/:hash/tags", get(get_file))
-        .route(
-            "/api/v1/file/:hash/tag/:name",
-            post(get_file).delete(get_file),
-        )
-        .route("/api/v1/query", get(query))
+        .nest("/file", file::router())
+        .nest("/query", query::router())
+        .nest("/tags", tags::router())
 }

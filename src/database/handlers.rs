@@ -6,21 +6,21 @@ impl<T: Handle> Database<T> {
     /// Add hash to database.
     pub fn hash_add(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("INSERT OR IGNORE INTO files(hash) VALUES (?)")?;
-        query.execute([hash])?;
+        query.execute([hash.as_ref()])?;
         Ok(())
     }
 
     /// Remove file hash from database, including all tags.
     pub fn hash_remove(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("DELETE FROM files WHERE hash = ?")?;
-        query.execute([hash])?;
+        query.execute([hash.as_ref()])?;
         Ok(())
     }
 
     /// Check if a hash exists.
     pub fn hash_exists(&self, hash: &Hash) -> Result<bool> {
         let mut query = self.prepare_cached("SELECT * FROM files WHERE hash = ?")?;
-        let mut rows = query.query([hash])?;
+        let mut rows = query.query([hash.as_ref()])?;
         Ok(rows.next()?.is_some())
     }
 
@@ -30,7 +30,7 @@ impl<T: Handle> Database<T> {
             FROM file_tags
             WHERE hash = ?",
         )?;
-        let rows = query.query([&hash])?;
+        let rows = query.query([hash.as_ref()])?;
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)
@@ -94,7 +94,7 @@ impl<T: Handle> Database<T> {
             "INSERT OR IGNORE INTO file_tags(hash, name, value)
             VALUES (?, ?, ?)",
         )?;
-        query.execute((file, &tag, &value))?;
+        query.execute((file.as_ref(), &tag, &value))?;
         Ok(())
     }
 
@@ -111,7 +111,7 @@ impl<T: Handle> Database<T> {
             AND coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
-        query.execute((file, &tag, &value))?;
+        query.execute((file.as_ref(), &tag, &value))?;
         Ok(())
     }
 
@@ -146,7 +146,7 @@ impl<T: Handle> Database<T> {
         let mut query = self.prepare(&query_string)?;
         let params: Vec<&dyn ToSql> = params.iter().map(|v| v as &dyn ToSql).collect();
         let rows = query.query(&params[..])?;
-        rows.mapped(|row| Ok(row.get::<_, Vec<u8>>("hash")?.into()))
+        rows.mapped(|row| Ok(Box::<[u8]>::from(row.get::<_, Vec<u8>>("hash")?).into()))
             .collect::<Result<BTreeSet<BoxHash>, _>>()
             .map_err(Into::into)
     }

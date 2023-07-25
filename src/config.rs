@@ -54,7 +54,7 @@ impl Default for DataConfig {
 
 impl DataConfig {
     pub fn data_path(&self, hash: &Hash) -> PathBuf {
-        let string = hex::encode(hash);
+        let string = hash.to_string();
         let mut slice = &string[..];
         let mut path = self.path.clone();
         for length in &self.prefix {
