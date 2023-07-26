@@ -3,7 +3,7 @@ use cindy_common::api::{GetRequest, Json};
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
 use std::rc::Rc;
-use yew::functional::{hook, use_context, use_effect, use_state};
+use yew::functional::hook;
 use yew_hooks::prelude::{use_async, use_effect_once, UseAsyncHandle};
 
 #[derive(thiserror::Error, Debug)]
