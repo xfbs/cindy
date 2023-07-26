@@ -17,6 +17,8 @@ pub enum Error {
     IO(#[from] std::io::Error),
     #[error("not found")]
     NotFound,
+    #[error(transparent)]
+    Query(#[from] serde_qs::Error),
 }
 
 impl Error {

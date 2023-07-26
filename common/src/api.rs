@@ -1,6 +1,6 @@
-use crate::{BoxHash, Hash, Tag, TagFilter};
+use crate::{BoxHash, Hash, Tag, TagPredicate};
 use bytes::Bytes;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Serialize, Deserialize};
 use std::borrow::Cow;
 
 pub trait OutputFormat: Sized {
@@ -26,7 +26,7 @@ pub trait GetRequest {
     type Query: Serialize;
 
     fn path(&self) -> Cow<'_, str>;
-    fn query(&self) -> Option<Self::Query> {
+    fn query(&self) -> Option<&Self::Query> {
         None
     }
 }
@@ -64,15 +64,21 @@ impl<'a> GetRequest for FileTags<'a> {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileQuery<'a> {
-    pub tags: Cow<'a, [TagFilter<'a>]>,
+    #[serde(default)]
+    pub query: Cow<'a, [TagPredicate<'a>]>,
 }
 
 impl<'a> GetRequest for FileQuery<'a> {
     type Output = Json<Vec<BoxHash>>;
-    type Query = ();
+    type Query = Self;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query".into()
+    }
+
+    fn query(&self) -> Option<&Self::Query> {
+        Some(&self)
     }
 }

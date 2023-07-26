@@ -5,7 +5,7 @@ use axum::{
     Router,
 };
 use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config};
-use cindy_common::api::*;
+use cindy_common::{api::*, tag::*};
 use hyper::Body;
 use std::{borrow::Cow, fs::*};
 use tempfile::tempdir;
@@ -19,7 +19,11 @@ trait RouterExt {
 #[async_trait(?Send)]
 impl RouterExt for Router {
     async fn get<R: GetRequest>(&self, request: R) -> Result<R::Output> {
-        let path = format!("/{}", request.path());
+        let mut path = format!("/{}", request.path());
+        if let Some(query) = request.query() {
+            path.push('?');
+            path.push_str(&serde_qs::to_string(query)?);
+        }
         println!("path {path}");
         let response = self
             .clone()
@@ -106,4 +110,77 @@ async fn test_file_content() {
         .unwrap();
 
     assert_eq!(receiver, content);
+}
+
+#[tokio::test]
+async fn test_query_empty() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    // create file
+    let content = "hello";
+    let file_path = dir.path().join("file.txt");
+    write(&file_path, content).unwrap();
+
+    // add single file
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![file_path],
+            recursive: false,
+        }))
+        .await
+        .unwrap();
+
+    // query
+    let router = cindy.router();
+    let tags = router
+        .get(FileQuery {
+            query: Default::default(),
+        })
+        .await
+        .unwrap()
+        .0;
+
+    // validate tags
+    assert_eq!(tags, vec![cindy.hasher().hash_data(&content.as_bytes())]);
+}
+
+#[tokio::test]
+async fn test_query_filename() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    // create file
+    let file1 = "hello";
+    let file2 = "world";
+    write(&dir.path().join("file1.txt"), file1).unwrap();
+    write(&dir.path().join("file2.txt"), file2).unwrap();
+
+    // add single file
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![dir.path().into()],
+            recursive: true,
+        }))
+        .await
+        .unwrap();
+
+    // query
+    let router = cindy.router();
+    let tags = router
+        .get(FileQuery {
+            query: vec![TagPredicate::Exists(TagFilter::new(
+                Some("filename"),
+                Some("file1.txt"),
+            ))]
+            .into(),
+        })
+        .await
+        .unwrap()
+        .0;
+
+    // validate tags
+    assert_eq!(tags, vec![cindy.hasher().hash_data(&file1.as_bytes())]);
 }
