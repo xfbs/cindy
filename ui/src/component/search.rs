@@ -14,7 +14,7 @@ fn Filter(props: &FilterProps) -> Html {
         ondelete.emit(());
     };
     html! {
-        <span class="ml-2 px-1 bg-red-400 rounded block flex items-center">{props.filter.to_string()}
+        <span class="ml-2 px-1 bg-red-400 rounded block flex items-center whitespace-nowrap">{props.filter.to_string()}
             <svg class="w-4 h-4 bg-red-500 ml-1 rounded hover:border hover:border-red-600" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" {onclick}>
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M6.79289 7.49998L4.14645 4.85353L4.85355 4.14642L7.5 6.79287L10.1464 4.14642L10.8536 4.85353L8.20711 7.49998L10.8536 10.1464L10.1464 10.8535L7.5 8.20708L4.85355 10.8535L4.14645 10.1464L6.79289 7.49998Z" fill="#000000"/>
             </svg>
