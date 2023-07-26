@@ -12,3 +12,6 @@ thiserror = "1.0.44"
 yew = { version = "0.20.0", features = ["csr"] }
 yew-hooks = "0.2.0"
 yew-router = "0.17.0"
+web-sys = { version = "0.3.62", features = ["HtmlInputElement", "HtmlTextAreaElement", "HtmlSelectElement"] }
+wasm-logger = "0.2.0"
+log = "0.4.19"

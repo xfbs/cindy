@@ -45,6 +45,7 @@ pub trait GetRequest {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileContent<'a> {
     pub hash: Cow<'a, Hash>,
 }
@@ -58,6 +59,7 @@ impl<'a> GetRequest for FileContent<'a> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileTags<'a> {
     pub hash: Cow<'a, Hash>,
     pub name: Option<Cow<'a, str>>,
@@ -78,7 +80,7 @@ impl<'a> GetRequest for FileTags<'a> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileQuery<'a> {
     #[serde(default)]
     pub query: Cow<'a, [TagPredicate<'a>]>,

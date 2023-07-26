@@ -29,7 +29,7 @@ fn tag_methods() {
     assert_eq!(tag.value(), "value");
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
 pub struct TagFilter<'a>(Option<Cow<'a, str>>, Option<Cow<'a, str>>);
 
 impl<'a> TagFilter<'a> {
@@ -44,9 +44,13 @@ impl<'a> TagFilter<'a> {
     pub fn value(&self) -> Option<&str> {
         self.1.as_ref().map(|v| v.borrow())
     }
+
+    pub fn exists(self) -> TagPredicate<'a> {
+        TagPredicate::Exists(self)
+    }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
 pub enum TagPredicate<'a> {
     Exists(TagFilter<'a>),
     Missing(TagFilter<'a>),
@@ -155,6 +159,18 @@ impl FromStr for TagFilter<'static> {
             parse_glob(name).map(|v| v.to_string().into()),
             parse_glob(value).map(|v| v.to_string().into()),
         ))
+    }
+}
+
+impl<'a> Display for TagFilter<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}:{}", self.0.as_ref().map(Cow::as_ref).unwrap_or("*"), self.1.as_ref().map(Cow::as_ref).unwrap_or("*"))
+    }
+}
+
+impl<'a> Display for TagPredicate<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.filter())
     }
 }
 

@@ -1,38 +1,25 @@
-use cindy_common::{
-    api::{FileContent, FileQuery, FileTags, GetRequest},
-    hash::BoxHash,
-    tag::Tag,
-};
-use std::borrow::Cow;
-use yew::prelude::*;
-use yew_router::prelude::*;
-
-mod request;
-use request::use_get;
+//! # Cindy Frontend
+//!
+//! This crate implements a Yew application that is the frontend of Cindy. This frontend is mainly
+//! used to query, tag and label that has been loaded into Cindy using the command-line interface.
 
 mod component;
-use component::*;
+mod request;
 
-#[derive(Clone, Routable, PartialEq)]
-enum Route {
-    #[at("/")]
-    Home,
-    #[at("/query")]
-    Query,
-    #[at("/file")]
-    File,
-}
-
-#[function_component]
-fn App() -> Html {
-    html! {
-        <div>
-        <NavBar />
-        <Content />
-        </div>
-    }
+/// Commonly used imports, re-exported for convenience.
+mod prelude {
+    pub use crate::{component::*, request::use_get};
+    pub use cindy_common::{api::*, hash::*, tag::*};
+    pub use std::borrow::Cow;
+    pub use web_sys::HtmlInputElement;
+    pub use yew::{
+        events::{InputEvent, TargetCast},
+        prelude::*,
+    };
+    pub use yew_router::prelude::*;
 }
 
 fn main() {
-    yew::Renderer::<App>::new().render();
+    wasm_logger::init(Default::default());
+    yew::Renderer::<component::App>::new().render();
 }
