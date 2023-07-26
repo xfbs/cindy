@@ -4,10 +4,8 @@ use axum::Router;
 mod api;
 mod error;
 mod frontend;
-mod query;
 
 use error::Error;
-use query::Query;
 
 fn router() -> Router<Cindy> {
     Router::new()

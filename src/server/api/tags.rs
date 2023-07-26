@@ -6,8 +6,5 @@ async fn tags() -> String {
 }
 
 pub fn router() -> Router<Cindy> {
-    Router::new().route(
-        "/:name/:value",
-        get(tags).post(tags).patch(tags).delete(tags),
-    )
+    Router::new().route("/:name/:value", get(tags).post(tags).delete(tags))
 }

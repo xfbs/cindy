@@ -9,7 +9,7 @@ use cindy_common::{api::*, tag::*};
 use hyper::Body;
 use std::{borrow::Cow, fs::*};
 use tempfile::tempdir;
-use tower::{Service, ServiceExt};
+use tower::ServiceExt;
 
 #[async_trait(?Send)]
 trait RouterExt {
@@ -19,11 +19,7 @@ trait RouterExt {
 #[async_trait(?Send)]
 impl RouterExt for Router {
     async fn get<R: GetRequest>(&self, request: R) -> Result<R::Output> {
-        let mut path = format!("/{}", request.path());
-        if let Some(query) = request.query() {
-            path.push('?');
-            path.push_str(&serde_qs::to_string(query)?);
-        }
+        let path = format!("/{}", request.uri());
         println!("path {path}");
         let response = self
             .clone()

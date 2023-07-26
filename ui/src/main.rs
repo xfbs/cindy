@@ -1,5 +1,14 @@
+use cindy_common::{
+    api::{FileContent, FileQuery, FileTags, GetRequest},
+    hash::BoxHash,
+    tag::Tag,
+};
+use std::borrow::Cow;
 use yew::prelude::*;
 use yew_router::prelude::*;
+
+mod request;
+use request::use_get;
 
 #[derive(Clone, Routable, PartialEq)]
 enum Route {
@@ -83,44 +92,86 @@ fn TagsList() -> Html {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct FileCardLoaderProps {
+    pub hash: BoxHash,
+}
+
 #[function_component]
-fn FileCard() -> Html {
+fn FileCardLoader(props: &FileCardLoaderProps) -> Html {
+    let tags = use_get(FileTags {
+        hash: Cow::Owned(props.hash.clone()),
+        name: None,
+        value: None,
+    });
+    html! {
+        <FileCard hash={props.hash.clone()} tags={tags.data.clone().unwrap_or_default()} />
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct FileCardProps {
+    pub hash: BoxHash,
+    pub tags: Vec<Tag>,
+}
+
+#[function_component]
+fn FileCard(props: &FileCardProps) -> Html {
+    let content = FileContent {
+        hash: Cow::Borrowed(&props.hash),
+    };
     html! {
         <div class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
             <a href="#">
-                <img class="rounded-lg" src="https://images.unsplash.com/photo-1488372759477-a7f4aa078cb6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="" />
+                <img class="rounded-lg" src={content.uri()} alt="" />
             </a>
             <div class="absolute bottom-0 left-0 p-2 min-w-full">
                 <div class="flex flex-wrap">
-                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"video"}</span>
-                    <span class="bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"image"}</span>
-                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"hd"}</span>
-                    <span class="bg-red-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"test.jpg"}</span>
-                    <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{"jpg"}</span>
+                    {
+                        props.tags.iter().map(|tag| html!{
+                            <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{tag.name()}{":"}{tag.value()}</span>
+                        }).collect::<Html>()
+                    }
                 </div>
             </div>
         </div>
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct FilesGridLoaderProps {}
+
 #[function_component]
-fn Files() -> Html {
+fn FilesGridLoader(props: &FilesGridLoaderProps) -> Html {
+    let data = use_get(FileQuery {
+        query: vec![].into(),
+    });
+
+    html! {
+        if let Some(data) = &data.data {
+            <FilesGrid files={data.clone()} />
+        }
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct FilesGridProps {
+    #[prop_or_default]
+    pub files: Vec<BoxHash>,
+}
+
+#[function_component]
+fn FilesGrid(props: &FilesGridProps) -> Html {
     html! {
         <div>
             <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 p-3">
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
-                <FileCard />
+            {
+                props.files.iter().cloned().map(|hash| {
+                    html! {
+                        <FileCardLoader {hash} />
+                    }
+                }).collect::<Html>()
+            }
             </div>
         </div>
     }
@@ -169,7 +220,7 @@ fn Content() -> Html {
                 <QuerySidebar />
             </div>
             <div class="md:mr-96">
-                <Files />
+                <FilesGridLoader />
             </div>
         </div>
     }

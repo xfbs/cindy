@@ -1,10 +1,14 @@
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::Error,
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use std::{
-    borrow::{Borrow, ToOwned},
     fmt::{Display, Formatter, Result as FmtResult},
     ops::Deref,
     str::FromStr,
     sync::Arc,
+    borrow::{Borrow, ToOwned},
+    rc::Rc,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -34,6 +38,7 @@ impl Deref for Hash {
 
 pub type BoxHash = Hash<Box<[u8]>>;
 pub type ArcHash = Hash<Arc<[u8]>>;
+pub type RcHash = Hash<Rc<[u8]>>;
 
 impl<T: AsRef<[u8]>> From<T> for Hash<T> {
     fn from(value: T) -> Self {

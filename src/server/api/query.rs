@@ -1,10 +1,6 @@
-use crate::{
-    common::api::FileQuery,
-    hash::BoxHash,
-    server::{Error, Query},
-    Cindy, Tag, TagPredicate,
-};
+use crate::{common::api::FileQuery, hash::BoxHash, server::Error, Cindy};
 use axum::{extract::State, routing::get, Json, Router};
+use serde_qs::axum::QsQuery as Query;
 use std::collections::BTreeSet;
 use tokio::task::spawn_blocking;
 

@@ -7,6 +7,7 @@ pub trait OutputFormat: Sized {
     fn decode(data: Bytes) -> Result<Self, serde_json::Error>;
 }
 
+#[derive(Clone, Debug)]
 pub struct Json<T>(pub T);
 
 impl<T: DeserializeOwned> OutputFormat for Json<T> {
@@ -26,8 +27,21 @@ pub trait GetRequest {
     type Query: Serialize;
 
     fn path(&self) -> Cow<'_, str>;
+
     fn query(&self) -> Option<&Self::Query> {
         None
+    }
+
+    fn uri(&self) -> String {
+        let mut path = self.path().into_owned();
+        if let Some(query) = self.query() {
+            let query_string = serde_qs::to_string(query).unwrap();
+            if !query_string.is_empty() {
+                path.push('?');
+                path.push_str(&query_string);
+            }
+        }
+        path
     }
 }
 

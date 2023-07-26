@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1.72"
 cindy-common = { path = "../common" }
+gloo-net = "0.3.1"
+serde = "1.0.175"
+thiserror = "1.0.44"
 yew = { version = "0.20.0", features = ["csr"] }
 yew-hooks = "0.2.0"
 yew-router = "0.17.0"
