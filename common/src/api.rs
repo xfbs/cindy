@@ -1,6 +1,6 @@
 use crate::{BoxHash, Hash, Tag, TagPredicate};
 use bytes::Bytes;
-use serde::{de::DeserializeOwned, Serialize, Deserialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 
 pub trait OutputFormat: Sized {
@@ -76,7 +76,8 @@ impl<'a> GetRequest for FileTags<'a> {
             self.hash,
             self.name.as_ref().map(Cow::as_ref).unwrap_or("*"),
             self.value.as_ref().map(Cow::as_ref).unwrap_or("*")
-        ).into()
+        )
+        .into()
     }
 }
 

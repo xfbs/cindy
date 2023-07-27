@@ -48,6 +48,10 @@ impl<'a> TagFilter<'a> {
     pub fn exists(self) -> TagPredicate<'a> {
         TagPredicate::Exists(self)
     }
+
+    pub fn missing(self) -> TagPredicate<'a> {
+        TagPredicate::Missing(self)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
@@ -164,7 +168,12 @@ impl FromStr for TagFilter<'static> {
 
 impl<'a> Display for TagFilter<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{}:{}", self.0.as_ref().map(Cow::as_ref).unwrap_or("*"), self.1.as_ref().map(Cow::as_ref).unwrap_or("*"))
+        write!(
+            f,
+            "{}:{}",
+            self.0.as_ref().map(Cow::as_ref).unwrap_or("*"),
+            self.1.as_ref().map(Cow::as_ref).unwrap_or("*")
+        )
     }
 }
 
@@ -174,9 +183,44 @@ impl<'a> Display for TagPredicate<'a> {
     }
 }
 
-#[test]
-fn tag_from_str() {
-    let tag: Tag = "name:value".parse().unwrap();
-    assert_eq!(tag.name(), "name");
-    assert_eq!(tag.value(), "value");
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tag_filter() {
+        let tag_filter = TagFilter::new(Some("object"), None);
+        assert_eq!(tag_filter.name(), Some("object"));
+        assert_eq!(tag_filter.value(), None);
+
+        assert_eq!(tag_filter.clone().exists(), TagPredicate::Exists(tag_filter.clone()));
+        assert_eq!(tag_filter.clone().missing(), TagPredicate::Missing(tag_filter.clone()));
+    }
+
+    #[test]
+    fn tag_predicate_from_filter() {
+        let filter = TagFilter::new(Some("object"), None);
+        let predicate: TagPredicate<'_> = filter.clone().into();
+        assert_eq!(predicate, TagPredicate::Exists(filter));
+    }
+
+    #[test]
+    fn tag_predicate_filter() {
+        let filter = TagFilter::new(Some("object"), None);
+
+        let predicate = TagPredicate::Missing(filter.clone());
+        assert_eq!(predicate.filter(), &filter);
+        assert_eq!(predicate.exists(), false);
+
+        let predicate = TagPredicate::Exists(filter.clone());
+        assert_eq!(predicate.filter(), &filter);
+        assert_eq!(predicate.exists(), true);
+    }
+
+    #[test]
+    fn tag_from_str() {
+        let tag: Tag = "name:value".parse().unwrap();
+        assert_eq!(tag.name(), "name");
+        assert_eq!(tag.value(), "value");
+    }
 }

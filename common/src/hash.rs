@@ -1,17 +1,14 @@
-use serde::{
-    de::Error,
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
+    borrow::{Borrow, ToOwned},
     fmt::{Display, Formatter, Result as FmtResult},
     ops::Deref,
+    rc::Rc,
     str::FromStr,
     sync::Arc,
-    borrow::{Borrow, ToOwned},
-    rc::Rc,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, Hash)]
 pub struct Hash<T: ?Sized + AsRef<[u8]> = [u8]>(T);
 
 impl Hash {
@@ -75,6 +72,12 @@ impl<T: AsRef<[u8]> + From<Vec<u8>>> FromStr for Hash<T> {
     }
 }
 
+impl<L: ?Sized + AsRef<[u8]>, R: ?Sized + AsRef<[u8]>> PartialEq<Hash<R>> for Hash<L> {
+    fn eq(&self, other: &Hash<R>) -> bool {
+        self.0.as_ref().eq(other.0.as_ref())
+    }
+}
+
 impl<T: ?Sized + AsRef<[u8]>> PartialEq<[u8]> for Hash<T> {
     fn eq(&self, other: &[u8]) -> bool {
         self.0.as_ref().eq(other)
@@ -127,6 +130,24 @@ impl ToOwned for Hash {
 
     fn to_owned(&self) -> Self::Owned {
         Hash(Box::from(self.0.to_vec()))
+    }
+}
+
+impl<T: AsRef<[u8]>> From<&T> for BoxHash {
+    fn from(value: &T) -> Self {
+        Hash(value.as_ref().to_vec().into())
+    }
+}
+
+impl From<BoxHash> for ArcHash {
+    fn from(hash: BoxHash) -> Self {
+        Self(hash.0.into())
+    }
+}
+
+impl From<BoxHash> for RcHash {
+    fn from(hash: BoxHash) -> Self {
+        Self(hash.0.into())
     }
 }
 
@@ -192,5 +213,20 @@ mod tests {
     #[test]
     fn hash_to_string() {
         assert_eq!(Hash::from([0xde, 0xad, 0xbe, 0xef]).to_string(), "deadbeef");
+    }
+
+    #[test]
+    fn box_hash_from() {
+        let box_hash = BoxHash::from(&[12, 23, 56, 67]);
+        assert_eq!(box_hash, [12, 23, 56, 67]);
+    }
+
+    #[test]
+    fn box_hash_into() {
+        let box_hash = BoxHash::from(&[12, 23, 56, 67]);
+        let arc_hash: ArcHash = box_hash.clone().into();
+        assert_eq!(box_hash, arc_hash);
+        let rc_hash: RcHash = box_hash.clone().into();
+        assert_eq!(box_hash, rc_hash);
     }
 }
