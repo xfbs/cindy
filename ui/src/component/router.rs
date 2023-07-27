@@ -4,10 +4,8 @@ use crate::prelude::*;
 pub enum Route {
     #[at("/")]
     Home,
-    #[at("/query")]
-    Query,
-    #[at("/file")]
-    File,
+    #[at("/file/:hash")]
+    File { hash: RcHash },
 }
 
 #[function_component]
@@ -34,9 +32,47 @@ pub fn HomeView() -> Html {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct FileViewProps {
+    pub hash: RcHash,
+}
+
+#[function_component]
+pub fn FileView(props: &FileViewProps) -> Html {
+    let filters = use_state(|| vec![]);
+    let onchange = {
+        let filters = filters.clone();
+        move |new: Vec<TagPredicate<'static>>| {
+            filters.set(new);
+        }
+    };
+    html! {
+        <div>
+            <NavBar {onchange} />
+            <SidebarLayout>
+                <SidebarLayoutSidebar>
+                    <FileSidebar />
+                </SidebarLayoutSidebar>
+                <SidebarLayoutContent>
+                <p></p>
+                </SidebarLayoutContent>
+            </SidebarLayout>
+        </div>
+    }
+}
+
+fn switch(route: Route) -> Html {
+    match route {
+        Route::Home => html! { <HomeView /> },
+        Route::File { hash } => html! { <FileView {hash} /> },
+    }
+}
+
 #[function_component]
 pub fn App() -> Html {
     html! {
-        <HomeView />
+        <BrowserRouter>
+            <Switch<Route> render={switch} />
+        </BrowserRouter>
     }
 }

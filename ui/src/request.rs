@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use cindy_common::api::{GetRequest, Json};
 use gloo_net::http::{Request, Response};
-use log::info;
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, rc::Rc};
 use yew::functional::{hook, use_effect, use_state};
@@ -42,7 +41,6 @@ where
     let request_clone = request.clone();
     let handle = use_async_with_options(
         async move {
-            //info!("GET {:?}", *request_clone);
             let path = format!("/{}", request_clone.uri());
             let response = Request::get(&path)
                 .send()

@@ -16,4 +16,3 @@ web-sys = { version = "0.3.62", features = ["HtmlInputElement", "HtmlTextAreaEle
 wasm-logger = "0.2.0"
 log = "0.4.19"
 wasm-bindgen = "0.2.87"
-js-sys = "0.3.64"

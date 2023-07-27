@@ -52,8 +52,6 @@ pub fn QuerySidebar() -> Html {
         <div class="bg-white w-full md:w-96 md:min-h-screen p-6">
             <h1 class="text-lg font-bold" >{"Common Tags"}</h1>
             <TagsList />
-            <TagsList />
-            <TagsList />
         </div>
     }
 }
@@ -64,6 +62,7 @@ pub fn FileSidebar() -> Html {
         <div class="bg-white md:w-96 md:min-h-screen p-6">
             <h1 class="text-lg font-bold" >{"Tags"}</h1>
             <TagsList />
+
             <h1 class="text-lg font-bold" >{"File Labels"}</h1>
             <TagsList />
         </div>

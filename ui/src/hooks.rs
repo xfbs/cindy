@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use js_sys::Function;
 use wasm_bindgen::{
     closure::{Closure, IntoWasmClosure},
     JsCast,
