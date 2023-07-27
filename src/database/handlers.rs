@@ -3,6 +3,9 @@ use crate::tag::TagPredicate;
 use cindy_common::{Label, LabelKind, Point, Rectangle, Sequence};
 use rusqlite::ToSql;
 
+// Database interactions return Sqlite errors.
+type Result<T, E = rusqlite::Error> = std::result::Result<T, E>;
+
 impl<T: Handle> Database<T> {
     /// Add hash to database.
     pub fn hash_add(&self, hash: &Hash) -> Result<()> {

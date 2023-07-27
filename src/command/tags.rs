@@ -46,7 +46,7 @@ impl Cindy {
                 let results: Vec<BTreeSet<Tag>> = command
                     .tags
                     .iter()
-                    .map(|filter| database.tag_list(filter.name(), filter.value()))
+                    .map(|filter| Ok(database.tag_list(filter.name(), filter.value())?))
                     .collect::<Result<Vec<BTreeSet<Tag>>>>()?;
                 results.into_iter().flat_map(|i| i.into_iter()).collect()
             };

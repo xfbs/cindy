@@ -26,10 +26,9 @@ async fn stream_file(
     let content_type = tags
         .into_iter()
         .map(|name| PathBuf::from(name.value()))
-        .filter(|path| path.extension().is_some())
-        .next()
+        .find(|path| path.extension().is_some())
         .and_then(|path| {
-            mime_guess::from_path(&path)
+            mime_guess::from_path(path)
                 .first_raw()
                 .map(HeaderValue::from_static)
         })
@@ -64,14 +63,9 @@ async fn file_tags(
     // get filenames
     let database = cindy.database().await;
     let hash_clone = hash.clone();
-    let tags = spawn_blocking(move || {
-        database.hash_tags(
-            &hash_clone,
-            name.as_ref().map(String::as_str),
-            value.as_ref().map(String::as_str),
-        )
-    })
-    .await??;
+    let tags =
+        spawn_blocking(move || database.hash_tags(&hash_clone, name.as_deref(), value.as_deref()))
+            .await??;
 
     Ok(Json(tags))
 }
@@ -105,11 +99,7 @@ async fn file_tag_delete(
     let database = cindy.database().await;
     let hash_clone = hash.clone();
     spawn_blocking(move || {
-        database.hash_tag_remove(
-            &hash_clone,
-            name.as_ref().map(String::as_str),
-            value.as_ref().map(String::as_str),
-        )
+        database.hash_tag_remove(&hash_clone, name.as_deref(), value.as_deref())
     })
     .await??;
 

@@ -19,11 +19,14 @@ pub enum Error {
     NotFound,
     #[error(transparent)]
     Query(#[from] serde_qs::Error),
+    #[error(transparent)]
+    Sqlite(#[from] rusqlite::Error),
 }
 
 impl Error {
     fn status(&self) -> StatusCode {
         match self {
+            Error::NotFound => StatusCode::NOT_FOUND,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

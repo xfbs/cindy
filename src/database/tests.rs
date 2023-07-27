@@ -1,6 +1,6 @@
 use super::*;
 use crate::tag::{TagFilter, TagPredicate};
-use cindy_common::{Label, Point, Rectangle, Sequence};
+use cindy_common::{Point, Rectangle, Sequence};
 
 #[test]
 fn test_migrate() {
