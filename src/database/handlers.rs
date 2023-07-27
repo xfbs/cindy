@@ -1,5 +1,6 @@
 use super::*;
 use crate::tag::TagPredicate;
+use cindy_common::{Label, LabelKind, Point, Rectangle, Sequence};
 use rusqlite::ToSql;
 
 impl<T: Handle> Database<T> {
@@ -156,6 +157,139 @@ impl<T: Handle> Database<T> {
         rows.mapped(|row| Ok(Box::<[u8]>::from(row.get::<_, Vec<u8>>("hash")?).into()))
             .collect::<Result<BTreeSet<BoxHash>, _>>()
             .map_err(Into::into)
+    }
+
+    /// Add a label to a tagged file.
+    pub fn label_add(&self, file: &Hash, name: &str, value: &str, label: &Label) -> Result<()> {
+        match label {
+            Label::Rectangle(rect) => self.label_add_rect(file, name, value, rect),
+            Label::Sequence(seq) => self.label_add_seq(file, name, value, seq),
+        }
+    }
+
+    fn label_add_rect(&self, file: &Hash, name: &str, value: &str, rect: &Rectangle) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "INSERT OR IGNORE INTO label_rectangles(file_tag_value_id, x1, y1, x2, y2)
+            VALUES (
+                (SELECT id FROM file_tags WHERE hash = ? AND name = ? AND value = ?),
+                ?, ?, ?, ?
+            )
+        ",
+        )?;
+        query.execute((
+            file.as_ref(),
+            name,
+            value,
+            rect.start.x,
+            rect.start.y,
+            rect.end.x,
+            rect.end.y,
+        ))?;
+        Ok(())
+    }
+
+    fn label_add_seq(&self, file: &Hash, name: &str, value: &str, seq: &Sequence) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "
+            INSERT OR IGNORE INTO label_sequences(file_tag_value_id, t1, t2)
+            VALUES (
+                (SELECT id FROM file_tags WHERE hash = ? AND name = ? AND value = ?),
+                ?, ?
+            )
+        ",
+        )?;
+        query.execute((file.as_ref(), name, value, seq.start, seq.end))?;
+        Ok(())
+    }
+
+    /// Add a label to a tagged file.
+    pub fn label_remove(&self, file: &Hash, name: &str, value: &str, label: &Label) -> Result<()> {
+        match label {
+            Label::Rectangle(rect) => self.label_remove_rect(file, name, value, rect),
+            Label::Sequence(seq) => self.label_remove_seq(file, name, value, seq),
+        }
+    }
+
+    fn label_remove_rect(
+        &self,
+        file: &Hash,
+        name: &str,
+        value: &str,
+        rect: &Rectangle,
+    ) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "DELETE FROM label_rectangles
+            WHERE file_tag_value_id = (SELECT id FROM file_tags WHERE hash = ? AND name = ? AND value = ?)
+            AND x1 = ?
+            AND y1 = ?
+            AND x2 = ?
+            AND y2 = ?"
+        )?;
+        query.execute((
+            file.as_ref(),
+            name,
+            value,
+            rect.start.x,
+            rect.start.y,
+            rect.end.x,
+            rect.end.y,
+        ))?;
+        Ok(())
+    }
+
+    fn label_remove_seq(&self, file: &Hash, name: &str, value: &str, seq: &Sequence) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "DELETE FROM label_sequences
+            WHERE file_tag_value_id = (SELECT id FROM file_tags WHERE hash = ? AND name = ? AND value = ?)
+            AND t1 = ?
+            AND t2 = ?"
+        )?;
+        query.execute((file.as_ref(), name, value, seq.start, seq.end))?;
+        Ok(())
+    }
+
+    // TODO: rename this to label_query and create label_get which takes a fixed hash, name and
+    // value but only returns Labels?
+    pub fn label_get(
+        &self,
+        file: Option<&Hash>,
+        name: Option<&str>,
+        value: Option<&str>,
+        kind: Option<LabelKind>,
+    ) -> Result<BTreeSet<(Tag, Label)>> {
+        let mut query = self.prepare_cached(
+            "SELECT *
+            FROM file_labels
+            WHERE coalesce(hash = ?, true)
+            AND coalesce(name = ?, true)
+            AND coalesce(value = ?, true)
+            AND coalesce(kind = ?, true)",
+        )?;
+        let rows = query.query((
+            file.map(|f| f.as_ref()),
+            name,
+            value,
+            kind.map(|k| k.name()),
+        ))?;
+        rows.mapped(|row| {
+            let tag = Tag::new(row.get("name")?, row.get("value")?);
+            let label = match row.get::<_, String>("kind")? {
+                kind if kind == LabelKind::Rectangle.name() => Rectangle {
+                    start: Point::new(row.get("x1")?, row.get("y1")?),
+                    end: Point::new(row.get("x2")?, row.get("y2")?),
+                }
+                .into(),
+                kind if kind == LabelKind::Sequence.name() => Sequence {
+                    start: row.get("t1")?,
+                    end: row.get("t2")?,
+                }
+                .into(),
+                _ => unreachable!("encountered unknown label kind"),
+            };
+            Ok((tag, label))
+        })
+        .collect::<Result<BTreeSet<(Tag, Label)>, _>>()
+        .map_err(Into::into)
     }
 
     /// Run migrations on database.

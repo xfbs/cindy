@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn impls_ord_hash() {
-        use std::collections::{HashSet, BTreeSet};
+        use std::collections::{BTreeSet, HashSet};
         let response = ErrorResponse {
             error: "Test".into(),
             cause: None,

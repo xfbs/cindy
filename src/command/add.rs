@@ -121,6 +121,15 @@ impl Cindy {
         if !path.exists() {
             let file = self.root().join(file);
             create_dir_all(path.parent().unwrap())?;
+
+            // try to reflink first, if enabled
+            #[cfg(feature = "reflink")]
+            match reflink::reflink(&file, &path) {
+                Ok(()) => return Ok(()),
+                Err(err) => println!("Error reflinking: {err}"),
+            }
+
+            // fall back to a hard link
             hard_link(file, path).or_else(|error| match error {
                 error if error.kind() == ErrorKind::AlreadyExists => Ok(()),
                 error => Err(error),

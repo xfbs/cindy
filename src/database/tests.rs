@@ -1,5 +1,6 @@
 use super::*;
 use crate::tag::{TagFilter, TagPredicate};
+use cindy_common::{Label, Point, Rectangle, Sequence};
 
 #[test]
 fn test_migrate() {
@@ -563,3 +564,108 @@ fn stress_test() {
         .hash_query(&mut [TagPredicate::Exists(TagFilter::new(None, Some("value-3")))].iter())
         .unwrap();
 }
+
+#[test]
+fn can_label_add_rect() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    database
+        .label_add(
+            &hash,
+            "name",
+            "value",
+            &Rectangle {
+                start: Point::new(0, 0),
+                end: Point::new(64, 64),
+            }
+            .into(),
+        )
+        .unwrap();
+}
+
+#[test]
+fn can_label_add_seq() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    database
+        .label_add(
+            &hash,
+            "name",
+            "value",
+            &Sequence { start: 0, end: 55 }.into(),
+        )
+        .unwrap();
+}
+
+#[test]
+fn can_label_remove_rect() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    let label = Rectangle {
+        start: Point::new(0, 0),
+        end: Point::new(64, 64),
+    }
+    .into();
+    database.label_add(&hash, "name", "value", &label).unwrap();
+    database
+        .label_remove(&hash, "name", "value", &label)
+        .unwrap();
+}
+
+#[test]
+fn can_label_remove_sequence() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    let label = Sequence { start: 11, end: 99 }.into();
+    database.label_add(&hash, "name", "value", &label).unwrap();
+    database
+        .label_remove(&hash, "name", "value", &label)
+        .unwrap();
+}
+
+#[test]
+fn can_label_query_empty() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let labels = database.label_get(None, None, None, None).unwrap();
+    assert_eq!(labels.len(), 0);
+}
+
+#[test]
+fn can_label_get_rect() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    let label = Rectangle {
+        start: Point::new(0, 0),
+        end: Point::new(64, 64),
+    }
+    .into();
+    database.label_add(&hash, "name", "value", &label).unwrap();
+    let labels = database.label_get(Some(&hash), None, None, None).unwrap();
+    assert_eq!(
+        labels,
+        [(Tag::new("name".into(), "value".into()), label)].into()
+    );
+}
+
+// TODO: test label_get with more loaded data?

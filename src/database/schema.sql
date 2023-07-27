@@ -75,9 +75,10 @@ BEGIN
 END;
 
 CREATE TABLE IF NOT EXISTS file_tag_values(
+    id INTEGER NOT NULL PRIMARY KEY,
     file_id INTEGER NOT NULL REFERENCES files(id),
     tag_value_id INTEGER NOT NULL REFERENCES tag_values(id),
-    PRIMARY KEY (file_id, tag_value_id)
+    UNIQUE (file_id, tag_value_id)
 );
 
 CREATE INDEX file_tag_values_by_file ON file_tag_values(file_id);
@@ -90,7 +91,8 @@ CREATE VIEW IF NOT EXISTS file_tags AS
         tags.name_id as name_id,
         tags.name as name,
         tags.value_id as value_id,
-        tags.value as value
+        tags.value as value,
+        file_tag_values.id as id
     FROM file_tag_values
     JOIN files ON file_tag_values.file_id = files.id
     JOIN tags ON file_tag_values.tag_value_id = tags.value_id;
@@ -113,3 +115,56 @@ BEGIN
     WHERE file_id = OLD.file_id
     AND tag_value_id = OLD.value_id;
 END;
+
+CREATE TABLE IF NOT EXISTS label_rectangles(
+    id INTEGER NOT NULL PRIMARY KEY,
+    file_tag_value_id INTEGER NOT NULL REFERENCES file_tag_values(id),
+    x1 INTEGER NOT NULL,
+    y1 INTEGER NOT NULL,
+    x2 INTEGER NOT NULL,
+    y2 INTEGER NOT NULL,
+    CHECK (x1 <= x2),
+    CHECK (y1 <= y2),
+    UNIQUE (file_tag_value_id, x1, y1, x2, y2)
+);
+
+CREATE TABLE IF NOT EXISTS label_sequences(
+    id INTEGER NOT NULL PRIMARY KEY,
+    file_tag_value_id INTEGER NOT NULL REFERENCES file_tag_values(id),
+    t1 INTEGER NOT NULL,
+    t2 INTEGER NOT NULL,
+    CHECK (t1 <= t2),
+    UNIQUE (file_tag_value_id, t1, t2)
+);
+
+CREATE VIEW IF NOT EXISTS labels AS
+    SELECT
+        id,
+        file_tag_value_id,
+        x1,
+        y1,
+        x2,
+        y2,
+        null as t1,
+        null as t2,
+        'rectangle' as kind
+    FROM label_rectangles
+    UNION
+    SELECT
+        id,
+        file_tag_value_id,
+        null as x1,
+        null as y1,
+        null as x2,
+        null as y2,
+        t1,
+        t2,
+        'sequence' as kind
+    FROM label_sequences;
+
+CREATE VIEW IF NOT EXISTS file_labels AS
+    SELECT
+        labels.*,
+        file_tags.*
+    FROM labels
+    JOIN file_tags ON labels.file_tag_value_id = file_tags.id;

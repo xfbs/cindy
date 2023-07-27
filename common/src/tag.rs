@@ -193,8 +193,14 @@ mod tests {
         assert_eq!(tag_filter.name(), Some("object"));
         assert_eq!(tag_filter.value(), None);
 
-        assert_eq!(tag_filter.clone().exists(), TagPredicate::Exists(tag_filter.clone()));
-        assert_eq!(tag_filter.clone().missing(), TagPredicate::Missing(tag_filter.clone()));
+        assert_eq!(
+            tag_filter.clone().exists(),
+            TagPredicate::Exists(tag_filter.clone())
+        );
+        assert_eq!(
+            tag_filter.clone().missing(),
+            TagPredicate::Missing(tag_filter.clone())
+        );
     }
 
     #[test]
