@@ -36,28 +36,19 @@ pub fn Search(props: &SearchProps) -> Html {
     // current search bar input
     let input = use_state_eq(|| String::new());
 
-    // run onchange callback, send callback with current filters
-    let onchange = {
-        let filters = filters.clone();
-        let onchange = props.onchange.clone();
-        move || {
-            onchange.emit((*filters).clone());
-        }
-    };
-
     // run onsubmit callback, this will try to parse the filter from the search
     // bar and add it to the list of filters
     let onsubmit = {
         let filters = filters.clone();
-        let onchange = onchange.clone();
+        let onchange = props.onchange.clone();
         let input = input.clone();
         move |_| {
             if let Ok(filter) = input.parse() {
                 let mut current = (*filters).clone();
                 current.push(filter);
-                filters.set(current);
+                filters.set(current.clone());
                 input.set(String::new());
-                (onchange)();
+                onchange.emit(current);
             }
         }
     };
@@ -72,7 +63,7 @@ pub fn Search(props: &SearchProps) -> Html {
     };
 
     html! {
-        <form {onsubmit} >
+        <form {onsubmit} action="#abc">
             <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">{"Search"}</label>
             <div class="flex items-center border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <div class="pl-3 pointer-events-none">
@@ -87,10 +78,12 @@ pub fn Search(props: &SearchProps) -> Html {
                         .map(|(index, predicate)| {
                             // callback to delete this predicate
                             let filters = filters.clone();
+                            let onchange = props.onchange.clone();
                             let ondelete = move |()| {
                                 let mut current = (*filters).clone();
                                 current.remove(index);
-                                filters.set(current);
+                                filters.set(current.clone());
+                                onchange.emit(current);
                             };
 
                             html!{<Filter filter={predicate.clone()} {ondelete} />}

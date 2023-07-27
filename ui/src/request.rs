@@ -42,7 +42,7 @@ where
     let request_clone = request.clone();
     let handle = use_async_with_options(
         async move {
-            info!("GET {:?}", *request_clone);
+            //info!("GET {:?}", *request_clone);
             let path = format!("/{}", request_clone.uri());
             let response = Request::get(&path)
                 .send()

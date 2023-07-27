@@ -4,11 +4,12 @@
 //! used to query, tag and label that has been loaded into Cindy using the command-line interface.
 
 mod component;
+mod hooks;
 mod request;
 
 /// Commonly used imports, re-exported for convenience.
 mod prelude {
-    pub use crate::{component::*, request::use_get};
+    pub use crate::{component::*, hooks::*, request::use_get};
     pub use cindy_common::{api::*, hash::*, tag::*};
     pub use std::borrow::Cow;
     pub use web_sys::HtmlInputElement;
@@ -16,6 +17,7 @@ mod prelude {
         events::{InputEvent, TargetCast},
         prelude::*,
     };
+    pub use yew_hooks::prelude::*;
     pub use yew_router::prelude::*;
 }
 

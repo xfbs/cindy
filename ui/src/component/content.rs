@@ -28,20 +28,24 @@ pub fn FileCard(props: &FileCardProps) -> Html {
     let content = FileContent {
         hash: Cow::Borrowed(&props.hash),
     };
+    let node = use_node_ref();
+    let visible = use_visible(node.clone());
     html! {
-        <div class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
-            <a href="#">
-                <img class="rounded-lg" src={content.uri()} alt="" />
-            </a>
-            <div class="absolute bottom-0 left-0 p-2 min-w-full">
-                <div class="flex flex-wrap">
-                    {
-                        props.tags.iter().map(|tag| html!{
-                            <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{tag.name()}{":"}{tag.value()}</span>
-                        }).collect::<Html>()
-                    }
+        <div ref={node} class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative min-h-[16rem]">
+            if visible {
+                <a href="#">
+                    <img class="rounded-lg" src={content.uri()} alt="" />
+                </a>
+                <div class="absolute bottom-0 left-0 p-2 min-w-full">
+                    <div class="flex flex-wrap">
+                        {
+                            props.tags.iter().map(|tag| html!{
+                                <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">{tag.name()}{":"}{tag.value()}</span>
+                            }).collect::<Html>()
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     }
 }

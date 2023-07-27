@@ -9,7 +9,6 @@ async fn query(
     Query(query): Query<FileQuery<'static>>,
 ) -> Result<Json<BTreeSet<BoxHash>>, Error> {
     let database = cindy.database().await;
-    println!("got query {query:?}");
     spawn_blocking(move || database.hash_query(&mut query.query.iter()))
         .await?
         .map(Json)
