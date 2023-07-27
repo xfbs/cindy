@@ -8,6 +8,16 @@ pub enum Route {
     File { hash: RcHash },
 }
 
+impl Route {
+    pub fn home() -> Self {
+        Self::Home
+    }
+
+    pub fn file(hash: RcHash) -> Self {
+        Self::File { hash }
+    }
+}
+
 #[function_component]
 pub fn HomeView() -> Html {
     let filters = use_state(|| vec![]);
@@ -51,10 +61,10 @@ pub fn FileView(props: &FileViewProps) -> Html {
             <NavBar {onchange} />
             <SidebarLayout>
                 <SidebarLayoutSidebar>
-                    <FileSidebar />
+                    <FileSidebar file={props.hash.clone()} />
                 </SidebarLayoutSidebar>
                 <SidebarLayoutContent>
-                <p></p>
+                    <FileInspect file={props.hash.clone()} />
                 </SidebarLayoutContent>
             </SidebarLayout>
         </div>

@@ -4,8 +4,11 @@ pub use navigation::*;
 mod sidebar;
 pub use sidebar::*;
 
-mod content;
-pub use content::*;
+mod search_results;
+pub use search_results::*;
+
+mod inspect;
+pub use inspect::*;
 
 mod router;
 pub use router::*;

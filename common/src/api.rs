@@ -3,6 +3,16 @@ use bytes::Bytes;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct QueryState {
+    #[serde(default)]
+    pub query: Vec<TagPredicate<'static>>,
+    #[serde(default)]
+    pub sort: Option<String>,
+    #[serde(default)]
+    pub group: Option<String>,
+}
+
 pub trait OutputFormat: Sized {
     fn decode(data: Bytes) -> Result<Self, serde_json::Error>;
 }

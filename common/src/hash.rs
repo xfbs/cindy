@@ -8,6 +8,7 @@ use std::{
     sync::Arc,
 };
 
+/// Represents a hash value with generic storage.
 #[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, Hash)]
 pub struct Hash<T: ?Sized + AsRef<[u8]> = [u8]>(T);
 
@@ -36,6 +37,13 @@ impl Deref for Hash {
 pub type BoxHash = Hash<Box<[u8]>>;
 pub type ArcHash = Hash<Arc<[u8]>>;
 pub type RcHash = Hash<Rc<[u8]>>;
+pub type RefHash<'a> = Hash<&'a [u8]>;
+
+impl<T: AsRef<[u8]> + ?Sized> AsRef<Hash> for Hash<T> {
+    fn as_ref(&self) -> &Hash {
+        Hash::<[u8]>::new::<T>(&self.0)
+    }
+}
 
 impl<T: AsRef<[u8]>> From<T> for Hash<T> {
     fn from(value: T) -> Self {
@@ -121,7 +129,7 @@ impl<'de, T: AsRef<[u8]> + From<Vec<u8>>> Deserialize<'de> for Hash<T> {
 
 impl<T: AsRef<[u8]>> Borrow<Hash> for Hash<T> {
     fn borrow(&self) -> &Hash {
-        Hash::new(self.as_ref())
+        Hash::new(self.0.as_ref())
     }
 }
 
@@ -228,5 +236,22 @@ mod tests {
         assert_eq!(box_hash, arc_hash);
         let rc_hash: RcHash = box_hash.clone().into();
         assert_eq!(box_hash, rc_hash);
+    }
+
+    #[test]
+    fn hash_as_ref() {
+        let hash_data = [1, 2, 3, 4];
+
+        let box_hash = BoxHash::from(&hash_data);
+        let hash: &Hash = box_hash.as_ref();
+        assert_eq!(*hash, hash_data);
+
+        let rc_hash = RcHash::from(box_hash.clone());
+        let hash: &Hash = rc_hash.as_ref();
+        assert_eq!(*hash, hash_data);
+
+        let arc_hash = ArcHash::from(box_hash.clone());
+        let hash: &Hash = arc_hash.as_ref();
+        assert_eq!(*hash, hash_data);
     }
 }
