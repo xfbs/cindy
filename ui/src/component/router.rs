@@ -64,7 +64,7 @@ pub fn FileView(props: &FileViewProps) -> Html {
                     <FileSidebar file={props.hash.clone()} />
                 </SidebarLayoutSidebar>
                 <SidebarLayoutContent>
-                    <FileInspect file={props.hash.clone()} />
+                    <FileInspect file={props.hash.clone()} overlays=true />
                 </SidebarLayoutContent>
             </SidebarLayout>
         </div>
