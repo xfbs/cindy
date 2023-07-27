@@ -111,7 +111,7 @@ impl<'de, T: AsRef<[u8]> + From<Vec<u8>>> Deserialize<'de> for Hash<T> {
     {
         if deserializer.is_human_readable() {
             let data: &'de str = <&'de str>::deserialize(deserializer)?;
-            Ok(Self::from_str(&data).map_err(Error::custom)?)
+            Ok(Self::from_str(data).map_err(Error::custom)?)
         } else {
             let data: Vec<u8> = <Vec<u8>>::deserialize(deserializer)?;
             Ok(Self(data.into()))

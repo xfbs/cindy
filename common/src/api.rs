@@ -96,6 +96,6 @@ impl<'a> GetRequest for FileQuery<'a> {
     }
 
     fn query(&self) -> Option<&Self::Query> {
-        Some(&self)
+        Some(self)
     }
 }
