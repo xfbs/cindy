@@ -20,20 +20,23 @@ use tokio::{
     task::{spawn_blocking, JoinHandle},
 };
 
-fn path_tags(path: &Path) -> Vec<Tag> {
+fn path_tags(path: &Path) -> impl Iterator<Item = Tag> + '_ {
     let path_tag = Tag::new("path".into(), format!("/{}", path.display()));
     let filename_tag = Tag::new(
         "filename".into(),
         path.file_name().unwrap().to_string_lossy().into_owned(),
     );
+    let directory_tag = Tag::new(
+        "directory".into(),
+        format!("/{}", path.parent().unwrap().display()),
+    );
     let pathprefix_tags = path
         .ancestors()
         .skip(1)
-        .map(|ancestor| Tag::new("pathprefix".into(), format!("/{}", ancestor.display())));
-    [path_tag, filename_tag]
+        .map(|ancestor| Tag::new("ancestor".into(), format!("/{}", ancestor.display())));
+    [path_tag, directory_tag, filename_tag]
         .into_iter()
         .chain(pathprefix_tags)
-        .collect()
 }
 
 fn add_file<H: Handle>(
@@ -435,18 +438,23 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn test_path_tags() {
-        let tags = path_tags(Path::new("images/vacation/boat.jpg"));
-        assert_eq!(
-            tags,
-            [
-                Tag::new("path".into(), "/images/vacation/boat.jpg".into()),
-                Tag::new("filename".into(), "boat.jpg".into()),
-                Tag::new("pathprefix".into(), "/images/vacation".into()),
-                Tag::new("pathprefix".into(), "/images".into()),
-                Tag::new("pathprefix".into(), "/".into()),
-            ]
-        );
+    fn test_path_tags_subfolder() {
+        let tags: BTreeSet<_> = path_tags(Path::new("images/vacation/boat.jpg")).collect();
+        assert!(tags.contains(&Tag::new("path".into(), "/images/vacation/boat.jpg".into())));
+        assert!(tags.contains(&Tag::new("directory".into(), "/images/vacation".into())));
+        assert!(tags.contains(&Tag::new("filename".into(), "boat.jpg".into())));
+        assert!(tags.contains(&Tag::new("ancestor".into(), "/images/vacation".into())));
+        assert!(tags.contains(&Tag::new("ancestor".into(), "/images".into())));
+        assert!(tags.contains(&Tag::new("ancestor".into(), "/".into())));
+    }
+
+    #[test]
+    fn test_path_tags_root() {
+        let tags: BTreeSet<_> = path_tags(Path::new("boat.jpg")).collect();
+        assert!(tags.contains(&Tag::new("path".into(), "/boat.jpg".into())));
+        assert!(tags.contains(&Tag::new("directory".into(), "/".into())));
+        assert!(tags.contains(&Tag::new("filename".into(), "boat.jpg".into())));
+        assert!(tags.contains(&Tag::new("ancestor".into(), "/".into())));
     }
 
     #[test]

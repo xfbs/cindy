@@ -110,17 +110,11 @@ async fn test_add_file() {
     let database = cindy.database().await;
     let tags = database.hash_tags(&hash, None, None).unwrap();
     drop(database);
-    assert_eq!(
-        tags,
-        [
-            Tag::new("filename".into(), "file.txt".into()),
-            Tag::new("filesize".into(), content.len().to_string()),
-            Tag::new("path".into(), "/folder/file.txt".into()),
-            Tag::new("pathprefix".into(), "/folder".into()),
-            Tag::new("pathprefix".into(), "/".into()),
-        ]
-        .into()
-    );
+    assert!(tags.contains(&Tag::new("filename".into(), "file.txt".into())));
+    assert!(tags.contains(&Tag::new("filesize".into(), content.len().to_string())));
+    assert!(tags.contains(&Tag::new("path".into(), "/folder/file.txt".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/folder".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/".into())));
 }
 
 #[tokio::test]
@@ -162,37 +156,25 @@ async fn test_add_files_recursively() {
     let tags = database.hash_tags(&file1, None, None).unwrap();
     drop(database);
 
-    assert_eq!(
-        tags,
-        [
-            Tag::new("filename".into(), "file1.txt".into()),
-            Tag::new("filesize".into(), "5".into()),
-            Tag::new("path".into(), "/folder/file1.txt".into()),
-            Tag::new("pathprefix".into(), "/folder".into()),
-            Tag::new("pathprefix".into(), "/".into()),
-        ]
-        .into()
-    );
+    assert!(tags.contains(&Tag::new("filename".into(), "file1.txt".into())));
+    assert!(tags.contains(&Tag::new("filesize".into(), "5".into())));
+    assert!(tags.contains(&Tag::new("path".into(), "/folder/file1.txt".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/folder".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/".into())));
 
     let database = cindy.database().await;
     let tags = database.hash_tags(&file2, None, None).unwrap();
     drop(database);
 
-    assert_eq!(
-        tags,
-        [
-            Tag::new("filename".into(), "file2.txt".into()),
-            Tag::new("filesize".into(), "5".into()),
-            Tag::new("path".into(), "/folder/file2.txt".into()),
-            Tag::new("pathprefix".into(), "/folder".into()),
-            Tag::new("pathprefix".into(), "/".into()),
-        ]
-        .into()
-    );
+    assert!(tags.contains(&Tag::new("filename".into(), "file2.txt".into())));
+    assert!(tags.contains(&Tag::new("filesize".into(), "5".into())));
+    assert!(tags.contains(&Tag::new("path".into(), "/folder/file2.txt".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/folder".into())));
+    assert!(tags.contains(&Tag::new("ancestor".into(), "/".into())));
 
     let database = cindy.database().await;
     let hashes = database
-        .hash_query(&mut [TagFilter::new(Some("pathprefix"), Some("/folder")).into()].iter())
+        .hash_query(&mut [TagFilter::new(Some("ancestor"), Some("/folder")).into()].iter())
         .unwrap();
     drop(database);
 
