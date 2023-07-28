@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use uuid::Uuid;
 
 #[derive(Properties, PartialEq)]
 pub struct TagsListHeaderProps {
@@ -69,13 +70,13 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct FileTagsListRowProps {
+pub struct FileTagsRowProps {
     pub file: RcHash,
     pub tag: Tag,
 }
 
 #[function_component]
-pub fn FileTagsListRow(props: &FileTagsListRowProps) -> Html {
+pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
@@ -92,6 +93,60 @@ pub fn FileTagsListRow(props: &FileTagsListRowProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
+pub struct FileTagsCreateRowProps {
+    pub file: RcHash,
+    pub id: Uuid,
+    #[prop_or_default]
+    pub ondelete: Callback<()>,
+}
+
+#[function_component]
+pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
+    html! {
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+            <th scope="row" class="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
+                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="media">{"media"}</option>
+                    <option value="format">{"format"}</option>
+                    <option value="resolution">{"resolution"}</option>
+                    <option value="depth">{"depth"}</option>
+                </select>
+            </th>
+            <td class="px-6 py-4">
+                <input onsubmit={move |_| {}} />
+            </td>
+            <td class="px-6 py-4 pr-1">
+                <RowDeleteButton onclick={props.ondelete.clone()} />
+            </td>
+        </tr>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct FileTagCreateButtonProps {
+    #[prop_or_default]
+    pub onclick: Callback<()>,
+}
+
+#[function_component]
+pub fn FileTagCreateButton(props: &FileTagCreateButtonProps) -> Html {
+    let onclick = props.onclick.clone();
+    let onclick = move |_| onclick.emit(());
+    html! {
+        <tr class="bg-white dark:bg-gray-800 dark:border-gray-700">
+            <td colspan="3">
+                <button class="bg-blue-200 p-3 w-full flex items-center justify-center" {onclick}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    {"Create tag"}
+                </button>
+            </td>
+        </tr>
+    }
+}
+
+#[derive(Properties, PartialEq)]
 pub struct FileTagsListProps {
     pub file: RcHash,
     #[prop_or_default]
@@ -100,6 +155,7 @@ pub struct FileTagsListProps {
 
 #[function_component]
 pub fn FileTagsList(props: &FileTagsListProps) -> Html {
+    let inputs = use_list(Vec::<Uuid>::new());
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -107,9 +163,18 @@ pub fn FileTagsList(props: &FileTagsListProps) -> Html {
                 <tbody>
                 {
                     props.tags.iter().cloned().map(|tag| html! {
-                        <FileTagsListRow {tag} file={props.file.clone()} />
+                        <FileTagsRow {tag} file={props.file.clone()} />
                     }).collect::<Html>()
                 }
+                {
+                    inputs.current().iter().copied().map(|id| {
+                        let inputs = inputs.clone();
+                        let ondelete = move |_| inputs.retain(|i| i != &id);
+                        html! {
+                        <FileTagsCreateRow {id} file={props.file.clone()} {ondelete}/>
+                    }}).collect::<Html>()
+                }
+                <FileTagCreateButton onclick={move |_| inputs.push(Uuid::new_v4())} />
                 </tbody>
             </table>
         </div>

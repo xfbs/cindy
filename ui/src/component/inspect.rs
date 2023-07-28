@@ -13,12 +13,14 @@ pub fn FileInspect(props: &FileInspectProps) -> Html {
         hash: Cow::Borrowed(&props.file),
     };
     let size = (500, 500);
-    let labels: Vec<(Tag, Label)> = vec![
-        (Tag::new("name".into(), "value".into()), Rectangle {
+    let labels: Vec<(Tag, Label)> = vec![(
+        Tag::new("name".into(), "value".into()),
+        Rectangle {
             start: Point::new(55, 90),
             end: Point::new(150, 150),
-        }.into()),
-    ];
+        }
+        .into(),
+    )];
     html! {
         <div class="p-3 relative">
             <img class="shadow rounded-lg w-screen" src={format!("/{}", content.uri())} alt="" />

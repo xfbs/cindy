@@ -10,7 +10,7 @@ mod request;
 /// Commonly used imports, re-exported for convenience.
 mod prelude {
     pub use crate::{component::*, hooks::*, request::use_get};
-    pub use cindy_common::{api::*, hash::*, tag::*, label::*};
+    pub use cindy_common::{api::*, hash::*, label::*, tag::*};
     pub use std::borrow::Cow;
     pub use web_sys::HtmlInputElement;
     pub use yew::{
