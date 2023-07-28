@@ -183,6 +183,12 @@ impl<'a> Display for TagPredicate<'a> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct TagNameInfo {
+    /// Count of possible values
+    pub values: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

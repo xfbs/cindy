@@ -1,7 +1,8 @@
 use super::*;
 use crate::tag::TagPredicate;
-use cindy_common::{Label, LabelKind, Point, Rectangle, Sequence};
+use cindy_common::{tag::TagNameInfo, Label, LabelKind, Point, Rectangle, Sequence};
 use rusqlite::ToSql;
+use std::collections::BTreeMap;
 
 // Database interactions return Sqlite errors.
 type Result<T, E = rusqlite::Error> = std::result::Result<T, E>;
@@ -10,21 +11,21 @@ impl<T: Handle> Database<T> {
     /// Add hash to database.
     pub fn hash_add(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("INSERT OR IGNORE INTO files(hash) VALUES (?)")?;
-        query.execute([hash.as_ref()])?;
+        query.execute([hash.as_slice()])?;
         Ok(())
     }
 
     /// Remove file hash from database, including all tags.
     pub fn hash_remove(&self, hash: &Hash) -> Result<()> {
         let mut query = self.prepare_cached("DELETE FROM files WHERE hash = ?")?;
-        query.execute([hash.as_ref()])?;
+        query.execute([hash.as_slice()])?;
         Ok(())
     }
 
     /// Check if a hash exists.
     pub fn hash_exists(&self, hash: &Hash) -> Result<bool> {
         let mut query = self.prepare_cached("SELECT * FROM files WHERE hash = ?")?;
-        let mut rows = query.query([hash.as_ref()])?;
+        let mut rows = query.query([hash.as_slice()])?;
         Ok(rows.next()?.is_some())
     }
 
@@ -41,7 +42,7 @@ impl<T: Handle> Database<T> {
             AND coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
-        let rows = query.query((hash.as_ref(), name, value))?;
+        let rows = query.query((hash.as_slice(), name, value))?;
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)
@@ -67,6 +68,26 @@ impl<T: Handle> Database<T> {
         rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
             .collect::<Result<BTreeSet<Tag>, _>>()
             .map_err(Into::into)
+    }
+
+    pub fn tag_names(&self) -> Result<BTreeMap<String, TagNameInfo>> {
+        let mut query = self.prepare_cached(
+            "SELECT
+                name,
+                count(*) AS value
+            FROM tags
+            GROUP BY name",
+        )?;
+        let rows = query.query([])?;
+        rows.mapped(|row| {
+            Ok((
+                row.get("name")?,
+                TagNameInfo {
+                    values: row.get("value")?,
+                },
+            ))
+        })
+        .collect()
     }
 
     /// Rename tag name.
@@ -105,7 +126,7 @@ impl<T: Handle> Database<T> {
             "INSERT OR IGNORE INTO file_tags(hash, name, value)
             VALUES (?, ?, ?)",
         )?;
-        query.execute((file.as_ref(), &tag, &value))?;
+        query.execute((file.as_slice(), &tag, &value))?;
         Ok(())
     }
 
@@ -122,7 +143,7 @@ impl<T: Handle> Database<T> {
             AND coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
-        query.execute((file.as_ref(), &tag, &value))?;
+        query.execute((file.as_slice(), &tag, &value))?;
         Ok(())
     }
 
@@ -180,7 +201,7 @@ impl<T: Handle> Database<T> {
         ",
         )?;
         query.execute((
-            file.as_ref(),
+            file.as_slice(),
             name,
             value,
             rect.start.x,
@@ -201,7 +222,7 @@ impl<T: Handle> Database<T> {
             )
         ",
         )?;
-        query.execute((file.as_ref(), name, value, seq.start, seq.end))?;
+        query.execute((file.as_slice(), name, value, seq.start, seq.end))?;
         Ok(())
     }
 
@@ -229,7 +250,7 @@ impl<T: Handle> Database<T> {
             AND y2 = ?"
         )?;
         query.execute((
-            file.as_ref(),
+            file.as_slice(),
             name,
             value,
             rect.start.x,
@@ -247,7 +268,7 @@ impl<T: Handle> Database<T> {
             AND t1 = ?
             AND t2 = ?"
         )?;
-        query.execute((file.as_ref(), name, value, seq.start, seq.end))?;
+        query.execute((file.as_slice(), name, value, seq.start, seq.end))?;
         Ok(())
     }
 
@@ -269,7 +290,7 @@ impl<T: Handle> Database<T> {
             AND coalesce(kind = ?, true)",
         )?;
         let rows = query.query((
-            file.map(|f| f.as_ref()),
+            file.map(|f| f.as_slice()),
             name,
             value,
             kind.map(|k| k.name()),

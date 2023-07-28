@@ -669,3 +669,39 @@ fn can_label_get_rect() {
 }
 
 // TODO: test label_get with more loaded data?
+
+#[test]
+fn can_get_tag_names_empty() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    let names = database.tag_names().unwrap();
+    assert_eq!(names.len(), 0);
+}
+
+#[test]
+fn can_get_tag_names_single() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    database.tag_add("name", "value").unwrap();
+
+    let names = database.tag_names().unwrap();
+    assert_eq!(names.len(), 1);
+    assert_eq!(names["name"].values, 1);
+}
+
+#[test]
+fn can_get_tag_names_multiple() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    database.tag_add("name", "value").unwrap();
+    database.tag_add("name", "other").unwrap();
+    database.tag_add("kind", "car").unwrap();
+
+    let names = database.tag_names().unwrap();
+    assert_eq!(names.len(), 2);
+    assert_eq!(names["name"].values, 2);
+    assert_eq!(names["kind"].values, 1);
+}

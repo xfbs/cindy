@@ -18,6 +18,12 @@ impl Hash {
     }
 }
 
+impl<T: ?Sized + AsRef<[u8]>> Hash<T> {
+    pub fn as_slice(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
 impl<T: Sized + AsRef<[u8]>> Deref for Hash<T> {
     type Target = Hash;
 
