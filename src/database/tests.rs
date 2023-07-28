@@ -668,6 +668,23 @@ fn can_label_get_rect() {
     );
 }
 
+#[test]
+fn can_label_get_seq() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    let hash = Hash::new(&[0x01]);
+    database.hash_add(&hash).unwrap();
+    database.tag_add("name", "value").unwrap();
+    database.hash_tag_add(&hash, "name", "value").unwrap();
+    let label = Sequence { start: 0, end: 15 }.into();
+    database.label_add(&hash, "name", "value", &label).unwrap();
+    let labels = database.label_get(Some(&hash), None, None, None).unwrap();
+    assert_eq!(
+        labels,
+        [(Tag::new("name".into(), "value".into()), label)].into()
+    );
+}
+
 // TODO: test label_get with more loaded data?
 
 #[test]

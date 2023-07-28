@@ -226,9 +226,9 @@ pub struct FileSidebarProps {
 #[function_component]
 pub fn FileSidebar(props: &FileSidebarProps) -> Html {
     let tags = use_get(FileTags {
-        hash: Cow::Owned((&props.file).into()),
-        name: None,
-        value: None,
+        hash: props.file.clone(),
+        name: None::<String>,
+        value: None::<String>,
     });
     html! {
         <div class="bg-white md:w-96 md:min-h-screen p-6">

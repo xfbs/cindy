@@ -1,4 +1,4 @@
-use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config, Tag, TagFilter};
+use cindy::{cli::*, hash::DataHasher, Cindy, Command, Config, Tag, TagFilter};
 use std::{fs::*, path::Path};
 use tempfile::tempdir;
 
@@ -76,6 +76,17 @@ async fn test_load() {
     let cindy = Cindy::load(&dir.path()).await.unwrap();
     assert_eq!(cindy.config().as_ref(), &config);
     assert_eq!(cindy.root(), dir.path());
+}
+
+#[tokio::test]
+async fn test_command_init() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+    cindy
+        .command(&Command::Init(InitCommand { path: ".".into() }))
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
@@ -216,4 +227,79 @@ async fn test_media_info_tags() {
         .unwrap();
     drop(database);
     assert_eq!(hashes.len(), 2);
+}
+
+#[tokio::test]
+async fn test_query() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    // create file
+    let content = "hello";
+    create_dir(dir.path().join("folder")).unwrap();
+    let file_path = dir.path().join("folder").join("file.txt");
+    write(&file_path, content).unwrap();
+
+    // add single file
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![file_path],
+            recursive: false,
+        }))
+        .await
+        .unwrap();
+
+    // determine hash of file
+    let hash = cindy.hasher().hash_data(content.as_bytes());
+
+    // make sure the path is in the data index
+    let path = cindy.hash_path(&hash);
+    assert_eq!(path.exists(), true);
+
+    // TODO: actually test output?
+    cindy
+        .command(&Command::Query(QueryCommand {
+            filters: vec![],
+            paths: false,
+            tags: false,
+        }))
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn test_tags_list() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    cindy
+        .command(&Command::Tags(TagsCommand::List(TagsListCommand {
+            tags: vec![],
+        })))
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn test_tags_create() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+    let tag1 = Tag::new("name".into(), "value".into());
+    let tag2 = Tag::new("name".into(), "other".into());
+
+    cindy
+        .command(&Command::Tags(TagsCommand::Create(TagsCreateCommand {
+            tags: vec![tag1.clone(), tag2.clone()],
+        })))
+        .await
+        .unwrap();
+
+    let database = cindy.database().await;
+    let tags = database.tag_list(None, None).unwrap();
+    drop(database);
+    assert!(tags.contains(&tag1));
+    assert!(tags.contains(&tag2));
 }

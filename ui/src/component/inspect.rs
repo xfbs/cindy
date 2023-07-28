@@ -10,7 +10,7 @@ pub struct FileInspectProps {
 #[function_component]
 pub fn FileInspect(props: &FileInspectProps) -> Html {
     let content = FileContent {
-        hash: Cow::Borrowed(&props.file),
+        hash: props.file.clone(),
     };
     let size = (500, 500);
     let labels: Vec<(Tag, Label)> = vec![(

@@ -18,8 +18,6 @@ pub enum Error {
     #[error("not found")]
     NotFound,
     #[error(transparent)]
-    Query(#[from] serde_qs::Error),
-    #[error(transparent)]
     Sqlite(#[from] rusqlite::Error),
 }
 

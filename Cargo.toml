@@ -43,3 +43,7 @@ default = ["ffmpeg", "server", "reflink"]
 ffmpeg = ["dep:ffmpeg-next"]
 server = ["dep:axum", "dep:include_dir"]
 reflink = ["dep:reflink"]
+
+[workspace]
+members = [".", "common"]
+exclude = ["ui"]

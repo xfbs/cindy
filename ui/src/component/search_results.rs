@@ -36,9 +36,9 @@ pub struct FileCardLoaderProps {
 #[function_component]
 pub fn FileCardLoader(props: &FileCardLoaderProps) -> Html {
     let tags = use_get(FileTags {
-        hash: Cow::Owned(props.hash.clone()),
-        name: None,
-        value: None,
+        hash: props.hash.clone(),
+        name: None::<String>,
+        value: None::<String>,
     });
     html! {
         <FileCard hash={props.hash.clone()} tags={tags.data.clone().unwrap_or_default()} />
@@ -68,7 +68,7 @@ pub struct FileCardProps {
 #[function_component]
 pub fn FileCard(props: &FileCardProps) -> Html {
     let content = FileContent {
-        hash: Cow::Borrowed(&props.hash),
+        hash: props.hash.clone(),
     };
     html! {
         <>

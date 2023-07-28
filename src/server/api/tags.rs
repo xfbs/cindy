@@ -15,6 +15,13 @@ async fn tag_names(
     spawn_blocking(move || database.tag_names().map(Json).map_err(Into::into)).await?
 }
 
+fn option_from_str(tag: &str) -> Option<&str> {
+    match tag {
+        "*" => None,
+        other => Some(other),
+    }
+}
+
 async fn tag_list(
     State(cindy): State<Cindy>,
     Path((name, value)): Path<(String, String)>,
@@ -22,7 +29,7 @@ async fn tag_list(
     let database = cindy.database().await;
     spawn_blocking(move || {
         database
-            .tag_list(Some(&name), Some(&value))
+            .tag_list(option_from_str(&name), option_from_str(&value))
             .map(Json)
             .map_err(Into::into)
     })
@@ -44,7 +51,7 @@ async fn tag_delete(
     let database = cindy.database().await;
     spawn_blocking(move || {
         database
-            .tag_delete(Some(&name), Some(&value))
+            .tag_delete(option_from_str(&name), option_from_str(&value))
             .map_err(Into::into)
     })
     .await?
