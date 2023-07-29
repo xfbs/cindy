@@ -42,7 +42,7 @@ pub fn Search(props: &SearchProps) -> Html {
         let filters = filters.clone();
         let onchange = props.onchange.clone();
         let input = input.clone();
-        move |_| {
+        move |event: SubmitEvent| {
             if let Ok(filter) = input.parse() {
                 let mut current = (*filters).clone();
                 current.push(filter);
@@ -50,6 +50,7 @@ pub fn Search(props: &SearchProps) -> Html {
                 input.set(String::new());
                 onchange.emit(current);
             }
+            event.prevent_default();
         }
     };
 
@@ -62,8 +63,34 @@ pub fn Search(props: &SearchProps) -> Html {
         }
     };
 
+    // whenever you hit backspace in an empty input field, and there is a tag in the filter list,
+    // we pop that tag from the filter list and let you edit it. this makes the search bar behave
+    // as if the tags are real text.
+    let onkeydown = {
+        let filters = filters.clone();
+        let input = input.clone();
+        let onchange = props.onchange.clone();
+        move |event: KeyboardEvent| {
+            if !(*input).is_empty() {
+                return;
+            }
+
+            if event.key() != "Backspace" {
+                return;
+            }
+
+            event.prevent_default();
+            let mut filters_current = (*filters).clone();
+            if let Some(filter) = filters_current.pop() {
+                input.set(filter.to_string());
+                filters.set(filters_current.clone());
+                onchange.emit(filters_current);
+            }
+        }
+    };
+
     html! {
-        <form {onsubmit} action="#abc">
+        <form {onsubmit}>
             <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">{"Search"}</label>
             <div class="flex items-center border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <div class="pl-3 pointer-events-none">
@@ -90,7 +117,7 @@ pub fn Search(props: &SearchProps) -> Html {
                         })
                         .collect::<Html>()
                 }
-                <input type="search" id="default-search" class="block w-full p-3 text-sm bg-gray-50 text-gray-900 dark:bg-gray-700" placeholder="Add tags to filter by..." required=true {oninput} value={input.to_string()} />
+                <input type="search" id="default-search" class="block w-full p-3 text-sm bg-gray-50 text-gray-900 dark:bg-gray-700" placeholder="Add tags to filter by..." required=true {oninput} value={input.to_string()} {onkeydown} />
                 <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mx-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">{"Search"}</button>
             </div>
         </form>

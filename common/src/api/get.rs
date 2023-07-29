@@ -1,4 +1,4 @@
-use super::{Json, OutputFormat};
+use super::{cache::*, Json, OutputFormat};
 use crate::{
     tag::{TagNameInfo, TagValueInfo},
     BoxHash, Hash, Tag, TagPredicate,
@@ -58,6 +58,8 @@ impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     }
 }
 
+impl<H: Borrow<Hash>> Cacheable for FileContent<H> {}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
     pub hash: H,
@@ -77,6 +79,15 @@ impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
             self.value.as_ref().map(Borrow::borrow).unwrap_or("*")
         )
         .into()
+    }
+}
+
+impl<H: Borrow<Hash>, S: Borrow<str>> Cacheable for FileTags<H, S> {
+    fn invalidated_by(&self, mutation: &Mutation) -> bool {
+        match mutation {
+            //Mutation::File(file) => file == self.hash.borrow(),
+            _ => true,
+        }
     }
 }
 

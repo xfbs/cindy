@@ -206,14 +206,51 @@ pub fn CommonTagsList(props: &CommonTagsListProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
+pub struct ToggleEntryProps {
+    text: String,
+}
+
+#[function_component]
+pub fn ToggleEntry(props: &ToggleEntryProps) -> Html {
+    html! {
+        <div class="py-1 flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-300">{&props.text}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked=true />
+                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+        </div>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct HeadingProps {
+    children: Children,
+}
+
+#[function_component]
+fn Heading(props: &HeadingProps) -> Html {
+    html! {
+        <h1 class="text-lg font-bold">
+            { for props.children.iter() }
+        </h1>
+    }
+}
+
+#[derive(Properties, PartialEq)]
 pub struct QuerySidebarProps {}
 
 #[function_component]
 pub fn QuerySidebar(props: &QuerySidebarProps) -> Html {
     html! {
         <div class="bg-white w-full md:w-96 md:min-h-screen p-6">
-            <h1 class="text-lg font-bold" >{"Common Tags"}</h1>
+            <Heading>{"Common tags"}</Heading>
             <CommonTagsList />
+            <Heading>{"Settings"}</Heading>
+            <div class="py-2">
+                <ToggleEntry text="Show tags" />
+                <ToggleEntry text="Hive system tags" />
+            </div>
         </div>
     }
 }
@@ -232,11 +269,17 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
     });
     html! {
         <div class="bg-white md:w-96 md:min-h-screen p-6">
-            <h1 class="text-lg font-bold" >{"Tags"}</h1>
+            <Heading>{"Tags"}</Heading>
             <FileTagsList file={props.file.clone()} tags={tags.data.clone().unwrap_or_default()} />
 
-            <h1 class="text-lg font-bold" >{"File Labels"}</h1>
+            <Heading>{"Labels"}</Heading>
             <FileTagsList file={props.file.clone()} />
+
+            <Heading>{"Settings"}</Heading>
+            <div class="py-2">
+                <ToggleEntry text="Show labels" />
+                <ToggleEntry text="Edit labels" />
+            </div>
         </div>
     }
 }

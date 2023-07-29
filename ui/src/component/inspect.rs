@@ -42,7 +42,7 @@ pub fn FileInspect(props: &FileInspectProps) -> Html {
 pub fn InspectNavigate() -> Html {
     let hash = match use_route::<Route>() {
         Some(Route::File { hash, .. }) => Some(hash),
-        _ => None
+        _ => None,
     };
     html! {
         <div class="flex items-center gap-x-4">
