@@ -7,7 +7,7 @@ use axum::{
 use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config};
 use cindy_common::{api::*, tag::*};
 use hyper::Body;
-use std::{borrow::Cow, fs::*, path::PathBuf};
+use std::{fs::*, path::PathBuf};
 use tempfile::tempdir;
 use tower::ServiceExt;
 
@@ -193,7 +193,6 @@ async fn test_list_tag_names() {
         }))
         .await
         .unwrap();
-    let hash = cindy.hasher().hash_data(&content.as_bytes());
     let router = cindy.router();
     let tags = router.get(TagNames).await.unwrap();
 
@@ -226,7 +225,6 @@ async fn test_list_tags() {
         }))
         .await
         .unwrap();
-    let hash = cindy.hasher().hash_data(&content.as_bytes());
     let router = cindy.router();
     let tags = router
         .get(TagList {

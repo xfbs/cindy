@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS files(
 CREATE TABLE IF NOT EXISTS tag_names(
     id INTEGER NOT NULL,
     name TEXT NOT NULL,
+    system INTEGER NOT NULL DEFAULT 0,
+    display TEXT,
     PRIMARY KEY(id),
     UNIQUE (name)
 );
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS tag_values(
     id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL REFERENCES tag_names(id),
     value TEXT NOT NULL,
+    display TEXT,
     PRIMARY KEY (id),
     UNIQUE (tag_id, value)
 );
@@ -36,8 +39,11 @@ CREATE VIEW IF NOT EXISTS tags AS
     SELECT
         tag_names.id as name_id,
         tag_names.name as name,
+        tag_names.system as system,
+        tag_names.display as name_display,
         tag_values.id as value_id,
-        tag_values.value as value
+        tag_values.value as value,
+        tag_values.display as value_display
     FROM tag_values
     JOIN tag_names ON tag_names.id = tag_values.tag_id;
 
@@ -90,8 +96,11 @@ CREATE VIEW IF NOT EXISTS file_tags AS
         files.hash as hash,
         tags.name_id as name_id,
         tags.name as name,
+        tags.name_display as name_display,
+        tags.system as system,
         tags.value_id as value_id,
         tags.value as value,
+        tags.value_display as value_display,
         file_tag_values.id as id
     FROM file_tag_values
     JOIN files ON file_tag_values.file_id = files.id
