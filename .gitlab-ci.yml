@@ -7,7 +7,6 @@ stages:
   - build
   - publish
 
-
 # Build and publish utility Docker container. This is only rebuilt whenever
 # the Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
 # This utility Docker container contains all dependencies (ffmpeg, gtk4, rust)
@@ -29,12 +28,16 @@ docker:
       - Dockerfile
 
 # Run unit tests on project. These should be fairly exhaustive.
+# FIXME: we create the ui/dist folder and place a mock index.html in there.
+# the unit tests assume that the frontend exists, but we have not compiled it yet.
 test:
   stage: test
   image: "$CI_REGISTRY_IMAGE/builder"
   interruptible: true
-  script:
+  before_script:
     - mkdir -p ui/dist
+    - touch ui/dist/index.html
+  script:
     - cargo test
 
 # Build UI. This needs to be done first as the frontend is embedded into the binary.
