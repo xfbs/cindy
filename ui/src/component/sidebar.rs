@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use uuid::Uuid;
+use web_sys::HtmlElement;
 
 #[derive(Properties, PartialEq)]
 pub struct TagsListHeaderProps {
@@ -107,11 +108,30 @@ pub struct FileTagsCreateRowProps {
 
 #[function_component]
 pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
+    let node = use_node_ref();
     let tag_names = use_get(TagNames);
+    let onkeydown = {
+        let ondelete = props.ondelete.clone();
+        move |event: KeyboardEvent| {
+            if event.key() == "Enter" {
+                ondelete.emit(());
+                event.prevent_default();
+            }
+        }
+    };
+    // put focus on dropdown
+    use_effect_once({
+        let node = node.clone();
+        move || {
+            let element: HtmlElement = node.cast().unwrap();
+            element.focus().unwrap();
+            move || {}
+        }
+    });
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
-                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select ref={node} id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 {
                     tag_names.data
                         .iter()
@@ -124,7 +144,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
                 </select>
             </th>
             <td class="px-3 py-4">
-                <input class="w-full" onsubmit={move |_| {}} />
+                <input type="text" class="w-full" {onkeydown} />
             </td>
             <td class="px-3 py-4 pr-1">
                 <RowDeleteButton onclick={props.ondelete.clone()} />
