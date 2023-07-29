@@ -38,7 +38,7 @@ test:
     - mkdir -p ui/dist
     - touch ui/dist/index.html
   script:
-    - cargo test
+    - cargo test --all
 
 # Build UI. This needs to be done first as the frontend is embedded into the binary.
 ui:
