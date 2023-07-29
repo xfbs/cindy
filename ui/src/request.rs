@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use cindy_common::api::{GetRequest, InputFormat, Json, PostRequest, DeleteRequest};
+use cindy_common::api::{DeleteRequest, GetRequest, InputFormat, Json, PostRequest};
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, rc::Rc};

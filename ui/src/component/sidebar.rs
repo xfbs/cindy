@@ -12,17 +12,17 @@ pub fn TagsListHeader(props: &TagsListHeaderProps) -> Html {
     html! {
         <thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-                <th scope="col" class="px-6 py-3 pl-1">
+                <th scope="col" class="px-3 py-3 pl-1">
                     {"Name"}
                 </th>
                 if props.actions {
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-3 py-3">
                         {"Value"}
                     </th>
-                    <th scope="col" class="px-6 py-3 pr-1">
+                    <th scope="col" class="px-3 py-3 pr-1">
                     </th>
                 } else {
-                    <th scope="col" class="px-6 py-3 pr-1">
+                    <th scope="col" class="px-3 py-3 pr-1">
                         {"Value"}
                     </th>
                 }
@@ -82,19 +82,16 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
         name: props.tag.name().to_string(),
         value: props.tag.value().to_string(),
     });
-    let onclick = move |()| {
-        delete.run();
-    };
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
+            <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
                 {props.tag.name()}
             </th>
-            <td class="px-6 py-4">
+            <td class="px-3 py-4">
                 {props.tag.value()}
             </td>
-            <td class="px-6 py-4 pr-1">
-                <RowDeleteButton {onclick} />
+            <td class="px-3 py-4 pr-1">
+                <RowDeleteButton onclick={move |_| delete.run()} />
             </td>
         </tr>
     }
@@ -110,20 +107,26 @@ pub struct FileTagsCreateRowProps {
 
 #[function_component]
 pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
+    let tag_names = use_get(TagNames);
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-            <th scope="row" class="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
+            <th scope="row" class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
                 <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option value="media">{"media"}</option>
-                    <option value="format">{"format"}</option>
-                    <option value="resolution">{"resolution"}</option>
-                    <option value="depth">{"depth"}</option>
+                {
+                    tag_names.data
+                        .iter()
+                        .flat_map(|v| v.iter())
+                        .filter(|(_, info)| !info.system)
+                        .map(|(tag, info)| html!{
+                            <option value={tag.clone()}>{&info.display}</option>
+                        }).collect::<Html>()
+                }
                 </select>
             </th>
-            <td class="px-6 py-4">
-                <input onsubmit={move |_| {}} />
+            <td class="px-3 py-4">
+                <input class="w-full" onsubmit={move |_| {}} />
             </td>
-            <td class="px-6 py-4 pr-1">
+            <td class="px-3 py-4 pr-1">
                 <RowDeleteButton onclick={props.ondelete.clone()} />
             </td>
         </tr>
@@ -143,8 +146,8 @@ pub fn FileTagCreateButton(props: &FileTagCreateButtonProps) -> Html {
     html! {
         <tr class="bg-white dark:bg-gray-800 dark:border-gray-700">
             <td colspan="3">
-                <button class="bg-blue-200 p-3 w-full flex items-center justify-center" {onclick}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <button class="p-3 w-full flex items-center justify-center hover:text-blue-600" {onclick}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mx-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     {"Create tag"}
@@ -288,6 +291,9 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
                 <ToggleEntry text="Show labels" />
                 <ToggleEntry text="Edit labels" />
             </div>
+
+            <Heading>{"Management"}</Heading>
+            <p>{"Delete file"}</p>
         </div>
     }
 }
