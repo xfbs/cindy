@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 use std::{convert::Infallible, error::Error};
 
 pub trait OutputFormat: Sized {
@@ -7,10 +7,6 @@ pub trait OutputFormat: Sized {
     type Error: Error + Sync + Send + 'static;
 
     fn decode(data: Bytes) -> Result<Self::Target, Self::Error>;
-
-    fn decode_boxed(data: Bytes) -> Result<Self::Target, Box<dyn Error + Sync + Send + 'static>> {
-        Ok(Self::decode(data)?)
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -31,5 +27,34 @@ impl OutputFormat for Bytes {
 
     fn decode(data: Bytes) -> Result<Self::Target, Self::Error> {
         Ok(data)
+    }
+}
+
+pub trait InputFormat {
+    type Target;
+    fn encode(target: &Self::Target) -> Bytes;
+}
+
+impl InputFormat for () {
+    type Target = ();
+
+    fn encode(target: &Self::Target) -> Bytes {
+        Vec::new().into()
+    }
+}
+
+impl InputFormat for Bytes {
+    type Target = Bytes;
+
+    fn encode(target: &Self::Target) -> Bytes {
+        target.clone()
+    }
+}
+
+impl<T: Serialize> InputFormat for Json<T> {
+    type Target = T;
+
+    fn encode(data: &Self::Target) -> Bytes {
+        serde_json::to_vec(data).unwrap().into()
     }
 }

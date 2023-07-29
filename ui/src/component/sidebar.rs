@@ -77,6 +77,14 @@ pub struct FileTagsRowProps {
 
 #[function_component]
 pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
+    let delete = use_delete(FileTagDelete {
+        hash: props.file.clone(),
+        name: props.tag.name().to_string(),
+        value: props.tag.value().to_string(),
+    });
+    let onclick = move |()| {
+        delete.run();
+    };
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
@@ -86,7 +94,7 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
                 {props.tag.value()}
             </td>
             <td class="px-6 py-4 pr-1">
-                <RowDeleteButton />
+                <RowDeleteButton {onclick} />
             </td>
         </tr>
     }
