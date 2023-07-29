@@ -17,3 +17,5 @@ wasm-logger = "0.2.0"
 log = "0.4.19"
 wasm-bindgen = "0.2.87"
 uuid = { version = "1.4.1", features = ["v4", "wasm-bindgen", "js"] }
+
+[workspace]

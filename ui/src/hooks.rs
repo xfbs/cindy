@@ -1,8 +1,5 @@
 use crate::prelude::*;
-use wasm_bindgen::{
-    closure::{Closure, IntoWasmClosure},
-    JsCast,
-};
+use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{IntersectionObserver, IntersectionObserverEntry};
 use yew::functional::*;
 use yew_router::prelude::use_location;

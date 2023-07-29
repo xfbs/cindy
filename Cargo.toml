@@ -46,4 +46,3 @@ reflink = ["dep:reflink"]
 
 [workspace]
 members = [".", "common"]
-exclude = ["ui"]
