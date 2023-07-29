@@ -300,6 +300,6 @@ async fn test_tags_create() {
     let database = cindy.database().await;
     let tags = database.tag_list(None, None).unwrap();
     drop(database);
-    assert!(tags.contains(&tag1));
-    assert!(tags.contains(&tag2));
+    assert!(tags.contains_key(&tag1));
+    assert!(tags.contains_key(&tag2));
 }

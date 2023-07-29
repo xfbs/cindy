@@ -29,7 +29,9 @@ pub fn HomeView() -> Html {
     };
     html! {
         <div>
-            <NavBar {onchange} />
+            <NavBar>
+                <Search {onchange} />
+            </NavBar>
             <SidebarLayout>
                 <SidebarLayoutSidebar>
                     <QuerySidebar />
@@ -58,7 +60,9 @@ pub fn FileView(props: &FileViewProps) -> Html {
     };
     html! {
         <div>
-            <NavBar {onchange} />
+            <NavBar>
+                <InspectNavigate />
+            </NavBar>
             <SidebarLayout>
                 <SidebarLayoutSidebar>
                     <FileSidebar file={props.hash.clone()} />

@@ -38,6 +38,26 @@ pub fn FileInspect(props: &FileInspectProps) -> Html {
     }
 }
 
+#[function_component]
+pub fn InspectNavigate() -> Html {
+    let hash = match use_route::<Route>() {
+        Some(Route::File { hash, .. }) => Some(hash),
+        _ => None
+    };
+    html! {
+        <div class="flex items-center gap-x-4">
+            <Link<Route> to={Route::home()} classes="hover:text-blue-600">{"Query"}</Link<Route>>
+            <div class="grow text-center font-bold">
+            if let Some(hash) = &hash {
+                {hash.to_string()}
+            }
+            </div>
+            <button class="hover:text-blue-600">{"Previous"}</button>
+            <button class="hover:text-blue-600">{"Next"}</button>
+        </div>
+    }
+}
+
 #[derive(Properties, PartialEq)]
 pub struct RectangleOverlayProps {
     pub tag: Tag,

@@ -2,6 +2,10 @@
 list:
     just --list
 
+# Run unit tests
+test:
+    cargo test --all
+
 # Format source with rustfmt nightly
 format:
     cargo +nightly fmt --all

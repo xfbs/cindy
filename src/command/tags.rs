@@ -1,10 +1,11 @@
 use crate::{
     cli::{TagsCommand, TagsCreateCommand, TagsDeleteCommand, TagsListCommand, TagsRenameCommand},
+    common::tag::TagValueInfo,
     tag::Tag,
     Cindy,
 };
 use anyhow::Result;
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 impl Cindy {
     pub async fn command_tags(&self, command: &TagsCommand) -> Result<()> {
@@ -43,14 +44,14 @@ impl Cindy {
             let tags = if command.tags.is_empty() {
                 database.tag_list(None, None)?
             } else {
-                let results: Vec<BTreeSet<Tag>> = command
+                let results: Vec<BTreeMap<Tag, TagValueInfo>> = command
                     .tags
                     .iter()
                     .map(|filter| Ok(database.tag_list(filter.name(), filter.value())?))
-                    .collect::<Result<Vec<BTreeSet<Tag>>>>()?;
+                    .collect::<Result<Vec<_>>>()?;
                 results.into_iter().flat_map(|i| i.into_iter()).collect()
             };
-            for tag in tags.iter() {
+            for tag in tags.keys() {
                 println!("{tag}");
             }
             Ok(()) as Result<()>

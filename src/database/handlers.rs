@@ -1,6 +1,9 @@
 use super::*;
 use crate::tag::TagPredicate;
-use cindy_common::{tag::TagNameInfo, Label, LabelKind, Point, Rectangle, Sequence};
+use cindy_common::{
+    tag::{TagNameInfo, TagValueInfo},
+    Label, LabelKind, Point, Rectangle, Sequence,
+};
 use rusqlite::ToSql;
 use std::collections::BTreeMap;
 
@@ -57,25 +60,59 @@ impl<T: Handle> Database<T> {
     }
 
     /// List tags in database.
-    pub fn tag_list(&self, name: Option<&str>, value: Option<&str>) -> Result<BTreeSet<Tag>> {
+    pub fn tag_list(
+        &self,
+        name: Option<&str>,
+        value: Option<&str>,
+    ) -> Result<BTreeMap<Tag, TagValueInfo>> {
         let mut query = self.prepare_cached(
-            "SELECT name, value
+            "SELECT
+                name,
+                value,
+                coalesce(value_display, value) as display,
+                system
             FROM tags
             WHERE coalesce(name = ?, true)
             AND coalesce(value = ?, true)",
         )?;
         let rows = query.query([&name, &value])?;
-        rows.mapped(|row| Ok(Tag::new(row.get("name")?, row.get("value")?)))
-            .collect::<Result<BTreeSet<Tag>, _>>()
-            .map_err(Into::into)
+        rows.mapped(|row| {
+            Ok((
+                Tag::new(row.get("name")?, row.get("value")?),
+                TagValueInfo {
+                    files: 0,
+                    display: row.get("display")?,
+                    system: row.get("system")?,
+                },
+            ))
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()
+        .map_err(Into::into)
     }
 
+    /// Set a tag name's display value.
+    pub fn tag_name_display(&self, name: &str, display: &str) -> Result<()> {
+        let mut query = self.prepare_cached("UPDATE tag_names SET display = ? WHERE name = ?")?;
+        query.execute([display, name])?;
+        Ok(())
+    }
+
+    /// Set a tag value's display value.
+    pub fn tag_value_display(&self, value: &str, display: &str) -> Result<()> {
+        let mut query = self.prepare_cached("UPDATE tag_values SET display = ? WHERE name = ?")?;
+        query.execute([value, display])?;
+        Ok(())
+    }
+
+    /// List tag names
     pub fn tag_names(&self) -> Result<BTreeMap<String, TagNameInfo>> {
         let mut query = self.prepare_cached(
             "SELECT
-                name,
-                count(*) AS value
-            FROM tags
+                coalesce(tag_names.display, tag_names.name) as display,
+                tag_names.*,
+                count(tag_names.id) as value
+            FROM tag_names
+            LEFT JOIN tag_values ON tag_names.id = tag_values.tag_id
             GROUP BY name",
         )?;
         let rows = query.query([])?;
@@ -84,6 +121,8 @@ impl<T: Handle> Database<T> {
                 row.get("name")?,
                 TagNameInfo {
                     values: row.get("value")?,
+                    system: row.get("system")?,
+                    display: row.get("display")?,
                 },
             ))
         })

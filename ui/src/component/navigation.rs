@@ -31,7 +31,7 @@ fn Settings() -> Html {
 #[derive(Properties, PartialEq)]
 pub struct NavBarProps {
     #[prop_or_default]
-    pub onchange: Callback<Vec<TagPredicate<'static>>>,
+    pub children: Children,
 }
 
 #[function_component]
@@ -44,7 +44,7 @@ pub fn NavBar(props: &NavBarProps) -> Html {
                     <Settings />
                 </div>
                 <div class="grow">
-                    <Search onchange={props.onchange.clone()} />
+                    { for props.children.iter() }
                 </div>
             </div>
         </nav>

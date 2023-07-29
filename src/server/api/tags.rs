@@ -4,8 +4,8 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use cindy_common::tag::{Tag, TagNameInfo};
-use std::collections::{BTreeMap, BTreeSet};
+use cindy_common::tag::{Tag, TagNameInfo, TagValueInfo};
+use std::collections::BTreeMap;
 use tokio::task::spawn_blocking;
 
 async fn tag_names(
@@ -25,7 +25,7 @@ fn option_from_str(tag: &str) -> Option<&str> {
 async fn tag_list(
     State(cindy): State<Cindy>,
     Path((name, value)): Path<(String, String)>,
-) -> Result<Json<BTreeSet<Tag>>, Error> {
+) -> Result<Json<BTreeMap<Tag, TagValueInfo>>, Error> {
     let database = cindy.database().await;
     spawn_blocking(move || {
         database

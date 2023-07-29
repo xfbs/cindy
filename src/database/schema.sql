@@ -24,6 +24,18 @@ CREATE TABLE IF NOT EXISTS tag_names(
     UNIQUE (name)
 );
 
+INSERT INTO tag_names(name, system) VALUES ('filesize', true);
+INSERT INTO tag_names(name, system) VALUES ('directory', true);
+INSERT INTO tag_names(name, system) VALUES ('ancestors', true);
+INSERT INTO tag_names(name, system) VALUES ('filename', true);
+INSERT INTO tag_names(name, system) VALUES ('media', true);
+INSERT INTO tag_names(name, system) VALUES ('format', true);
+INSERT INTO tag_names(name, system) VALUES ('width', true);
+INSERT INTO tag_names(name, system) VALUES ('height', true);
+INSERT INTO tag_names(name, system) VALUES ('resolution', true);
+INSERT INTO tag_names(name, system) VALUES ('duration', true);
+INSERT INTO tag_names(name, system) VALUES ('durationgroup', true);
+
 CREATE TABLE IF NOT EXISTS tag_values(
     id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL REFERENCES tag_names(id),
@@ -69,7 +81,8 @@ BEGIN
     -- delete tag value
     DELETE FROM tag_values
         WHERE tag_id = OLD.name_id
-        AND value = OLD.value;
+        AND value = OLD.value
+        AND OLD.system = 0;
 
     -- delete tag name if no tag values left
     DELETE FROM tag_names
@@ -77,7 +90,8 @@ BEGIN
         SELECT count(id)
             FROM tag_values
             WHERE tag_id = tag_names.id
-        ) = 0;
+        ) = 0
+        AND system = 0;
 END;
 
 CREATE TABLE IF NOT EXISTS file_tag_values(

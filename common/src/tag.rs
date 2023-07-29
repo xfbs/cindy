@@ -1,11 +1,11 @@
-use serde::{Deserialize, Serialize};
+use ::serde::{Deserialize, Serialize};
 use std::{
     borrow::{Borrow, Cow},
     fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Tag(String, String);
 
 impl Tag {
@@ -22,11 +22,31 @@ impl Tag {
     }
 }
 
-#[test]
-fn tag_methods() {
-    let tag = Tag::new("name".into(), "value".into());
-    assert_eq!(tag.name(), "name");
-    assert_eq!(tag.value(), "value");
+mod serde {
+    use super::*;
+    use ::serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+
+    // custom serde implementation that serializes and deserializes tags as strings (using their
+    // as string representation).
+    impl Serialize for Tag {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            // serialize as hex string or as byte array, depending on format.
+            self.to_string().serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Tag {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let data: &'de str = <&'de str>::deserialize(deserializer)?;
+            Ok(Self::from_str(data).map_err(Error::custom)?)
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
@@ -187,11 +207,36 @@ impl<'a> Display for TagPredicate<'a> {
 pub struct TagNameInfo {
     /// Count of possible values
     pub values: u64,
+
+    /// Whether this is a system tag that should not be modified.
+    pub system: bool,
+
+    /// What to display this tag name as.
+    pub display: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct TagValueInfo {
+    /// Count of files tagged with this
+    pub files: u64,
+
+    /// Whether this is a system tag that should not be modified.
+    pub system: bool,
+
+    /// What to display this tag value as.
+    pub display: String,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tag_methods() {
+        let tag = Tag::new("name".into(), "value".into());
+        assert_eq!(tag.name(), "name");
+        assert_eq!(tag.value(), "value");
+    }
 
     #[test]
     fn tag_filter() {

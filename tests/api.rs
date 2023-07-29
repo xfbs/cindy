@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use axum::{
     http::{Method, Request},
@@ -33,7 +33,12 @@ impl RouterExt for Router {
             .await?;
         let status = response.status();
         if !status.is_success() {
-            bail!("Unsuccessful status: {status}");
+            println!("Unsuccessful status: {status}");
+            let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+            if let Ok(string) = std::str::from_utf8(&body) {
+                println!("Body: {string}");
+            }
+            panic!("Error in GET request");
         }
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         R::Output::decode(body).map_err(Into::into)
@@ -236,7 +241,7 @@ async fn test_list_tags() {
 
     // validate tags
     assert!(!tags.is_empty());
-    assert!(tags.contains(&Tag::new("filename".into(), "file.txt".into())));
+    assert!(tags.contains_key(&Tag::new("filename".into(), "file.txt".into())));
 }
 
 #[tokio::test]

@@ -1,10 +1,13 @@
 use super::{Json, OutputFormat};
-use crate::{tag::TagNameInfo, BoxHash, Hash, Tag, TagPredicate};
+use crate::{
+    tag::{TagNameInfo, TagValueInfo},
+    BoxHash, Hash, Tag, TagPredicate,
+};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::{Borrow, Cow},
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     path::Path,
 };
 
@@ -119,7 +122,7 @@ where
     N: Borrow<str>,
     V: Borrow<str>,
 {
-    type Output = Json<BTreeSet<Tag>>;
+    type Output = Json<BTreeMap<Tag, TagValueInfo>>;
     type Query = ();
 
     fn path(&self) -> Cow<'_, str> {
