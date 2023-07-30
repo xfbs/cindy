@@ -1,12 +1,13 @@
 use crate::{hash::ArcHash, server::Error, Cindy};
 use axum::{
     body::StreamBody,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{header, HeaderValue},
     response::IntoResponse,
-    routing::get,
+    routing::{delete, get},
     Json, Router,
 };
+use cindy_common::api::TagQuery;
 use std::path::PathBuf;
 use tokio::{fs::File, task::spawn_blocking};
 use tokio_util::io::ReaderStream;
@@ -84,22 +85,14 @@ async fn file_tag_create(
 
 async fn file_tag_delete(
     State(cindy): State<Cindy>,
-    Path((hash, name, value)): Path<(ArcHash, String, String)>,
+    Query(query): Query<TagQuery<String>>,
+    Path(hash): Path<ArcHash>,
 ) -> Result<(), Error> {
-    let name = match name.as_str() {
-        "*" => None,
-        _ => Some(name),
-    };
-    let value = match value.as_str() {
-        "*" => None,
-        _ => Some(value),
-    };
-
     // get filenames
     let database = cindy.database().await;
     let hash_clone = hash.clone();
     spawn_blocking(move || {
-        database.hash_tag_remove(&hash_clone, name.as_deref(), value.as_deref())
+        database.hash_tag_remove(&hash_clone, query.name.as_deref(), query.value.as_deref())
     })
     .await??;
 
@@ -107,8 +100,11 @@ async fn file_tag_delete(
 }
 
 pub fn router() -> Router<Cindy> {
-    Router::new().route("/:hash", get(stream_file)).route(
-        "/:hash/tags/:name/:value",
-        get(file_tags).post(file_tag_create).delete(file_tag_delete),
-    )
+    Router::new()
+        .route("/:hash", get(stream_file))
+        .route(
+            "/:hash/tags/:name/:value",
+            get(file_tags).post(file_tag_create),
+        )
+        .route("/:hash/tags", delete(file_tag_delete))
 }
