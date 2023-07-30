@@ -1,10 +1,14 @@
 use async_trait::async_trait;
-use cindy_common::api::{DeleteRequest, GetRequest, InputFormat, Json, PostRequest};
+use cindy_common::{
+    api::{DeleteRequest, GetRequest, InputFormat, Json, PostRequest, OutputFormat},
+    cache::RcValue,
+};
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, rc::Rc};
 use yew::functional::{hook, use_effect, use_state};
 use yew_hooks::prelude::{use_async, use_async_with_options, UseAsyncHandle, UseAsyncOptions};
+use crate::cache::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -13,14 +17,12 @@ pub enum Error {
 }
 
 #[async_trait(?Send)]
-pub trait Decodable {
-    type Target: Clone + 'static;
+pub trait Decodable: OutputFormat {
     async fn decode(response: &Response) -> Result<Self::Target, Error>;
 }
 
 #[async_trait(?Send)]
 impl<T: DeserializeOwned + Clone + 'static> Decodable for Json<T> {
-    type Target = T;
     async fn decode(response: &Response) -> Result<Self::Target, Error> {
         response.json::<T>().await.map_err(Error::from)
     }
@@ -28,7 +30,6 @@ impl<T: DeserializeOwned + Clone + 'static> Decodable for Json<T> {
 
 #[async_trait(?Send)]
 impl Decodable for () {
-    type Target = ();
     async fn decode(response: &Response) -> Result<Self::Target, Error> {
         Ok(())
     }
@@ -36,19 +37,20 @@ impl Decodable for () {
 
 #[async_trait(?Send)]
 pub trait HttpRequest {
-    type Response: Clone;
+    type Response: Clone + 'static;
     async fn send(&self) -> Result<Self::Response, Error>;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Get<T: GetRequest>(pub T);
 
 #[async_trait(?Send)]
 impl<T: GetRequest> HttpRequest for Get<T>
 where
     T::Output: Decodable,
+    <T::Output as OutputFormat>::Target: Clone + 'static,
 {
-    type Response = <T::Output as Decodable>::Target;
+    type Response = <T::Output as OutputFormat>::Target;
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.uri());
         let response = Request::get(&path).send().await?;
@@ -85,9 +87,10 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
 #[hook]
 pub fn use_get<R: GetRequest + Clone + Eq + Debug + 'static>(
     request: R,
-) -> UseAsyncHandle<<R::Output as Decodable>::Target, Rc<Error>>
+) -> UseAsyncHandle<<R::Output as OutputFormat>::Target, Rc<Error>>
 where
     R::Output: Decodable + Clone,
+    <R::Output as OutputFormat>::Target: Clone + PartialEq + 'static,
 {
     let request = Rc::new(request);
     let current = use_state({
@@ -134,4 +137,13 @@ pub fn use_post<R: PostRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<E
 #[hook]
 pub fn use_delete<R: DeleteRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>> {
     use_request(Delete(request))
+}
+
+#[hook]
+pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Output as OutputFormat>::Target> where
+    R::Output: Decodable,
+    <R::Output as OutputFormat>::Target: PartialEq + Clone + 'static,
+    Get<R>: CacheItem,
+{
+    use_cached(Get(data))
 }

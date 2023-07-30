@@ -35,13 +35,14 @@ pub struct FileCardLoaderProps {
 
 #[function_component]
 pub fn FileCardLoader(props: &FileCardLoaderProps) -> Html {
-    let tags = use_get(FileTags {
+    let tags = use_get_cached(FileTags {
         hash: props.hash.clone(),
         name: None::<String>,
         value: None::<String>,
     });
+    let tags = tags.data().map(|tags| tags[..].to_vec()).unwrap_or_default();
     html! {
-        <FileCard hash={props.hash.clone()} tags={tags.data.clone().unwrap_or_default()} />
+        <FileCard hash={props.hash.clone()} {tags} />
     }
 }
 

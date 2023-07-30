@@ -1,7 +1,8 @@
-use super::{cache::*, Json, OutputFormat};
+use super::{Json, OutputFormat};
 use crate::{
+    cache::*,
     tag::{TagNameInfo, TagValueInfo},
-    BoxHash, Hash, Tag, TagPredicate,
+    BoxHash, Hash, Mutation, Tag, TagPredicate,
 };
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -58,7 +59,7 @@ impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     }
 }
 
-impl<H: Borrow<Hash>> Cacheable for FileContent<H> {}
+impl<H: Borrow<Hash>> Invalidatable for FileContent<H> {}
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
@@ -82,7 +83,7 @@ impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     }
 }
 
-impl<H: Borrow<Hash>, S: Borrow<str>> Cacheable for FileTags<H, S> {
+impl<H: Borrow<Hash>, S: Borrow<str>> Invalidatable for FileTags<H, S> {
     fn invalidated_by(&self, mutation: &Mutation) -> bool {
         match mutation {
             //Mutation::File(file) => file == self.hash.borrow(),

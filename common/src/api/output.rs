@@ -30,6 +30,15 @@ impl OutputFormat for Bytes {
     }
 }
 
+impl OutputFormat for () {
+    type Target = ();
+    type Error = Infallible;
+
+    fn decode(data: Bytes) -> Result<Self::Target, Self::Error> {
+        Ok(())
+    }
+}
+
 pub trait InputFormat {
     type Target;
     fn encode(target: &Self::Target) -> Bytes;

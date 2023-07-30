@@ -85,8 +85,10 @@ fn switch(route: Route) -> Html {
 #[function_component]
 pub fn App() -> Html {
     html! {
-        <BrowserRouter>
-            <Switch<Route> render={switch} />
-        </BrowserRouter>
+        <CacheProvider>
+            <BrowserRouter>
+                <Switch<Route> render={switch} />
+            </BrowserRouter>
+        </CacheProvider>
     }
 }

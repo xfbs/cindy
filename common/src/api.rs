@@ -8,10 +8,8 @@ mod delete;
 pub use delete::*;
 
 mod output;
+pub use crate::cache::*;
 pub use output::*;
-
-mod cache;
-pub use cache::*;
 
 #[cfg(test)]
 mod tests;
