@@ -1,5 +1,6 @@
 use super::{Json, OutputFormat};
 use crate::{
+    api::query::TagQuery,
     cache::*,
     tag::{TagNameInfo, TagValueInfo},
     BoxHash, Hash, Mutation, Tag, TagPredicate,
@@ -24,18 +25,20 @@ pub struct QueryState {
 
 pub trait GetRequest {
     type Output: OutputFormat;
-    type Query: Serialize;
+    type Query<'a>: Serialize
+    where
+        Self: 'a;
 
     fn path(&self) -> Cow<'_, str>;
 
-    fn query(&self) -> Option<&Self::Query> {
+    fn query(&self) -> Option<Self::Query<'_>> {
         None
     }
 
     fn uri(&self) -> String {
         let mut path = self.path().into_owned();
         if let Some(query) = self.query() {
-            let query_string = serde_qs::to_string(query).unwrap();
+            let query_string = serde_qs::to_string(&query).unwrap();
             if !query_string.is_empty() {
                 path.push('?');
                 path.push_str(&query_string);
@@ -52,7 +55,7 @@ pub struct FileContent<H: Borrow<Hash> = BoxHash> {
 
 impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     type Output = Bytes;
-    type Query = ();
+    type Query<'a> = () where H: 'a;
 
     fn path(&self) -> Cow<'_, str> {
         format!("api/v1/file/{}", self.hash.borrow()).into()
@@ -70,11 +73,11 @@ pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
 
 impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     type Output = Json<Vec<Tag>>;
-    type Query = ();
+    type Query<'a> = () where H: 'a, S: 'a;
 
     fn path(&self) -> Cow<'_, str> {
         format!(
-            "api/v1/file/{}/tag/{}/{}",
+            "api/v1/file/{}/tags/{}/{}",
             self.hash.borrow(),
             self.name.as_ref().map(Borrow::borrow).unwrap_or("*"),
             self.value.as_ref().map(Borrow::borrow).unwrap_or("*")
@@ -100,14 +103,14 @@ pub struct FileQuery<'a> {
 
 impl<'a> GetRequest for FileQuery<'a> {
     type Output = Json<Vec<BoxHash>>;
-    type Query = Self;
+    type Query<'b> = &'b Self where 'a: 'b;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query".into()
     }
 
-    fn query(&self) -> Option<&Self::Query> {
-        Some(self)
+    fn query(&self) -> Option<Self::Query<'_>> {
+        Some(&self)
     }
 }
 
@@ -116,7 +119,7 @@ pub struct TagNames;
 
 impl GetRequest for TagNames {
     type Output = Json<BTreeMap<String, TagNameInfo>>;
-    type Query = ();
+    type Query<'a> = ();
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/names".into()
@@ -135,19 +138,17 @@ where
     V: Borrow<str>,
 {
     type Output = Json<BTreeMap<Tag, TagValueInfo>>;
-    type Query = ();
+    type Query<'a> = TagQuery<&'a str> where N: 'a, V: 'a;
 
     fn path(&self) -> Cow<'_, str> {
-        format!(
-            "api/v1/tags/{}/{}",
-            self.name.as_ref().map(Borrow::borrow).unwrap_or("*"),
-            self.value.as_ref().map(Borrow::borrow).unwrap_or("*")
-        )
-        .into()
+        "api/v1/tags".into()
     }
 
-    fn query(&self) -> Option<&Self::Query> {
-        None
+    fn query(&self) -> Option<Self::Query<'_>> {
+        Some(TagQuery {
+            name: self.name.as_ref().map(Borrow::borrow),
+            value: self.value.as_ref().map(Borrow::borrow),
+        })
     }
 }
 
@@ -158,7 +159,7 @@ pub struct FrontendFile<P: Borrow<Path>> {
 
 impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
     type Output = Bytes;
-    type Query = ();
+    type Query<'a> = () where P: 'a;
 
     fn path(&self) -> Cow<'_, str> {
         self.path.borrow().display().to_string().into()

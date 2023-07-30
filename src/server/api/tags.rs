@@ -1,10 +1,13 @@
 use crate::{server::Error, Cindy};
 use axum::{
-    extract::{Path, State},
-    routing::get,
+    extract::{Path, Query, State},
+    routing::{get, post},
     Json, Router,
 };
-use cindy_common::tag::{Tag, TagNameInfo, TagValueInfo};
+use cindy_common::{
+    api::TagQuery,
+    tag::{Tag, TagNameInfo, TagValueInfo},
+};
 use std::collections::BTreeMap;
 use tokio::task::spawn_blocking;
 
@@ -24,12 +27,12 @@ fn option_from_str(tag: &str) -> Option<&str> {
 
 async fn tag_list(
     State(cindy): State<Cindy>,
-    Path((name, value)): Path<(String, String)>,
+    Query(query): Query<TagQuery<String>>,
 ) -> Result<Json<BTreeMap<Tag, TagValueInfo>>, Error> {
     let database = cindy.database().await;
     spawn_blocking(move || {
         database
-            .tag_list(option_from_str(&name), option_from_str(&value))
+            .tag_list(query.name.as_deref(), query.value.as_deref())
             .map(Json)
             .map_err(Into::into)
     })
@@ -46,12 +49,12 @@ async fn tag_create(
 
 async fn tag_delete(
     State(cindy): State<Cindy>,
-    Path((name, value)): Path<(String, String)>,
+    Query(query): Query<TagQuery<String>>,
 ) -> Result<(), Error> {
     let database = cindy.database().await;
     spawn_blocking(move || {
         database
-            .tag_delete(option_from_str(&name), option_from_str(&value))
+            .tag_delete(query.name.as_deref(), query.value.as_deref())
             .map_err(Into::into)
     })
     .await?
@@ -59,9 +62,7 @@ async fn tag_delete(
 
 pub fn router() -> Router<Cindy> {
     Router::new()
-        .route(
-            "/:name/:value",
-            get(tag_list).post(tag_create).delete(tag_delete),
-        )
+        .route("/", get(tag_list).delete(tag_delete))
+        .route("/:name/:value", post(tag_create))
         .route("/names", get(tag_names))
 }

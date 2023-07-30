@@ -108,7 +108,7 @@ async fn file_tag_delete(
 
 pub fn router() -> Router<Cindy> {
     Router::new().route("/:hash", get(stream_file)).route(
-        "/:hash/tag/:name/:value",
+        "/:hash/tags/:name/:value",
         get(file_tags).post(file_tag_create).delete(file_tag_delete),
     )
 }

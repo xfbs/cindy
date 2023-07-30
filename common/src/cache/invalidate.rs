@@ -15,6 +15,6 @@ pub trait Invalidatable<T = Mutation> {
 impl<T> Invalidatable<()> for T {}
 
 /// Something which produces invalidations.
-pub trait Invalidator {
-    fn mutations(&self) -> Vec<Mutation>;
+pub trait Invalidator<T = Mutation> {
+    fn mutations(&self) -> Vec<T>;
 }

@@ -109,7 +109,7 @@ pub struct FileTagsCreateRowProps {
 #[function_component]
 pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
     let node = use_node_ref();
-    let tag_names = use_get(TagNames);
+    let tag_names = use_get_cached(TagNames);
     let onkeydown = {
         let ondelete = props.ondelete.clone();
         move |event: KeyboardEvent| {
@@ -133,7 +133,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
             <th scope="row" class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
                 <select ref={node} id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 {
-                    tag_names.data
+                    tag_names.data()
                         .iter()
                         .flat_map(|v| v.iter())
                         .filter(|(_, info)| !info.system)
@@ -293,7 +293,7 @@ pub struct FileSidebarProps {
 
 #[function_component]
 pub fn FileSidebar(props: &FileSidebarProps) -> Html {
-    let tags = use_get(FileTags {
+    let tags = use_get_cached(FileTags {
         hash: props.file.clone(),
         name: None::<String>,
         value: None::<String>,
@@ -301,7 +301,11 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
     html! {
         <div class="bg-white md:w-96 md:min-h-screen p-6">
             <Heading>{"Tags"}</Heading>
-            <FileTagsList file={props.file.clone()} tags={tags.data.clone().unwrap_or_default()} />
+            if let Some(tags) = tags.data() {
+                <FileTagsList file={props.file.clone()} tags={(**tags).clone()} />
+            } else {
+                <FileTagsList file={props.file.clone()} tags={vec![]} />
+            }
 
             <Heading>{"Labels"}</Heading>
             <FileTagsList file={props.file.clone()} />

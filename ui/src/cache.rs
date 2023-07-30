@@ -59,16 +59,25 @@ impl PartialEq for Cache {
 
 impl BTreeCache {
     /// Unsubscribe to the value of this data.
-    pub fn mutate<T: CacheKey, F: FnOnce(&mut Entry)>(
+    pub fn mutate<T: CacheKey, R, F: FnOnce(&mut Entry) -> R>(
         &mut self,
         data: &T,
         mutate: F,
-    ) -> bool {
+    ) -> Option<R> {
         if let Some(entry) = self.entries.get_mut(data as &dyn CacheKey) {
-            mutate(entry);
-            true
+            Some(mutate(entry))
         } else {
-            false
+            None
+        }
+    }
+
+    /// Unsubscribe to the value of this data.
+    pub fn mutate_all<F: Fn(&Box<dyn CacheKey>, &mut Entry)>(
+        &mut self,
+        mutate: F,
+    ) {
+        for (key, entry) in &mut self.entries {
+            mutate(key, entry);
         }
     }
 
@@ -86,6 +95,8 @@ impl Cache {
     {
         let setter = handle.setter();
         let mut cache = self.cache.lock().expect("Failure to lock cache");
+
+        // add self as subscriber to cache value, if exists.
         let mutated = cache.mutate(request, |entry| {
             entry.subscribe(&setter);
 
@@ -95,18 +106,27 @@ impl Cache {
             if value != current {
                 setter.set(entry.value.clone());
             }
+
+            entry.clone()
         });
 
-        if !mutated {
-            cache.insert(
-                request.clone(),
-                Entry {
-                    value: RcValue::default(),
-                    subscriptions: vec![setter.clone()],
-                },
-            );
-            drop(cache);
-            self.fetch(request);
+        match mutated {
+            None => {
+                cache.insert(
+                    request.clone(),
+                    Entry {
+                        value: RcValue::default(),
+                        subscriptions: vec![setter.clone()],
+                    },
+                );
+                drop(cache);
+                self.fetch(request);
+            },
+            Some(entry) if !entry.value.valid() => {
+                drop(cache);
+                self.fetch(request);
+            }
+            _ => {}
         }
     }
 
@@ -153,6 +173,18 @@ impl Cache {
             .lock()
             .expect("Failure to lock cache")
             .mutate(data, |entry| {
+                entry.value.invalidate();
+                entry.broadcast();
+            });
+    }
+
+    /// FIXME: invalidates entire cache.
+    pub fn invalidate_all(&self) {
+        let mut cache = self.cache
+            .lock()
+            .expect("Failure to lock cache");
+        cache
+            .mutate_all(|key, entry| {
                 entry.value.invalidate();
                 entry.broadcast();
             });

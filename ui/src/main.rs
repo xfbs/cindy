@@ -10,7 +10,12 @@ mod request;
 
 /// Commonly used imports, re-exported for convenience.
 mod prelude {
-    pub use crate::{component::*, hooks::*, request::*, cache::{CacheProvider, use_cached}};
+    pub use crate::{
+        cache::{use_cached, CacheProvider},
+        component::*,
+        hooks::*,
+        request::*,
+    };
     pub use cindy_common::{api::*, hash::*, label::*, tag::*};
     pub use std::borrow::Cow;
     pub use web_sys::HtmlInputElement;

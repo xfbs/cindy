@@ -40,7 +40,10 @@ pub fn FileCardLoader(props: &FileCardLoaderProps) -> Html {
         name: None::<String>,
         value: None::<String>,
     });
-    let tags = tags.data().map(|tags| tags[..].to_vec()).unwrap_or_default();
+    let tags = tags
+        .data()
+        .map(|tags| tags[..].to_vec())
+        .unwrap_or_default();
     html! {
         <FileCard hash={props.hash.clone()} {tags} />
     }
@@ -97,13 +100,13 @@ pub struct FilesGridLoaderProps {
 
 #[function_component]
 pub fn FilesGridLoader(props: &FilesGridLoaderProps) -> Html {
-    let data = use_get(FileQuery {
+    let data = use_get_cached(FileQuery {
         query: props.query.clone().into(),
     });
 
     html! {
-        if let Some(data) = &data.data {
-            <FilesGrid files={data.clone()} />
+        if let Some(data) = data.data() {
+            <FilesGrid files={data.to_vec()} />
         }
     }
 }

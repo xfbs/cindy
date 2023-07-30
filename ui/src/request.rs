@@ -1,14 +1,14 @@
+use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{DeleteRequest, GetRequest, InputFormat, Json, PostRequest, OutputFormat},
+    api::{DeleteRequest, GetRequest, InputFormat, Json, OutputFormat, PostRequest},
     cache::RcValue,
 };
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, rc::Rc};
-use yew::functional::{hook, use_effect, use_state};
+use yew::functional::{hook, use_context, use_effect, use_state};
 use yew_hooks::prelude::{use_async, use_async_with_options, UseAsyncHandle, UseAsyncOptions};
-use crate::cache::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -78,54 +78,20 @@ pub struct Delete<T: DeleteRequest>(pub T);
 impl<T: DeleteRequest> HttpRequest for Delete<T> {
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.0.path());
+        let path = format!("/{}", self.0.uri());
         let response = Request::delete(&path).send().await?;
         Ok(())
     }
 }
 
 #[hook]
-pub fn use_get<R: GetRequest + Clone + Eq + Debug + 'static>(
-    request: R,
-) -> UseAsyncHandle<<R::Output as OutputFormat>::Target, Rc<Error>>
-where
-    R::Output: Decodable + Clone,
-    <R::Output as OutputFormat>::Target: Clone + PartialEq + 'static,
-{
-    let request = Rc::new(request);
-    let current = use_state({
-        let request = request.clone();
-        move || request
-    });
-    let request_clone = request.clone();
-    let handle = use_async_with_options(
-        async move {
-            let path = format!("/{}", request_clone.uri());
-            let response = Request::get(&path)
-                .send()
-                .await
-                .map_err(Error::from)
-                .map_err(Rc::new)?;
-            <R::Output as Decodable>::decode(&response)
-                .await
-                .map_err(Rc::new)
-        },
-        UseAsyncOptions::enable_auto(),
-    );
-    let handle_clone = handle.clone();
-    use_effect(move || {
-        if *current != request {
-            current.set(request);
-            handle_clone.run();
-        }
-        || {}
-    });
-    handle
-}
-
-#[hook]
 pub fn use_request<R: HttpRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
-    let handle = use_async(async move { request.send().await.map_err(Rc::new) });
+    let cache = use_context::<Cache>().expect("Cache not present");
+    let handle = use_async(async move {
+        let result = request.send().await.map_err(Rc::new);
+        cache.invalidate_all();
+        result
+    });
     handle
 }
 
@@ -140,7 +106,8 @@ pub fn use_delete<R: DeleteRequest + 'static>(request: R) -> UseAsyncHandle<(), 
 }
 
 #[hook]
-pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Output as OutputFormat>::Target> where
+pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Output as OutputFormat>::Target>
+where
     R::Output: Decodable,
     <R::Output as OutputFormat>::Target: PartialEq + Clone + 'static,
     Get<R>: CacheItem,

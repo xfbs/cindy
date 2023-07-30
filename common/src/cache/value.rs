@@ -7,6 +7,7 @@ use std::{
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Value<T> {
+    /// Valid means the data is usable.
     valid: bool,
     data: Option<T>,
 }
