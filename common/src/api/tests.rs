@@ -34,7 +34,7 @@ fn test_uri() {
                 name: None::<&str>,
                 value: None::<&str>,
             },
-            "api/v1/file/ab/tags/*/*",
+            "api/v1/file/ab/tags",
         ),
     ];
 

@@ -73,16 +73,17 @@ pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
 
 impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     type Output = Json<Vec<Tag>>;
-    type Query<'a> = () where H: 'a, S: 'a;
+    type Query<'a> = TagQuery<&'a str> where H: 'a, S: 'a;
 
     fn path(&self) -> Cow<'_, str> {
-        format!(
-            "api/v1/file/{}/tags/{}/{}",
-            self.hash.borrow(),
-            self.name.as_ref().map(Borrow::borrow).unwrap_or("*"),
-            self.value.as_ref().map(Borrow::borrow).unwrap_or("*")
-        )
-        .into()
+        format!("api/v1/file/{}/tags", self.hash.borrow(),).into()
+    }
+
+    fn query(&self) -> Option<Self::Query<'_>> {
+        Some(TagQuery {
+            name: self.name.as_ref().map(Borrow::borrow),
+            value: self.value.as_ref().map(Borrow::borrow),
+        })
     }
 }
 

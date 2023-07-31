@@ -98,9 +98,15 @@ impl<T: Handle> Database<T> {
     }
 
     /// Set a tag value's display value.
-    pub fn tag_value_display(&self, value: &str, display: &str) -> Result<()> {
-        let mut query = self.prepare_cached("UPDATE tag_values SET display = ? WHERE name = ?")?;
-        query.execute([value, display])?;
+    /// TODO: test and/or move this into tags view?
+    pub fn tag_value_display(&self, name: &str, value: &str, display: &str) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "UPDATE tag_values
+            SET display = ?
+            WHERE name = ?
+            AND tag_id = (SELECT id FROM tag_name WHERE name = ?)",
+        )?;
+        query.execute([value, display, name])?;
         Ok(())
     }
 

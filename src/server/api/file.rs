@@ -7,7 +7,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
-use cindy_common::api::TagQuery;
+use cindy_common::api::*;
 use std::path::PathBuf;
 use tokio::{fs::File, task::spawn_blocking};
 use tokio_util::io::ReaderStream;
@@ -50,35 +50,27 @@ async fn stream_file(
 
 async fn file_tags(
     State(cindy): State<Cindy>,
-    Path((hash, name, value)): Path<(ArcHash, String, String)>,
+    Path(hash): Path<ArcHash>,
+    Query(query): Query<TagQuery<String>>,
 ) -> Result<impl IntoResponse, Error> {
-    let name = match name.as_str() {
-        "*" => None,
-        _ => Some(name),
-    };
-    let value = match value.as_str() {
-        "*" => None,
-        _ => Some(value),
-    };
-
     // get filenames
     let database = cindy.database().await;
-    let hash_clone = hash.clone();
-    let tags =
-        spawn_blocking(move || database.hash_tags(&hash_clone, name.as_deref(), value.as_deref()))
-            .await??;
+    let tags = spawn_blocking(move || {
+        database.hash_tags(&hash, query.name.as_deref(), query.value.as_deref())
+    })
+    .await??;
 
     Ok(Json(tags))
 }
 
 async fn file_tag_create(
     State(cindy): State<Cindy>,
-    Path((hash, name, value)): Path<(ArcHash, String, String)>,
+    Path(hash): Path<ArcHash>,
+    Json(request): Json<FileTagCreateBody<'static>>,
 ) -> Result<(), Error> {
     // get filenames
     let database = cindy.database().await;
-    let hash_clone = hash.clone();
-    spawn_blocking(move || database.hash_tag_add(&hash_clone, &name, &value)).await??;
+    spawn_blocking(move || database.hash_tag_add(&hash, &request.name, &request.value)).await??;
 
     Ok(())
 }
@@ -100,11 +92,8 @@ async fn file_tag_delete(
 }
 
 pub fn router() -> Router<Cindy> {
-    Router::new()
-        .route("/:hash", get(stream_file))
-        .route(
-            "/:hash/tags/:name/:value",
-            get(file_tags).post(file_tag_create),
-        )
-        .route("/:hash/tags", delete(file_tag_delete))
+    Router::new().route("/:hash", get(stream_file)).route(
+        "/:hash/tags",
+        get(file_tags).delete(file_tag_delete).post(file_tag_create),
+    )
 }

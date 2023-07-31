@@ -5,7 +5,7 @@ use axum::{
     Json, Router,
 };
 use cindy_common::{
-    api::TagQuery,
+    api::*,
     tag::{Tag, TagNameInfo, TagValueInfo},
 };
 use std::collections::BTreeMap;
@@ -42,9 +42,17 @@ async fn tag_list(
 async fn tag_create(
     State(cindy): State<Cindy>,
     Path((name, value)): Path<(String, String)>,
+    Json(query): Json<TagCreateBody<'static>>,
 ) -> Result<(), Error> {
     let database = cindy.database().await;
-    spawn_blocking(move || database.tag_add(&name, &value).map_err(Into::into)).await?
+    spawn_blocking(move || {
+        database.tag_add(&query.name, &query.value)?;
+        if let Some(display) = &query.display {
+            database.tag_value_display(&query.name, &query.value, display)?;
+        }
+        Ok(())
+    })
+    .await?
 }
 
 async fn tag_delete(
@@ -62,7 +70,6 @@ async fn tag_delete(
 
 pub fn router() -> Router<Cindy> {
     Router::new()
-        .route("/", get(tag_list).delete(tag_delete))
-        .route("/:name/:value", post(tag_create))
+        .route("/", get(tag_list).delete(tag_delete).post(tag_create))
         .route("/names", get(tag_names))
 }
