@@ -5,8 +5,8 @@ use axum::{
     Router,
 };
 use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config};
-use cindy_common::{api::*, tag::*};
-use hyper::Body;
+use cindy_common::{api::*, tag::*, ErrorResponse};
+use hyper::{Body, StatusCode};
 use std::{fs::*, path::PathBuf};
 use tempfile::tempdir;
 use tower::ServiceExt;
@@ -470,4 +470,141 @@ async fn test_frontend_nonexisting() {
         .unwrap();
 
     assert_eq!(index, include_str!("../ui/dist/index.html"));
+}
+
+#[tokio::test]
+async fn file_tag_create() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    let router = cindy.router();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "value",
+            display: Some("Name Value"),
+        })
+        .await
+        .unwrap();
+
+    // create file
+    let content = "hello";
+    create_dir(dir.path().join("folder")).unwrap();
+    let file_path = dir.path().join("folder").join("file.txt");
+    write(&file_path, content).unwrap();
+
+    // add single file
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![file_path],
+            recursive: false,
+        }))
+        .await
+        .unwrap();
+    let router = cindy.router();
+    let hash = cindy.hasher().hash_data(&content.as_bytes());
+    let tags = router
+        .post(FileTagCreate {
+            hash: hash.clone(),
+            name: "name",
+            value: "value",
+        })
+        .await
+        .unwrap();
+
+    let tags = router
+        .get(FileTags {
+            hash: hash,
+            name: None,
+            value: None::<String>,
+        })
+        .await
+        .unwrap();
+
+    assert!(tags.contains(&Tag::new("name".into(), "value".into())));
+}
+
+#[tokio::test]
+async fn file_tag_delete() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    let router = cindy.router();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "value",
+            display: Some("Name Value"),
+        })
+        .await
+        .unwrap();
+
+    // create file
+    let content = "hello";
+    create_dir(dir.path().join("folder")).unwrap();
+    let file_path = dir.path().join("folder").join("file.txt");
+    write(&file_path, content).unwrap();
+
+    // add single file
+    cindy
+        .command(&Command::Add(AddCommand {
+            paths: vec![file_path],
+            recursive: false,
+        }))
+        .await
+        .unwrap();
+    let router = cindy.router();
+    let hash = cindy.hasher().hash_data(&content.as_bytes());
+    router
+        .post(FileTagCreate {
+            hash: hash.clone(),
+            name: "name",
+            value: "value",
+        })
+        .await
+        .unwrap();
+
+    router
+        .delete(FileTagDelete {
+            hash: hash.clone(),
+            name: Some("name"),
+            value: Some("value"),
+        })
+        .await
+        .unwrap();
+
+    let tags = router
+        .get(FileTags {
+            hash: hash,
+            name: None,
+            value: None::<String>,
+        })
+        .await
+        .unwrap();
+
+    assert!(!tags.contains(&Tag::new("name".into(), "value".into())));
+}
+
+#[tokio::test]
+async fn api_notfound() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+    let response = cindy
+        .router()
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/unknown")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let response: ErrorResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(response.error, "not found");
+    assert_eq!(response.cause, None);
 }

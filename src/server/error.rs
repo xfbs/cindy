@@ -37,3 +37,41 @@ impl IntoResponse for Error {
         (status, Json(response)).into_response()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::anyhow;
+
+    fn errors() -> Vec<Error> {
+        vec![
+            Error::NotFound,
+            Error::Other(anyhow::anyhow!("Anyhow error")),
+        ]
+    }
+
+    #[test]
+    fn test_response() {
+        for error in errors() {
+            let status = error.status();
+            let response = error.into_response();
+            assert_eq!(response.status(), status);
+        }
+    }
+
+    #[test]
+    fn test_debug() {
+        for error in errors() {
+            println!("{error:?}");
+        }
+    }
+
+    #[test]
+    fn test_status() {
+        assert_eq!(Error::NotFound.status(), StatusCode::NOT_FOUND);
+        assert_eq!(
+            Error::Other(anyhow!("Error")).status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+}

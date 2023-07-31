@@ -65,9 +65,7 @@ impl<H: Borrow<Hash>, S: Borrow<str>> PostRequest for FileTagCreate<H, S> {
 
     fn path(&self) -> Cow<'_, str> {
         let hash = self.hash.borrow();
-        let name = self.name.borrow();
-        let value = self.value.borrow();
-        format!("api/v1/file/{hash}/tag/{name}/{value}").into()
+        format!("api/v1/file/{hash}/tags").into()
     }
 
     fn body(&self) -> Option<Self::Input<'_>> {

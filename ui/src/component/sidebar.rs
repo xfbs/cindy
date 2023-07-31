@@ -80,8 +80,8 @@ pub struct FileTagsRowProps {
 pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
     let delete = use_delete(FileTagDelete {
         hash: props.file.clone(),
-        name: props.tag.name().to_string(),
-        value: props.tag.value().to_string(),
+        name: Some(props.tag.name().to_string()),
+        value: Some(props.tag.value().to_string()),
     });
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
