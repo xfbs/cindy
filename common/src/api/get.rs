@@ -1,4 +1,4 @@
-use super::{Json, OutputFormat};
+use super::{Json, ResponseEncoding};
 use crate::{
     api::query::TagQuery,
     cache::*,
@@ -24,7 +24,7 @@ pub struct QueryState {
 }
 
 pub trait GetRequest {
-    type Output: OutputFormat;
+    type Response: ResponseEncoding;
     type Query<'a>: Serialize
     where
         Self: 'a;
@@ -54,7 +54,7 @@ pub struct FileContent<H: Borrow<Hash> = BoxHash> {
 }
 
 impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
-    type Output = Bytes;
+    type Response = Bytes;
     type Query<'a> = () where H: 'a;
 
     fn path(&self) -> Cow<'_, str> {
@@ -72,7 +72,7 @@ pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
 }
 
 impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
-    type Output = Json<Vec<Tag>>;
+    type Response = Json<Vec<Tag>>;
     type Query<'a> = TagQuery<&'a str> where H: 'a, S: 'a;
 
     fn path(&self) -> Cow<'_, str> {
@@ -96,7 +96,7 @@ pub struct FileQuery<'a> {
 }
 
 impl<'a> GetRequest for FileQuery<'a> {
-    type Output = Json<Vec<BoxHash>>;
+    type Response = Json<Vec<BoxHash>>;
     type Query<'b> = &'b Self where 'a: 'b;
 
     fn path(&self) -> Cow<'_, str> {
@@ -112,7 +112,7 @@ impl<'a> GetRequest for FileQuery<'a> {
 pub struct TagNames;
 
 impl GetRequest for TagNames {
-    type Output = Json<BTreeMap<String, TagNameInfo>>;
+    type Response = Json<BTreeMap<String, TagNameInfo>>;
     type Query<'a> = ();
 
     fn path(&self) -> Cow<'_, str> {
@@ -131,7 +131,7 @@ where
     N: Borrow<str>,
     V: Borrow<str>,
 {
-    type Output = Json<BTreeMap<Tag, TagValueInfo>>;
+    type Response = Json<BTreeMap<Tag, TagValueInfo>>;
     type Query<'a> = TagQuery<&'a str> where N: 'a, V: 'a;
 
     fn path(&self) -> Cow<'_, str> {
@@ -152,7 +152,7 @@ pub struct FrontendFile<P: Borrow<Path>> {
 }
 
 impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
-    type Output = Bytes;
+    type Response = Bytes;
     type Query<'a> = () where P: 'a;
 
     fn path(&self) -> Cow<'_, str> {

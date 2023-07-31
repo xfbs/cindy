@@ -13,14 +13,20 @@ use tower::ServiceExt;
 
 #[async_trait(?Send)]
 trait RouterExt {
-    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Output as OutputFormat>::Target>;
+    async fn get<R: GetRequest>(
+        &self,
+        request: R,
+    ) -> Result<<R::Response as ResponseEncoding>::Target>;
     async fn post<R: PostRequest>(&self, request: R) -> Result<()>;
     async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()>;
 }
 
 #[async_trait(?Send)]
 impl RouterExt for Router {
-    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Output as OutputFormat>::Target> {
+    async fn get<R: GetRequest>(
+        &self,
+        request: R,
+    ) -> Result<<R::Response as ResponseEncoding>::Target> {
         let path = format!("/{}", request.uri());
         println!("GET {path}");
         let response = self
@@ -43,7 +49,7 @@ impl RouterExt for Router {
             panic!("Error in GET request");
         }
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-        R::Output::decode(body).map_err(Into::into)
+        R::Response::decode(body).map_err(Into::into)
     }
 
     async fn post<R: PostRequest>(&self, request: R) -> Result<()> {

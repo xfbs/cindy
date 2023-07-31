@@ -7,11 +7,11 @@ pub use post::*;
 mod delete;
 pub use delete::*;
 
-mod output;
-pub use crate::cache::*;
-pub use output::*;
+mod encoding;
+pub use encoding::*;
 
 mod query;
+pub use crate::cache::*;
 pub use query::*;
 
 #[cfg(test)]

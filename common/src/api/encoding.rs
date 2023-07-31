@@ -2,7 +2,7 @@ use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{convert::Infallible, error::Error};
 
-pub trait OutputFormat: Sized {
+pub trait ResponseEncoding: Sized {
     type Target;
     type Error: Error + Sync + Send + 'static;
 
@@ -12,7 +12,7 @@ pub trait OutputFormat: Sized {
 #[derive(Clone, Debug)]
 pub struct Json<T>(pub T);
 
-impl<T: DeserializeOwned> OutputFormat for Json<T> {
+impl<T: DeserializeOwned> ResponseEncoding for Json<T> {
     type Target = T;
     type Error = serde_json::Error;
 
@@ -21,7 +21,7 @@ impl<T: DeserializeOwned> OutputFormat for Json<T> {
     }
 }
 
-impl OutputFormat for Bytes {
+impl ResponseEncoding for Bytes {
     type Target = Bytes;
     type Error = Infallible;
 
@@ -30,7 +30,7 @@ impl OutputFormat for Bytes {
     }
 }
 
-impl OutputFormat for () {
+impl ResponseEncoding for () {
     type Target = ();
     type Error = Infallible;
 
@@ -40,23 +40,23 @@ impl OutputFormat for () {
     }
 }
 
-pub trait InputFormat {
+pub trait RequestEncoding {
     fn encode(&self) -> Bytes;
 }
 
-impl InputFormat for () {
+impl RequestEncoding for () {
     fn encode(&self) -> Bytes {
         Vec::new().into()
     }
 }
 
-impl InputFormat for Bytes {
+impl RequestEncoding for Bytes {
     fn encode(&self) -> Bytes {
         self.clone()
     }
 }
 
-impl<T: Serialize> InputFormat for Json<T> {
+impl<T: Serialize> RequestEncoding for Json<T> {
     fn encode(&self) -> Bytes {
         serde_json::to_vec(&self.0).unwrap().into()
     }

@@ -1,7 +1,7 @@
 use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{DeleteRequest, GetRequest, Json, OutputFormat, PostRequest},
+    api::{DeleteRequest, GetRequest, Json, PostRequest, ResponseEncoding},
     cache::RcValue,
 };
 use gloo_net::http::{Request, Response};
@@ -17,7 +17,7 @@ pub enum Error {
 }
 
 #[async_trait(?Send)]
-pub trait Decodable: OutputFormat {
+pub trait Decodable: ResponseEncoding {
     async fn decode(response: &Response) -> Result<Self::Target, Error>;
 }
 
@@ -47,14 +47,14 @@ pub struct Get<T: GetRequest>(pub T);
 #[async_trait(?Send)]
 impl<T: GetRequest> HttpRequest for Get<T>
 where
-    T::Output: Decodable,
-    <T::Output as OutputFormat>::Target: Clone + 'static,
+    T::Response: Decodable,
+    <T::Response as ResponseEncoding>::Target: Clone + 'static,
 {
-    type Response = <T::Output as OutputFormat>::Target;
+    type Response = <T::Response as ResponseEncoding>::Target;
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.uri());
         let response = Request::get(&path).send().await?;
-        <T::Output as Decodable>::decode(&response).await
+        <T::Response as Decodable>::decode(&response).await
     }
 }
 
@@ -66,7 +66,10 @@ impl<T: PostRequest> HttpRequest for Post<T> {
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.path());
-        Request::post(&path).send().await?;
+        Request::post(&path)
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
         Ok(())
     }
 }
@@ -106,10 +109,10 @@ pub fn use_delete<R: DeleteRequest + 'static>(request: R) -> UseAsyncHandle<(), 
 }
 
 #[hook]
-pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Output as OutputFormat>::Target>
+pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Response as ResponseEncoding>::Target>
 where
-    R::Output: Decodable,
-    <R::Output as OutputFormat>::Target: PartialEq + Clone + 'static,
+    R::Response: Decodable,
+    <R::Response as ResponseEncoding>::Target: PartialEq + Clone + 'static,
     Get<R>: CacheItem,
 {
     use_cached(Get(data))

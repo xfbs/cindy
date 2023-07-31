@@ -91,9 +91,41 @@ async fn file_tag_delete(
     Ok(())
 }
 
+async fn file_labels(
+    State(cindy): State<Cindy>,
+    Path(hash): Path<ArcHash>,
+    Query(query): Query<TagQuery<String>>,
+) -> Result<impl IntoResponse, Error> {
+    // get filenames
+    let database = cindy.database().await;
+    let labels = spawn_blocking(move || {
+        database.label_get(
+            Some(&hash),
+            query.name.as_deref(),
+            query.value.as_deref(),
+            None,
+        )
+    })
+    .await??;
+
+    Ok(Json(labels))
+}
+
+async fn file_label_delete() {}
+
+async fn file_label_create() {}
+
 pub fn router() -> Router<Cindy> {
-    Router::new().route("/:hash", get(stream_file)).route(
-        "/:hash/tags",
-        get(file_tags).delete(file_tag_delete).post(file_tag_create),
-    )
+    Router::new()
+        .route("/:hash", get(stream_file))
+        .route(
+            "/:hash/tags",
+            get(file_tags).delete(file_tag_delete).post(file_tag_create),
+        )
+        .route(
+            "/:hash/labels",
+            get(file_labels)
+                .delete(file_label_delete)
+                .post(file_label_create),
+        )
 }

@@ -108,12 +108,18 @@ pub struct FileTagsCreateRowProps {
 
 #[function_component]
 pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
+    let create = use_post(FileTagCreate {
+        hash: props.file.clone(),
+        name: "test",
+        value: "test",
+    });
     let node = use_node_ref();
     let tag_names = use_get_cached(TagNames);
     let onkeydown = {
         let ondelete = props.ondelete.clone();
         move |event: KeyboardEvent| {
             if event.key() == "Enter" {
+                create.run();
                 ondelete.emit(());
                 event.prevent_default();
             }
