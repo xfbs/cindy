@@ -28,20 +28,21 @@ pub struct TagCreateBody<'a> {
 pub struct TagCreate<S: Borrow<str>> {
     pub name: S,
     pub value: S,
+    pub display: Option<S>,
 }
 
 impl<S: Borrow<str>> PostRequest for TagCreate<S> {
     type Input<'a> = Json<TagCreateBody<'a>> where S: 'a;
 
     fn path(&self) -> Cow<'_, str> {
-        format!("api/v1/tags/{}/{}", self.name.borrow(), self.value.borrow()).into()
+        "api/v1/tags/values".into()
     }
 
     fn body(&self) -> Option<Self::Input<'_>> {
         Some(Json(TagCreateBody {
             name: self.name.borrow().into(),
             value: self.value.borrow().into(),
-            display: None,
+            display: self.display.as_ref().map(Borrow::borrow).map(Into::into),
         }))
     }
 }

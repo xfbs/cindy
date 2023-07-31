@@ -142,7 +142,7 @@ where
     type Query<'a> = TagQuery<&'a str> where N: 'a, V: 'a;
 
     fn path(&self) -> Cow<'_, str> {
-        "api/v1/tags".into()
+        "api/v1/tags/values".into()
     }
 
     fn query(&self) -> Option<Self::Query<'_>> {

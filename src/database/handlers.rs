@@ -103,10 +103,10 @@ impl<T: Handle> Database<T> {
         let mut query = self.prepare_cached(
             "UPDATE tag_values
             SET display = ?
-            WHERE name = ?
-            AND tag_id = (SELECT id FROM tag_name WHERE name = ?)",
+            WHERE value = ?
+            AND tag_id = (SELECT id FROM tag_names WHERE name = ?)",
         )?;
-        query.execute([value, display, name])?;
+        query.execute([display, value, name])?;
         Ok(())
     }
 

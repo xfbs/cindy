@@ -18,13 +18,6 @@ async fn tag_names(
     spawn_blocking(move || database.tag_names().map(Json).map_err(Into::into)).await?
 }
 
-fn option_from_str(tag: &str) -> Option<&str> {
-    match tag {
-        "*" => None,
-        other => Some(other),
-    }
-}
-
 async fn tag_list(
     State(cindy): State<Cindy>,
     Query(query): Query<TagQuery<String>>,
@@ -41,7 +34,6 @@ async fn tag_list(
 
 async fn tag_create(
     State(cindy): State<Cindy>,
-    Path((name, value)): Path<(String, String)>,
     Json(query): Json<TagCreateBody<'static>>,
 ) -> Result<(), Error> {
     let database = cindy.database().await;
@@ -70,6 +62,6 @@ async fn tag_delete(
 
 pub fn router() -> Router<Cindy> {
     Router::new()
-        .route("/", get(tag_list).delete(tag_delete).post(tag_create))
+        .route("/values", get(tag_list).delete(tag_delete).post(tag_create))
         .route("/names", get(tag_names))
 }

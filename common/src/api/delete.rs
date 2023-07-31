@@ -27,9 +27,10 @@ pub trait DeleteRequest {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TagDelete<S: Borrow<str>> {
-    pub name: S,
-    pub value: S,
+    pub name: Option<S>,
+    pub value: Option<S>,
 }
 
 impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
@@ -37,21 +38,22 @@ impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
     fn path(&self) -> Cow<'_, str> {
         let name = self.name.borrow();
         let value = self.value.borrow();
-        format!("api/v1/tags").into()
+        format!("api/v1/tags/values").into()
     }
 
     fn query(&self) -> Option<Self::Query<'_>> {
         Some(TagQuery {
-            name: Some(self.name.borrow()),
-            value: Some(self.value.borrow()),
+            name: self.name.as_ref().map(Borrow::borrow),
+            value: self.value.as_ref().map(Borrow::borrow),
         })
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileTagDelete<H: Borrow<Hash>, S: Borrow<str>> {
     pub hash: H,
-    pub name: S,
-    pub value: S,
+    pub name: Option<S>,
+    pub value: Option<S>,
 }
 
 impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
@@ -66,8 +68,8 @@ impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
 
     fn query(&self) -> Option<Self::Query<'_>> {
         Some(TagQuery {
-            name: Some(self.name.borrow()),
-            value: Some(self.value.borrow()),
+            name: self.name.as_ref().map(Borrow::borrow),
+            value: self.value.as_ref().map(Borrow::borrow),
         })
     }
 }

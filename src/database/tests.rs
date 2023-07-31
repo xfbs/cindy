@@ -1,5 +1,5 @@
 use super::*;
-use crate::tag::{TagFilter, TagPredicate};
+use crate::tag::{TagFilter, TagPredicate, TagValueInfo};
 use cindy_common::{Point, Rectangle, Sequence};
 
 #[test]
@@ -28,23 +28,156 @@ fn tags_initially_empty() {
 }
 
 #[test]
-fn can_tags_list_all() {
+fn can_tags_list_all_one() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    // add tags
+    database.tag_add("test", "label").unwrap();
+
+    // get all tags
+    let list = database.tag_list(None, None).unwrap();
+    assert_eq!(
+        list[&Tag::new("test".into(), "label".into())],
+        TagValueInfo {
+            files: 0,
+            display: "label".into(),
+            system: false,
+        }
+    );
+}
+
+#[test]
+fn can_tags_value_set_display() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    // add tags
+    database.tag_add("test", "label").unwrap();
+    database
+        .tag_value_display("test", "label", "Label Name")
+        .unwrap();
+
+    // get all tags
+    let list = database.tag_list(None, None).unwrap();
+    assert_eq!(
+        list[&Tag::new("test".into(), "label".into())],
+        TagValueInfo {
+            files: 0,
+            display: "Label Name".into(),
+            system: false,
+        }
+    );
+}
+
+#[test]
+fn can_tags_list_all_multiple() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
     // add tags
     database.tag_add("test", "label").unwrap();
     database.tag_add("test", "other").unwrap();
-    database.tag_add("height", "zero").unwrap();
-    database.tag_add("height", "other").unwrap();
+    database.tag_add("name", "zero").unwrap();
+    database.tag_add("name", "other").unwrap();
 
     // get all tags
     let list = database.tag_list(None, None).unwrap();
     assert_eq!(list.len(), 4);
-    assert!(list.contains_key(&Tag::new("test".into(), "label".into())));
-    assert!(list.contains_key(&Tag::new("test".into(), "other".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "zero".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "other".into())));
+    assert_eq!(
+        list[&Tag::new("test".into(), "label".into())],
+        TagValueInfo {
+            files: 0,
+            display: "label".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("test".into(), "other".into())],
+        TagValueInfo {
+            files: 0,
+            display: "other".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("name".into(), "zero".into())],
+        TagValueInfo {
+            files: 0,
+            display: "zero".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("name".into(), "other".into())],
+        TagValueInfo {
+            files: 0,
+            display: "other".into(),
+            system: false,
+        }
+    );
+}
+
+#[test]
+fn can_tags_set_display_multiple() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+
+    // add tags
+    database.tag_add("test", "label").unwrap();
+    database.tag_add("test", "other").unwrap();
+    database.tag_add("name", "zero").unwrap();
+    database.tag_add("name", "other").unwrap();
+
+    // set display
+    database
+        .tag_value_display("test", "label", "Test Label")
+        .unwrap();
+    database
+        .tag_value_display("test", "other", "Test Other")
+        .unwrap();
+    database
+        .tag_value_display("name", "zero", "Name Zero")
+        .unwrap();
+    database
+        .tag_value_display("name", "other", "Name Other")
+        .unwrap();
+
+    // get all tags
+    let list = database.tag_list(None, None).unwrap();
+    assert_eq!(list.len(), 4);
+    assert_eq!(
+        list[&Tag::new("test".into(), "label".into())],
+        TagValueInfo {
+            files: 0,
+            display: "Test Label".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("test".into(), "other".into())],
+        TagValueInfo {
+            files: 0,
+            display: "Test Other".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("name".into(), "zero".into())],
+        TagValueInfo {
+            files: 0,
+            display: "Name Zero".into(),
+            system: false,
+        }
+    );
+    assert_eq!(
+        list[&Tag::new("name".into(), "other".into())],
+        TagValueInfo {
+            files: 0,
+            display: "Name Other".into(),
+            system: false,
+        }
+    );
 }
 
 #[test]

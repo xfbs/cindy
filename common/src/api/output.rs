@@ -40,30 +40,23 @@ impl OutputFormat for () {
 }
 
 pub trait InputFormat {
-    type Target;
-    fn encode(target: &Self::Target) -> Bytes;
+    fn encode(&self) -> Bytes;
 }
 
 impl InputFormat for () {
-    type Target = ();
-
-    fn encode(target: &Self::Target) -> Bytes {
+    fn encode(&self) -> Bytes {
         Vec::new().into()
     }
 }
 
 impl InputFormat for Bytes {
-    type Target = Bytes;
-
-    fn encode(target: &Self::Target) -> Bytes {
-        target.clone()
+    fn encode(&self) -> Bytes {
+        self.clone()
     }
 }
 
 impl<T: Serialize> InputFormat for Json<T> {
-    type Target = T;
-
-    fn encode(data: &Self::Target) -> Bytes {
-        serde_json::to_vec(data).unwrap().into()
+    fn encode(&self) -> Bytes {
+        serde_json::to_vec(&self.0).unwrap().into()
     }
 }

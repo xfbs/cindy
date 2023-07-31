@@ -14,13 +14,15 @@ use tower::ServiceExt;
 #[async_trait(?Send)]
 trait RouterExt {
     async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Output as OutputFormat>::Target>;
+    async fn post<R: PostRequest>(&self, request: R) -> Result<()>;
+    async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()>;
 }
 
 #[async_trait(?Send)]
 impl RouterExt for Router {
     async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Output as OutputFormat>::Target> {
         let path = format!("/{}", request.uri());
-        println!("path {path}");
+        println!("GET {path}");
         let response = self
             .clone()
             .oneshot(
@@ -42,6 +44,62 @@ impl RouterExt for Router {
         }
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         R::Output::decode(body).map_err(Into::into)
+    }
+
+    async fn post<R: PostRequest>(&self, request: R) -> Result<()> {
+        let path = format!("/{}", request.path());
+        println!("POST {path}");
+        let body: Body = if let Some(body) = request.body() {
+            body.encode().into()
+        } else {
+            Body::empty()
+        };
+        let response = self
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(&path)
+                    .method(Method::POST)
+                    .header("Content-Type", "application/json")
+                    .body(body)
+                    .unwrap(),
+            )
+            .await?;
+        let status = response.status();
+        if !status.is_success() {
+            println!("Unsuccessful status: {status}");
+            let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+            if let Ok(string) = std::str::from_utf8(&body) {
+                println!("Body: {string}");
+            }
+            panic!("Error in GET request");
+        }
+        Ok(())
+    }
+
+    async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()> {
+        let path = format!("/{}", request.uri());
+        println!("DELETE {path}");
+        let response = self
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(&path)
+                    .method(Method::DELETE)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await?;
+        let status = response.status();
+        if !status.is_success() {
+            println!("Unsuccessful status: {status}");
+            let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+            if let Ok(string) = std::str::from_utf8(&body) {
+                println!("Body: {string}");
+            }
+            panic!("Error in GET request");
+        }
+        Ok(())
     }
 }
 
@@ -78,6 +136,140 @@ async fn test_file_list_tags() {
 
     // validate tags
     assert!(!tags.is_empty());
+}
+
+#[tokio::test]
+async fn tag_create() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    let router = cindy.router();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "value",
+            display: Some("Name Value"),
+        })
+        .await
+        .unwrap();
+
+    let tags = router
+        .get(TagList {
+            name: None::<&str>,
+            value: None::<&str>,
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(
+        tags[&Tag::new("name".into(), "value".into())],
+        TagValueInfo {
+            files: 0,
+            system: false,
+            display: "Name Value".into(),
+        }
+    );
+}
+
+#[tokio::test]
+async fn tag_delete_one() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    let router = cindy.router();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "value",
+            display: Some("Name Value"),
+        })
+        .await
+        .unwrap();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "other",
+            display: Some("Other Value"),
+        })
+        .await
+        .unwrap();
+
+    router
+        .delete(TagDelete {
+            name: Some("name"),
+            value: Some("value"),
+        })
+        .await
+        .unwrap();
+
+    let tags = router
+        .get(TagList {
+            name: None::<&str>,
+            value: None::<&str>,
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(
+        tags.contains_key(&Tag::new("name".into(), "value".into())),
+        false
+    );
+    assert_eq!(
+        tags.contains_key(&Tag::new("name".into(), "other".into())),
+        true
+    );
+}
+
+#[tokio::test]
+async fn tag_delete_all_labels() {
+    let dir = tempdir().unwrap();
+    let config = Config::default();
+    let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
+
+    let router = cindy.router();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "value",
+            display: Some("Name Value"),
+        })
+        .await
+        .unwrap();
+    router
+        .post(TagCreate {
+            name: "name",
+            value: "other",
+            display: Some("Other Value"),
+        })
+        .await
+        .unwrap();
+
+    router
+        .delete(TagDelete {
+            name: Some("name"),
+            value: None,
+        })
+        .await
+        .unwrap();
+
+    let tags = router
+        .get(TagList {
+            name: None::<&str>,
+            value: None::<&str>,
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(
+        tags.contains_key(&Tag::new("name".into(), "value".into())),
+        false
+    );
+    assert_eq!(
+        tags.contains_key(&Tag::new("name".into(), "other".into())),
+        false
+    );
 }
 
 #[tokio::test]
