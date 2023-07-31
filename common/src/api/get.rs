@@ -3,7 +3,7 @@ use crate::{
     api::query::TagQuery,
     cache::*,
     tag::{TagNameInfo, TagValueInfo},
-    BoxHash, Hash, Mutation, Tag, TagPredicate,
+    BoxHash, Hash, Tag, TagPredicate,
 };
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -87,14 +87,7 @@ impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     }
 }
 
-impl<H: Borrow<Hash>, S: Borrow<str>> Invalidatable for FileTags<H, S> {
-    fn invalidated_by(&self, mutation: &Mutation) -> bool {
-        match mutation {
-            //Mutation::File(file) => file == self.hash.borrow(),
-            _ => true,
-        }
-    }
-}
+impl<H: Borrow<Hash>, S: Borrow<str>> Invalidatable for FileTags<H, S> {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileQuery<'a> {
@@ -111,7 +104,7 @@ impl<'a> GetRequest for FileQuery<'a> {
     }
 
     fn query(&self) -> Option<Self::Query<'_>> {
-        Some(&self)
+        Some(self)
     }
 }
 

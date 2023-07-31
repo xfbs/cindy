@@ -504,7 +504,7 @@ async fn file_tag_create() {
         .unwrap();
     let router = cindy.router();
     let hash = cindy.hasher().hash_data(&content.as_bytes());
-    let tags = router
+    router
         .post(FileTagCreate {
             hash: hash.clone(),
             name: "name",

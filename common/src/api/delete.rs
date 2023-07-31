@@ -1,7 +1,4 @@
-use crate::{
-    api::{InputFormat, TagQuery},
-    hash::*,
-};
+use crate::{api::TagQuery, hash::*};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
@@ -36,9 +33,7 @@ pub struct TagDelete<S: Borrow<str>> {
 impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
     type Query<'a> = TagQuery<&'a str> where S: 'a;
     fn path(&self) -> Cow<'_, str> {
-        let name = self.name.borrow();
-        let value = self.value.borrow();
-        format!("api/v1/tags/values").into()
+        "api/v1/tags/values".into()
     }
 
     fn query(&self) -> Option<Self::Query<'_>> {
@@ -61,8 +56,6 @@ impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
 
     fn path(&self) -> Cow<'_, str> {
         let hash = self.hash.borrow();
-        let name = self.name.borrow();
-        let value = self.value.borrow();
         format!("api/v1/file/{hash}/tags").into()
     }
 

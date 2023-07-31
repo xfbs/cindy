@@ -44,7 +44,7 @@ mod serde {
             D: Deserializer<'de>,
         {
             let data: &'de str = <&'de str>::deserialize(deserializer)?;
-            Ok(Self::from_str(data).map_err(Error::custom)?)
+            Self::from_str(data).map_err(Error::custom)
         }
     }
 }

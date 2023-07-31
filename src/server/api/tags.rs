@@ -1,7 +1,7 @@
 use crate::{server::Error, Cindy};
 use axum::{
-    extract::{Path, Query, State},
-    routing::{get, post},
+    extract::{Query, State},
+    routing::get,
     Json, Router,
 };
 use cindy_common::{

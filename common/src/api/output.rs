@@ -34,7 +34,8 @@ impl OutputFormat for () {
     type Target = ();
     type Error = Infallible;
 
-    fn decode(data: Bytes) -> Result<Self::Target, Self::Error> {
+    fn decode(_data: Bytes) -> Result<Self::Target, Self::Error> {
+        // TODO: raise error on non empty body?
         Ok(())
     }
 }

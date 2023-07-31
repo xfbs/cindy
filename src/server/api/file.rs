@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderValue},
     response::IntoResponse,
-    routing::{delete, get},
+    routing::get,
     Json, Router,
 };
 use cindy_common::api::*;

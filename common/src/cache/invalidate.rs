@@ -1,20 +1,15 @@
-use crate::{BoxHash, Mutation};
-use std::time::Duration;
+use crate::Mutation;
 
 /// Something which can be invalidated.
-pub trait Invalidatable<T = Mutation> {
-    fn invalidated_by(&self, mutation: &T) -> bool {
+pub trait Invalidatable<M = Mutation> {
+    fn invalidated_by(&self, _mutation: &M) -> bool {
         true
-    }
-
-    fn duration(&self) -> Option<Duration> {
-        None
     }
 }
 
 impl<T> Invalidatable<()> for T {}
 
 /// Something which produces invalidations.
-pub trait Invalidator<T = Mutation> {
-    fn mutations(&self) -> Vec<T>;
+pub trait Invalidator<M = Mutation> {
+    fn mutations(&self) -> Vec<M>;
 }
