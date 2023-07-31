@@ -272,7 +272,7 @@ fn Heading(props: &HeadingProps) -> Html {
 pub struct QuerySidebarProps {}
 
 #[function_component]
-pub fn QuerySidebar(props: &QuerySidebarProps) -> Html {
+pub fn QuerySidebar(_props: &QuerySidebarProps) -> Html {
     html! {
         <div class="bg-white w-full md:w-96 md:min-h-screen p-6">
             <Heading>{"Common tags"}</Heading>

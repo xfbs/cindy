@@ -1,6 +1,6 @@
 use crate::request::HttpRequest;
-use cindy_common::cache::{RcValue, CacheKey};
-use std::{any::{TypeId, Any}, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex, cmp::Ordering, ops::Deref};
+use cindy_common::cache::{CacheKey, RcValue};
+use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex};
 use yew::{
     functional::{UseStateHandle, UseStateSetter},
     prelude::*,
@@ -72,10 +72,7 @@ impl BTreeCache {
     }
 
     /// Unsubscribe to the value of this data.
-    pub fn mutate_all<F: Fn(&Box<dyn CacheKey>, &mut Entry)>(
-        &mut self,
-        mutate: F,
-    ) {
+    pub fn mutate_all<F: Fn(&Box<dyn CacheKey>, &mut Entry)>(&mut self, mutate: F) {
         for (key, entry) in &mut self.entries {
             mutate(key, entry);
         }
@@ -121,7 +118,7 @@ impl Cache {
                 );
                 drop(cache);
                 self.fetch(request);
-            },
+            }
             Some(entry) if !entry.value.valid() => {
                 drop(cache);
                 self.fetch(request);
@@ -180,14 +177,11 @@ impl Cache {
 
     /// FIXME: invalidates entire cache.
     pub fn invalidate_all(&self) {
-        let mut cache = self.cache
-            .lock()
-            .expect("Failure to lock cache");
-        cache
-            .mutate_all(|key, entry| {
-                entry.value.invalidate();
-                entry.broadcast();
-            });
+        let mut cache = self.cache.lock().expect("Failure to lock cache");
+        cache.mutate_all(|_key, entry| {
+            entry.value.invalidate();
+            entry.broadcast();
+        });
     }
 }
 
@@ -208,7 +202,10 @@ pub fn CacheProvider(props: &CacheProviderProps) -> Html {
 }
 
 #[hook]
-pub fn use_cached<R: HttpRequest + CacheItem>(data: R) -> RcValue<R::Response> where R::Response: PartialEq {
+pub fn use_cached<R: HttpRequest + CacheItem>(data: R) -> RcValue<R::Response>
+where
+    R::Response: PartialEq,
+{
     log::debug!("use_data({data:?})");
     let cache = use_context::<Cache>().expect("Cache not present");
     let state = use_state(|| RcValue::default());

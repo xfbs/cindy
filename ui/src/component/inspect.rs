@@ -12,7 +12,7 @@ pub fn FileInspect(props: &FileInspectProps) -> Html {
     let content = FileContent {
         hash: props.file.clone(),
     };
-    let size = (500, 500);
+    //let size = (500, 500);
     let labels: Vec<(Tag, Label)> = vec![(
         Tag::new("name".into(), "value".into()),
         Rectangle {

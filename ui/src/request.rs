@@ -1,14 +1,14 @@
 use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{DeleteRequest, GetRequest, InputFormat, Json, OutputFormat, PostRequest},
+    api::{DeleteRequest, GetRequest, Json, OutputFormat, PostRequest},
     cache::RcValue,
 };
 use gloo_net::http::{Request, Response};
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, rc::Rc};
-use yew::functional::{hook, use_context, use_effect, use_state};
-use yew_hooks::prelude::{use_async, use_async_with_options, UseAsyncHandle, UseAsyncOptions};
+use yew::functional::{hook, use_context};
+use yew_hooks::prelude::{use_async, UseAsyncHandle};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -30,7 +30,7 @@ impl<T: DeserializeOwned + Clone + 'static> Decodable for Json<T> {
 
 #[async_trait(?Send)]
 impl Decodable for () {
-    async fn decode(response: &Response) -> Result<Self::Target, Error> {
+    async fn decode(_response: &Response) -> Result<Self::Target, Error> {
         Ok(())
     }
 }
@@ -66,7 +66,7 @@ impl<T: PostRequest> HttpRequest for Post<T> {
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.path());
-        let response = Request::post(&path).send().await?;
+        Request::post(&path).send().await?;
         Ok(())
     }
 }
@@ -79,7 +79,7 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.uri());
-        let response = Request::delete(&path).send().await?;
+        Request::delete(&path).send().await?;
         Ok(())
     }
 }

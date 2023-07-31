@@ -51,13 +51,15 @@ pub struct FileViewProps {
 
 #[function_component]
 pub fn FileView(props: &FileViewProps) -> Html {
-    let filters = use_state(|| vec![]);
+    //let filters = use_state(|| vec![]);
+    /*
     let onchange = {
         let filters = filters.clone();
         move |new: Vec<TagPredicate<'static>>| {
             filters.set(new);
         }
     };
+    */
     html! {
         <div>
             <NavBar>
