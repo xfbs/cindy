@@ -3,6 +3,7 @@
 //! This crate implements a Yew application that is the frontend of Cindy. This frontend is mainly
 //! used to query, tag and label that has been loaded into Cindy using the command-line interface.
 
+mod app;
 mod cache;
 mod component;
 mod hooks;
@@ -11,6 +12,7 @@ mod request;
 /// Commonly used imports, re-exported for convenience.
 mod prelude {
     pub use crate::{
+        app::*,
         cache::{use_cached, CacheProvider},
         component::*,
         hooks::*,
@@ -29,5 +31,5 @@ mod prelude {
 
 fn main() {
     wasm_logger::init(Default::default());
-    yew::Renderer::<component::App>::new().render();
+    yew::Renderer::<app::App>::new().render();
 }

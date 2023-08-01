@@ -16,12 +16,12 @@ fn Settings() -> Html {
         <div class="w-auto" id="navbar-default">
             <ul class="font-medium flex flex-col p-0 flex-row space-x-8 mt-0">
                 <li>
-                    <a href="#" class="group flex items-center text-gray-900 md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">
+                    <Link<Route> to={Route::SettingsRoot} classes="group flex items-center text-gray-900 md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">
                         <img src="/gear.svg" class="h-8 mr-3 group-hover:rotate-180 transition duration-500 group-hover:scale-125" alt="Settings icon" />
                         <span class="hidden md:block p-0">
                             {"Settings"}
                         </span>
-                    </a>
+                    </Link<Route>>
                 </li>
             </ul>
         </div>

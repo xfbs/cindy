@@ -261,12 +261,12 @@ pub fn ToggleEntry(props: &ToggleEntryProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct HeadingProps {
-    children: Children,
+pub struct SidebarHeadingProps {
+    pub children: Children,
 }
 
 #[function_component]
-fn Heading(props: &HeadingProps) -> Html {
+pub fn SidebarHeading(props: &SidebarHeadingProps) -> Html {
     html! {
         <h1 class="text-lg font-bold">
             { for props.children.iter() }
@@ -280,15 +280,15 @@ pub struct QuerySidebarProps {}
 #[function_component]
 pub fn QuerySidebar(_props: &QuerySidebarProps) -> Html {
     html! {
-        <div class="bg-white w-full md:w-96 md:min-h-screen p-6">
-            <Heading>{"Common tags"}</Heading>
+        <Sidebar>
+            <SidebarHeading>{"Common tags"}</SidebarHeading>
             <CommonTagsList />
-            <Heading>{"Settings"}</Heading>
+            <SidebarHeading>{"Settings"}</SidebarHeading>
             <div class="py-2">
                 <ToggleEntry text="Show tags" />
                 <ToggleEntry text="Hive system tags" />
             </div>
-        </div>
+        </Sidebar>
     }
 }
 
@@ -305,25 +305,39 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
         value: None::<String>,
     });
     html! {
-        <div class="bg-white md:w-96 md:min-h-screen p-6">
-            <Heading>{"Tags"}</Heading>
+        <Sidebar>
+            <SidebarHeading>{"Tags"}</SidebarHeading>
             if let Some(tags) = tags.data() {
                 <FileTagsList file={props.file.clone()} tags={(**tags).clone()} />
             } else {
                 <FileTagsList file={props.file.clone()} tags={vec![]} />
             }
 
-            <Heading>{"Labels"}</Heading>
+            <SidebarHeading>{"Labels"}</SidebarHeading>
             <FileTagsList file={props.file.clone()} />
 
-            <Heading>{"Settings"}</Heading>
+            <SidebarHeading>{"Settings"}</SidebarHeading>
             <div class="py-2">
                 <ToggleEntry text="Show labels" />
                 <ToggleEntry text="Edit labels" />
             </div>
 
-            <Heading>{"Management"}</Heading>
+            <SidebarHeading>{"Management"}</SidebarHeading>
             <p>{"Delete file"}</p>
+        </Sidebar>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct SidebarProps {
+    pub children: Children,
+}
+
+#[function_component]
+pub fn Sidebar(props: &SidebarProps) -> Html {
+    html! {
+        <div class="bg-white md:w-96 md:h-full p-6">
+        { for props.children.iter() }
         </div>
     }
 }

@@ -10,9 +10,6 @@ pub use search_results::*;
 mod inspect;
 pub use inspect::*;
 
-mod router;
-pub use router::*;
-
 mod search;
 pub use search::*;
 
