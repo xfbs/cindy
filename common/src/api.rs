@@ -11,8 +11,12 @@ mod encoding;
 pub use encoding::*;
 
 mod query;
-pub use crate::cache::*;
 pub use query::*;
+
+mod traits;
+pub use traits::*;
+
+pub use crate::cache::*;
 
 #[cfg(test)]
 mod tests;

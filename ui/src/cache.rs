@@ -1,4 +1,4 @@
-use crate::request::HttpRequest;
+use crate::request::GlooRequest;
 use cindy_common::cache::{CacheKey, RcValue};
 use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex};
 use yew::{
@@ -87,7 +87,7 @@ impl BTreeCache {
 }
 
 impl Cache {
-    fn subscribe<R: HttpRequest + CacheItem>(&self, request: &R, handle: UseStateHandle<RcValue>)
+    fn subscribe<R: GlooRequest + CacheItem>(&self, request: &R, handle: UseStateHandle<RcValue>)
     where
         R::Response: PartialEq,
     {
@@ -130,7 +130,7 @@ impl Cache {
     }
 
     /// Trigger a fetch of this data.
-    fn fetch<T: HttpRequest + CacheItem>(&self, data: &T) {
+    fn fetch<T: GlooRequest + CacheItem>(&self, data: &T) {
         let data = data.clone();
         let cache = self.clone();
         wasm_bindgen_futures::spawn_local(async move {
@@ -142,7 +142,7 @@ impl Cache {
     }
 
     /// Cache this data.
-    pub fn failure<T: HttpRequest + CacheItem>(&self, data: &T, error: crate::request::Error) {
+    pub fn failure<T: GlooRequest + CacheItem>(&self, data: &T, error: crate::request::Error) {
         self.cache
             .lock()
             .expect("Failure to lock cache")
@@ -153,7 +153,7 @@ impl Cache {
     }
 
     /// Cache this data.
-    pub fn cache<T: HttpRequest + CacheItem>(&self, data: &T, value: Rc<T::Response>) {
+    pub fn cache<T: GlooRequest + CacheItem>(&self, data: &T, value: Rc<T::Response>) {
         self.cache
             .lock()
             .expect("Failure to lock cache")
@@ -164,7 +164,7 @@ impl Cache {
     }
 
     /// Unsubscribe to the value of this data.
-    pub fn unsubscribe<T: HttpRequest + CacheItem>(
+    pub fn unsubscribe<T: GlooRequest + CacheItem>(
         &self,
         data: &T,
         setter: &UseStateSetter<RcValue>,
@@ -178,7 +178,7 @@ impl Cache {
     }
 
     /// Invalidate this data.
-    pub fn invalidate<T: HttpRequest + CacheItem>(&self, data: &T) {
+    pub fn invalidate<T: GlooRequest + CacheItem>(&self, data: &T) {
         self.cache
             .lock()
             .expect("Failure to lock cache")
@@ -216,7 +216,7 @@ pub fn CacheProvider(props: &CacheProviderProps) -> Html {
 }
 
 #[hook]
-pub fn use_cached<R: HttpRequest + CacheItem>(data: R) -> RcValue<R::Response>
+pub fn use_cached<R: GlooRequest + CacheItem>(data: R) -> RcValue<R::Response>
 where
     R::Response: PartialEq,
 {

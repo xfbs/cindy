@@ -57,7 +57,7 @@ impl<T: Serialize> GlooEncodable for Json<T> {
 }
 
 #[async_trait(?Send)]
-pub trait HttpRequest {
+pub trait GlooRequest {
     type Response: Clone + 'static;
     async fn send(&self) -> Result<Self::Response, Error>;
 }
@@ -66,7 +66,7 @@ pub trait HttpRequest {
 pub struct Get<T: GetRequest>(pub T);
 
 #[async_trait(?Send)]
-impl<T: GetRequest> HttpRequest for Get<T>
+impl<T: GetRequest> GlooRequest for Get<T>
 where
     T::Response: GlooDecodable,
     <T::Response as ResponseEncoding>::Target: Clone + 'static,
@@ -83,7 +83,7 @@ where
 pub struct Post<T: PostRequest>(pub T);
 
 #[async_trait(?Send)]
-impl<T: PostRequest> HttpRequest for Post<T>
+impl<T: PostRequest> GlooRequest for Post<T>
 where
     T::Request: GlooEncodable,
 {
@@ -91,11 +91,9 @@ where
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.path());
         let builder = Request::post(&path);
-        let request = match self.0.body() {
-            Some(body) => body.gloo_encode(builder),
-            None => builder.build(),
-        };
-        request?.send().await?;
+        self.0.body().gloo_encode(builder)?
+            .send()
+            .await?;
         Ok(())
     }
 }
@@ -104,7 +102,7 @@ where
 pub struct Delete<T: DeleteRequest>(pub T);
 
 #[async_trait(?Send)]
-impl<T: DeleteRequest> HttpRequest for Delete<T> {
+impl<T: DeleteRequest> GlooRequest for Delete<T> {
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.uri());
@@ -114,7 +112,7 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
 }
 
 #[hook]
-pub fn use_request<R: HttpRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
+pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
     let cache = use_context::<Cache>().expect("Cache not present");
     let handle = use_async(async move {
         let result = request.send().await.map_err(Rc::new);

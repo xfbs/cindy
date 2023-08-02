@@ -55,11 +55,7 @@ impl RouterExt for Router {
     async fn post<R: PostRequest>(&self, request: R) -> Result<()> {
         let path = format!("/{}", request.path());
         println!("POST {path}");
-        let body: Body = if let Some(body) = request.body() {
-            body.encode().into()
-        } else {
-            Body::empty()
-        };
+        let body: Body = request.body().encode().into();
         let response = self
             .clone()
             .oneshot(

@@ -1,6 +1,6 @@
 use super::{Json, ResponseEncoding};
 use crate::{
-    api::query::TagQuery,
+    api::{query::TagQuery, GetRequest},
     cache::*,
     tag::{TagNameInfo, TagValueInfo},
     BoxHash, Hash, Tag, TagPredicate,
@@ -23,31 +23,6 @@ pub struct QueryState {
     pub group: Option<String>,
 }
 
-pub trait GetRequest {
-    type Response: ResponseEncoding;
-    type Query<'a>: Serialize
-    where
-        Self: 'a;
-
-    fn path(&self) -> Cow<'_, str>;
-
-    fn query(&self) -> Option<Self::Query<'_>> {
-        None
-    }
-
-    fn uri(&self) -> String {
-        let mut path = self.path().into_owned();
-        if let Some(query) = self.query() {
-            let query_string = serde_qs::to_string(&query).unwrap();
-            if !query_string.is_empty() {
-                path.push('?');
-                path.push_str(&query_string);
-            }
-        }
-        path
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileContent<H: Borrow<Hash> = BoxHash> {
     pub hash: H,
@@ -55,7 +30,11 @@ pub struct FileContent<H: Borrow<Hash> = BoxHash> {
 
 impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     type Response = Bytes;
-    type Query<'a> = () where H: 'a;
+    type Query = ();
+
+    fn query(&self) -> Self::Query {
+        ()
+    }
 
     fn path(&self) -> Cow<'_, str> {
         format!("api/v1/file/{}", self.hash.borrow()).into()
@@ -73,17 +52,17 @@ pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
 
 impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     type Response = Json<Vec<Tag>>;
-    type Query<'a> = TagQuery<&'a str> where H: 'a, S: 'a;
+    type Query = TagQuery<String>;
 
     fn path(&self) -> Cow<'_, str> {
         format!("api/v1/file/{}/tags", self.hash.borrow(),).into()
     }
 
-    fn query(&self) -> Option<Self::Query<'_>> {
-        Some(TagQuery {
-            name: self.name.as_ref().map(Borrow::borrow),
-            value: self.value.as_ref().map(Borrow::borrow),
-        })
+    fn query(&self) -> Self::Query {
+        TagQuery {
+            name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
+            value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
+        }
     }
 }
 
@@ -97,14 +76,14 @@ pub struct FileQuery<'a> {
 
 impl<'a> GetRequest for FileQuery<'a> {
     type Response = Json<Vec<BoxHash>>;
-    type Query<'b> = &'b Self where 'a: 'b;
+    type Query = Self;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query".into()
     }
 
-    fn query(&self) -> Option<Self::Query<'_>> {
-        Some(self)
+    fn query(&self) -> Self::Query {
+        self.clone()
     }
 }
 
@@ -113,10 +92,14 @@ pub struct TagNames;
 
 impl GetRequest for TagNames {
     type Response = Json<BTreeMap<String, TagNameInfo>>;
-    type Query<'a> = ();
+    type Query = ();
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/names".into()
+    }
+
+    fn query(&self) -> Self::Query {
+        ()
     }
 }
 
@@ -132,17 +115,17 @@ where
     V: Borrow<str>,
 {
     type Response = Json<BTreeMap<Tag, TagValueInfo>>;
-    type Query<'a> = TagQuery<&'a str> where N: 'a, V: 'a;
+    type Query = TagQuery<String>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/values".into()
     }
 
-    fn query(&self) -> Option<Self::Query<'_>> {
-        Some(TagQuery {
-            name: self.name.as_ref().map(Borrow::borrow),
-            value: self.value.as_ref().map(Borrow::borrow),
-        })
+    fn query(&self) -> Self::Query {
+        TagQuery {
+            name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
+            value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
+        }
     }
 }
 
@@ -153,9 +136,13 @@ pub struct FrontendFile<P: Borrow<Path>> {
 
 impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
     type Response = Bytes;
-    type Query<'a> = () where P: 'a;
+    type Query = ();
 
     fn path(&self) -> Cow<'_, str> {
         self.path.borrow().display().to_string().into()
+    }
+
+    fn query(&self) -> Self::Query {
+        ()
     }
 }
