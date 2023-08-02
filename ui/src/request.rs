@@ -1,11 +1,14 @@
 use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{DeleteRequest, GetRequest, Json, PostRequest, ResponseEncoding},
+    api::{DeleteRequest, GetRequest, Json, PostRequest, RequestEncoding, ResponseEncoding},
     cache::RcValue,
 };
-use gloo_net::http::{Request, Response};
-use serde::de::DeserializeOwned;
+use gloo_net::{
+    http::{Request, RequestBuilder, Response},
+    Error as GlooError,
+};
+use serde::{de::DeserializeOwned, Serialize};
 use std::{fmt::Debug, rc::Rc};
 use yew::functional::{hook, use_context};
 use yew_hooks::prelude::{use_async, UseAsyncHandle};
@@ -17,21 +20,39 @@ pub enum Error {
 }
 
 #[async_trait(?Send)]
-pub trait Decodable: ResponseEncoding {
+pub trait GlooDecodable: ResponseEncoding {
     async fn decode(response: &Response) -> Result<Self::Target, Error>;
 }
 
 #[async_trait(?Send)]
-impl<T: DeserializeOwned + Clone + 'static> Decodable for Json<T> {
+impl<T: DeserializeOwned + Clone + 'static> GlooDecodable for Json<T> {
     async fn decode(response: &Response) -> Result<Self::Target, Error> {
         response.json::<T>().await.map_err(Error::from)
     }
 }
 
 #[async_trait(?Send)]
-impl Decodable for () {
+impl GlooDecodable for () {
     async fn decode(_response: &Response) -> Result<Self::Target, Error> {
         Ok(())
+    }
+}
+
+pub trait GlooEncodable: RequestEncoding {
+    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError>;
+}
+
+impl GlooEncodable for () {
+    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError> {
+        builder.build()
+    }
+}
+
+impl<T: Serialize> GlooEncodable for Json<T> {
+    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError> {
+        builder
+            .header("Content-Type", "application/json")
+            .json(&self.0)
     }
 }
 
@@ -47,14 +68,14 @@ pub struct Get<T: GetRequest>(pub T);
 #[async_trait(?Send)]
 impl<T: GetRequest> HttpRequest for Get<T>
 where
-    T::Response: Decodable,
+    T::Response: GlooDecodable,
     <T::Response as ResponseEncoding>::Target: Clone + 'static,
 {
     type Response = <T::Response as ResponseEncoding>::Target;
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.uri());
         let response = Request::get(&path).send().await?;
-        <T::Response as Decodable>::decode(&response).await
+        <T::Response as GlooDecodable>::decode(&response).await
     }
 }
 
@@ -62,14 +83,19 @@ where
 pub struct Post<T: PostRequest>(pub T);
 
 #[async_trait(?Send)]
-impl<T: PostRequest> HttpRequest for Post<T> {
+impl<T: PostRequest> HttpRequest for Post<T>
+where
+    T::Request: GlooEncodable,
+{
     type Response = ();
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.path());
-        Request::post(&path)
-            .header("Content-Type", "application/json")
-            .send()
-            .await?;
+        let builder = Request::post(&path);
+        let request = match self.0.body() {
+            Some(body) => body.gloo_encode(builder),
+            None => builder.build(),
+        };
+        request?.send().await?;
         Ok(())
     }
 }
@@ -99,7 +125,10 @@ pub fn use_request<R: HttpRequest + 'static>(request: R) -> UseAsyncHandle<R::Re
 }
 
 #[hook]
-pub fn use_post<R: PostRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>> {
+pub fn use_post<R: PostRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>>
+where
+    R::Request: GlooEncodable,
+{
     use_request(Post(request))
 }
 
@@ -111,7 +140,7 @@ pub fn use_delete<R: DeleteRequest + 'static>(request: R) -> UseAsyncHandle<(), 
 #[hook]
 pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Response as ResponseEncoding>::Target>
 where
-    R::Response: Decodable,
+    R::Response: GlooDecodable,
     <R::Response as ResponseEncoding>::Target: PartialEq + Clone + 'static,
     Get<R>: CacheItem,
 {

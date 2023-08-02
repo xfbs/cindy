@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use uuid::Uuid;
-use web_sys::HtmlElement;
+use web_sys::{HtmlSelectElement, HtmlElement};
 
 #[derive(Properties, PartialEq)]
 pub struct TagsListHeaderProps {
@@ -52,19 +52,46 @@ fn RowDeleteButton(props: &RowDeleteButtonProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
+pub struct RowSubmitButtonProps {
+    #[prop_or_default]
+    pub onclick: Callback<()>,
+}
+
+#[function_component]
+fn RowSubmitButton(props: &RowSubmitButtonProps) -> Html {
+    let onclick = props.onclick.clone();
+    let onclick = move |_| onclick.emit(());
+    html! {
+        <button class="w-4 h-4 bg-green-500 rounded hover:border hover:border-green-600" {onclick}>
+            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M6.79289 7.49998L4.14645 4.85353L4.85355 4.14642L7.5 6.79287L10.1464 4.14642L10.8536 4.85353L8.20711 7.49998L10.8536 10.1464L10.1464 10.8535L7.5 8.20708L4.85355 10.8535L4.14645 10.1464L6.79289 7.49998Z" fill="#000000"/>
+            </svg>
+        </button>
+    }
+}
+
+#[derive(Properties, PartialEq)]
 pub struct TagsListRowProps {
     pub tag: Tag,
 }
 
 #[function_component]
 pub fn TagsListRow(props: &TagsListRowProps) -> Html {
+    let tag_value = use_get_cached(TagList {
+        name: props.tag.name().to_string().into(),
+        value: props.tag.value().to_string().into(),
+    });
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
                 {props.tag.name()}
             </th>
             <td class="px-6 py-4 pr-1">
+            if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
+                {&info.display}
+            } else {
                 {props.tag.value()}
+            }
             </td>
         </tr>
     }
@@ -78,6 +105,10 @@ pub struct FileTagsRowProps {
 
 #[function_component]
 pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
+    let tag_value = use_get_cached(TagList {
+        name: props.tag.name().to_string().into(),
+        value: props.tag.value().to_string().into(),
+    });
     let delete = use_delete(FileTagDelete {
         hash: props.file.clone(),
         name: Some(props.tag.name().to_string()),
@@ -89,7 +120,11 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
                 {props.tag.name()}
             </th>
             <td class="px-3 py-4">
-                {props.tag.value()}
+                if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
+                    {&info.display}
+                } else {
+                    {props.tag.value()}
+                }
             </td>
             <td class="px-3 py-4 pr-1">
                 <RowDeleteButton onclick={move |_| delete.run()} />
@@ -101,43 +136,61 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct FileTagsCreateRowProps {
     pub file: RcHash,
-    pub id: Uuid,
-    #[prop_or_default]
-    pub ondelete: Callback<()>,
 }
 
 #[function_component]
 pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
+    let name = use_state(String::new);
+    let value = use_state(String::new);
+
+    let tag_names = use_get_cached(TagNames);
+
+    if let Some(tag_names) = tag_names.data() {
+        if !tag_names.contains_key(&*name) {
+            if let Some((first_name, _)) = tag_names.iter().find(|(_, info)| !info.system) {
+                name.set(first_name.clone());
+            }
+        }
+    }
+
+    let tag_values = use_get_cached(TagList {
+        name: Some((**name).to_string()),
+        value: None::<String>,
+    });
+
+
     let create = use_post(FileTagCreate {
         hash: props.file.clone(),
-        name: "test",
-        value: "test",
+        name: (**name).to_string(),
+        value: (**value).to_string(),
     });
-    let node = use_node_ref();
-    let tag_names = use_get_cached(TagNames);
     let onkeydown = {
-        let ondelete = props.ondelete.clone();
+        let create = create.clone();
         move |event: KeyboardEvent| {
             if event.key() == "Enter" {
                 create.run();
-                ondelete.emit(());
                 event.prevent_default();
             }
         }
     };
-    // put focus on dropdown
-    use_effect_once({
-        let node = node.clone();
-        move || {
-            let element: HtmlElement = node.cast().unwrap();
-            element.focus().unwrap();
-            move || {}
+
+    let name_onchange = {
+        move |event: Event| {
+            let target: HtmlSelectElement = event.target_dyn_into().unwrap();
+            name.set(target.value());
         }
-    });
+    };
+
+    let value_onchange = {
+        move |event: Event| {
+            let target: HtmlSelectElement = event.target_dyn_into().unwrap();
+            value.set(target.value());
+        }
+    };
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
-                <select ref={node} id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onchange={name_onchange}>
                 {
                     tag_names.data()
                         .iter()
@@ -150,10 +203,19 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
                 </select>
             </th>
             <td class="px-3 py-4">
-                <input type="text" class="w-full" {onkeydown} />
+                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onchange={value_onchange}>
+                {
+                    tag_values.data()
+                        .iter()
+                        .flat_map(|v| v.iter())
+                        .map(|(tag, info)| html!{
+                            <option value={tag.value().to_string()}>{&info.display}</option>
+                        }).collect::<Html>()
+                }
+                </select>
             </td>
             <td class="px-3 py-4 pr-1">
-                <RowDeleteButton onclick={props.ondelete.clone()} />
+                <RowSubmitButton onclick={move |_| create.run()} />
             </td>
         </tr>
     }
@@ -203,15 +265,7 @@ pub fn FileTagsList(props: &FileTagsListProps) -> Html {
                         <FileTagsRow {tag} file={props.file.clone()} />
                     }).collect::<Html>()
                 }
-                {
-                    inputs.current().iter().copied().map(|id| {
-                        let inputs = inputs.clone();
-                        let ondelete = move |_| inputs.retain(|i| i != &id);
-                        html! {
-                        <FileTagsCreateRow {id} file={props.file.clone()} {ondelete}/>
-                    }}).collect::<Html>()
-                }
-                <FileTagCreateButton onclick={move |_| inputs.push(Uuid::new_v4())} />
+                <FileTagsCreateRow file={props.file.clone()} />
                 </tbody>
             </table>
         </div>

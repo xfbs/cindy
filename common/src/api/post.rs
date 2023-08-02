@@ -6,13 +6,11 @@ use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
 pub trait PostRequest {
-    type Request<'a>: RequestEncoding
-    where
-        Self: 'a;
+    type Request: RequestEncoding;
 
     fn path(&self) -> Cow<'_, str>;
 
-    fn body(&self) -> Option<Self::Request<'_>> {
+    fn body(&self) -> Option<Self::Request> {
         None
     }
 }
@@ -32,17 +30,17 @@ pub struct TagCreate<S: Borrow<str>> {
 }
 
 impl<S: Borrow<str>> PostRequest for TagCreate<S> {
-    type Request<'a> = Json<TagCreateBody<'a>> where S: 'a;
+    type Request = Json<TagCreateBody<'static>>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/values".into()
     }
 
-    fn body(&self) -> Option<Self::Request<'_>> {
+    fn body(&self) -> Option<Self::Request> {
         Some(Json(TagCreateBody {
-            name: self.name.borrow().into(),
-            value: self.value.borrow().into(),
-            display: self.display.as_ref().map(Borrow::borrow).map(Into::into),
+            name: self.name.borrow().to_string().into(),
+            value: self.value.borrow().to_string().into(),
+            display: self.display.as_ref().map(|value| value.borrow().to_string().into()),
         }))
     }
 }
@@ -61,17 +59,17 @@ pub struct FileTagCreateBody<'a> {
 }
 
 impl<H: Borrow<Hash>, S: Borrow<str>> PostRequest for FileTagCreate<H, S> {
-    type Request<'a> = Json<FileTagCreateBody<'a>> where H: 'a, S: 'a;
+    type Request = Json<FileTagCreateBody<'static>>;
 
     fn path(&self) -> Cow<'_, str> {
         let hash = self.hash.borrow();
         format!("api/v1/file/{hash}/tags").into()
     }
 
-    fn body(&self) -> Option<Self::Request<'_>> {
+    fn body(&self) -> Option<Self::Request> {
         Some(Json(FileTagCreateBody {
-            name: self.name.borrow().into(),
-            value: self.value.borrow().into(),
+            name: self.name.borrow().to_string().into(),
+            value: self.value.borrow().to_string().into()
         }))
     }
 }

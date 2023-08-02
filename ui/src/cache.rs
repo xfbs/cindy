@@ -8,6 +8,7 @@ use yew::{
 
 #[derive(Clone)]
 pub struct Entry {
+    pub progress: bool,
     /// Current cached value.
     pub value: RcValue,
     /// List of subscribers to this value.
@@ -112,6 +113,7 @@ impl Cache {
                 cache.insert(
                     request.clone(),
                     Entry {
+                        progress: true,
                         value: RcValue::default(),
                         subscriptions: vec![setter.clone()],
                     },
@@ -119,7 +121,7 @@ impl Cache {
                 drop(cache);
                 self.fetch(request);
             }
-            Some(entry) if !entry.value.valid() => {
+            Some(entry) if !entry.value.valid() && !entry.progress => {
                 drop(cache);
                 self.fetch(request);
             }
@@ -134,9 +136,20 @@ impl Cache {
         wasm_bindgen_futures::spawn_local(async move {
             match data.send().await {
                 Ok(result) => cache.cache(&data, Rc::new(result)),
-                Err(_error) => {}
+                Err(error) => cache.failure(&data, error),
             }
         });
+    }
+
+    /// Cache this data.
+    pub fn failure<T: HttpRequest + CacheItem>(&self, data: &T, error: crate::request::Error) {
+        self.cache
+            .lock()
+            .expect("Failure to lock cache")
+            .mutate(data, move |entry| {
+                entry.progress = false;
+                entry.broadcast();
+            });
     }
 
     /// Cache this data.
@@ -192,6 +205,7 @@ pub struct CacheProviderProps {
 
 #[function_component]
 pub fn CacheProvider(props: &CacheProviderProps) -> Html {
+    log::debug!("Creating new cache");
     let state = use_state(Cache::default);
     let context: Cache = (*state).clone();
     html! {
