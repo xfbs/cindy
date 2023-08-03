@@ -1,6 +1,7 @@
 use derive_more::From;
 use enum_kinds::EnumKind;
 use serde::{Deserialize, Serialize};
+use std::ops::Sub;
 
 #[derive(
     Serialize, Deserialize, Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From, EnumKind,
@@ -33,13 +34,23 @@ impl<T> Point<T> {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Rectangle {
-    pub start: Point<u64>,
-    pub end: Point<u64>,
+pub struct Rectangle<T = u64> {
+    pub start: Point<T>,
+    pub end: Point<T>,
+}
+
+impl<T: Sub<Output = T> + Copy> Rectangle<T> {
+    pub fn width(&self) -> T {
+        self.end.x - self.start.x
+    }
+
+    pub fn height(&self) -> T {
+        self.end.y - self.start.y
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Sequence {
-    pub start: u64,
-    pub end: u64,
+pub struct Sequence<T = u64> {
+    pub start: T,
+    pub end: T,
 }
