@@ -91,9 +91,7 @@ where
     async fn send(&self) -> Result<Self::Response, Error> {
         let path = format!("/{}", self.0.path());
         let builder = Request::post(&path);
-        self.0.body().gloo_encode(builder)?
-            .send()
-            .await?;
+        self.0.body().gloo_encode(builder)?.send().await?;
         Ok(())
     }
 }

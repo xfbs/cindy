@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use uuid::Uuid;
-use web_sys::{HtmlSelectElement, HtmlElement};
+use web_sys::{HtmlElement, HtmlSelectElement};
 
 #[derive(Properties, PartialEq)]
 pub struct TagsListHeaderProps {
@@ -158,7 +158,6 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
         value: None::<String>,
     });
 
-
     let create = use_post(FileTagCreate {
         hash: props.file.clone(),
         name: (**name).to_string(),
@@ -175,6 +174,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
     };
 
     let name_onchange = {
+        let name = name.clone();
         move |event: Event| {
             let target: HtmlSelectElement = event.target_dyn_into().unwrap();
             name.set(target.value());
@@ -182,6 +182,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
     };
 
     let value_onchange = {
+        let value = value.clone();
         move |event: Event| {
             let target: HtmlSelectElement = event.target_dyn_into().unwrap();
             value.set(target.value());
@@ -197,7 +198,9 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
                         .flat_map(|v| v.iter())
                         .filter(|(_, info)| !info.system)
                         .map(|(tag, info)| html!{
-                            <option value={tag.clone()}>{&info.display}</option>
+                            <option selected={tag == &*name} value={tag.clone()}>
+                                {&info.display}
+                            </option>
                         }).collect::<Html>()
                 }
                 </select>
@@ -209,7 +212,9 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
                         .iter()
                         .flat_map(|v| v.iter())
                         .map(|(tag, info)| html!{
-                            <option value={tag.value().to_string()}>{&info.display}</option>
+                            <option selected={tag.value() == &*value} value={tag.value().to_string()}>
+                                {&info.display}
+                            </option>
                         }).collect::<Html>()
                 }
                 </select>
