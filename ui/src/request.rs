@@ -128,6 +128,10 @@ pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Re
     let cache = use_context::<Cache>().expect("Cache not present");
     let handle = use_async(async move {
         let result = request.send().await.map_err(Rc::new);
+        if let Err(error) = &result {
+            log::error!("Error: {error:?}");
+        }
+        log::info!("Invalidating cache");
         cache.invalidate_all();
         result
     });

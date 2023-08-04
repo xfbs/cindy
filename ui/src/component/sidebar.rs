@@ -372,6 +372,7 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
         name: None::<String>,
         value: None::<String>,
     });
+    log::info!("RENDERING FILE SIDEBAR");
     html! {
         <Sidebar>
             <SidebarHeading>{"Tags"}</SidebarHeading>

@@ -159,6 +159,7 @@ impl Cache {
             .expect("Failure to lock cache")
             .mutate(data, move |entry| {
                 entry.value = RcValue::new(value as Rc<dyn Any>);
+                entry.progress = false;
                 entry.broadcast();
             });
     }

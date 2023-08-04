@@ -2,21 +2,29 @@ use super::*;
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
-pub trait PostRequest {
+pub trait PostRequest: Sized {
     type Request: RequestEncoding;
 
     fn path(&self) -> Cow<'_, str>;
     fn body(&self) -> Self::Request;
+
+    fn request(self) -> Post<Self> {
+        Post(self)
+    }
 }
 
-pub trait PatchRequest {
+pub trait PatchRequest: Sized {
     type Request: RequestEncoding;
 
     fn path(&self) -> Cow<'_, str>;
     fn body(&self) -> Self::Request;
+
+    fn request(self) -> Patch<Self> {
+        Patch(self)
+    }
 }
 
-pub trait DeleteRequest {
+pub trait DeleteRequest: Sized {
     type Query: Serialize;
 
     fn path(&self) -> Cow<'_, str>;
@@ -30,9 +38,13 @@ pub trait DeleteRequest {
         }
         path
     }
+
+    fn request(self) -> Delete<Self> {
+        Delete(self)
+    }
 }
 
-pub trait GetRequest {
+pub trait GetRequest: Sized {
     type Response: ResponseEncoding;
     type Query: Serialize;
 
@@ -47,9 +59,13 @@ pub trait GetRequest {
         }
         path
     }
+
+    fn request(self) -> Get<Self> {
+        Get(self)
+    }
 }
 
-pub(crate) struct Get<T: GetRequest>(T);
+pub struct Get<T: GetRequest>(T);
 
 impl<T: GetRequest> From<T> for Get<T> {
     fn from(request: T) -> Self {
@@ -57,7 +73,7 @@ impl<T: GetRequest> From<T> for Get<T> {
     }
 }
 
-pub(crate) struct Post<T: PostRequest>(T);
+pub struct Post<T: PostRequest>(T);
 
 impl<T: PostRequest> From<T> for Post<T> {
     fn from(request: T) -> Self {
@@ -65,7 +81,7 @@ impl<T: PostRequest> From<T> for Post<T> {
     }
 }
 
-pub(crate) struct Delete<T: DeleteRequest>(T);
+pub struct Delete<T: DeleteRequest>(T);
 
 impl<T: DeleteRequest> From<T> for Delete<T> {
     fn from(request: T) -> Self {
@@ -73,11 +89,14 @@ impl<T: DeleteRequest> From<T> for Delete<T> {
     }
 }
 
+pub struct Patch<T>(T);
+
 #[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Method {
     Post,
     Get,
     Delete,
+    Patch,
 }
 
 pub trait HttpRequest {

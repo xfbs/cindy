@@ -1,5 +1,5 @@
 use crate::{
-    api::{Json, PostRequest, RequestEncoding},
+    api::{Json, Post, PostRequest, RequestEncoding},
     hash::*,
 };
 use serde::{Deserialize, Serialize};
