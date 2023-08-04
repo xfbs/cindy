@@ -100,6 +100,7 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct FileTagsRowProps {
     pub file: RcHash,
+    pub name: String,
     pub tag: Tag,
 }
 
@@ -117,7 +118,7 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
-                {props.tag.name()}
+                {&props.name}
             </th>
             <td class="px-3 py-4">
                 if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
@@ -259,6 +260,7 @@ pub struct FileTagsListProps {
 
 #[function_component]
 pub fn FileTagsList(props: &FileTagsListProps) -> Html {
+    let names = use_get_cached(TagNames);
     let inputs = use_list(Vec::<Uuid>::new());
     html! {
         <div class="relative overflow-x-auto py-3">
@@ -266,9 +268,16 @@ pub fn FileTagsList(props: &FileTagsListProps) -> Html {
                 <TagsListHeader actions=true />
                 <tbody>
                 {
-                    props.tags.iter().cloned().map(|tag| html! {
-                        <FileTagsRow {tag} file={props.file.clone()} />
-                    }).collect::<Html>()
+                    props.tags.iter().cloned().map(|tag| {
+                        let name = names
+                            .data()
+                            .and_then(|names| names.get(tag.name()))
+                            .map(|info| &info.display as &str)
+                            .unwrap_or(tag.name())
+                            .to_string();
+                        html! {
+                        <FileTagsRow {tag} {name} file={props.file.clone()} />
+                    }}).collect::<Html>()
                 }
                 <FileTagsCreateRow file={props.file.clone()} />
                 </tbody>
@@ -372,13 +381,11 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
                 <FileTagsList file={props.file.clone()} tags={vec![]} />
             }
 
-            <SidebarHeading>{"Labels"}</SidebarHeading>
-            <FileTagsList file={props.file.clone()} />
-
             <SidebarHeading>{"Settings"}</SidebarHeading>
             <div class="py-2">
                 <ToggleEntry text="Show labels" />
                 <ToggleEntry text="Edit labels" />
+                <ToggleEntry text="Show system tags" />
             </div>
 
             <SidebarHeading>{"Management"}</SidebarHeading>

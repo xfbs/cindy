@@ -125,10 +125,8 @@ impl<T: Handle> Database<T> {
             "SELECT
                 coalesce(tag_names.display, tag_names.name) as display,
                 tag_names.*,
-                count(tag_names.id) as value
-            FROM tag_names
-            LEFT JOIN tag_values ON tag_names.id = tag_values.tag_id
-            GROUP BY name",
+                (SELECT count(*) FROM tag_values WHERE tag_id = tag_names.id) as value
+            FROM tag_names",
         )?;
         let rows = query.query([])?;
         rows.mapped(|row| {

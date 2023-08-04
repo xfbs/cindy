@@ -1,9 +1,6 @@
 use crate::cache::*;
 use async_trait::async_trait;
-use cindy_common::{
-    api::*,
-    cache::RcValue,
-};
+use cindy_common::{api::*, cache::RcValue};
 use gloo_net::{
     http::{Request, RequestBuilder, Response},
     Error as GlooError,

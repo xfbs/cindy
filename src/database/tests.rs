@@ -861,6 +861,17 @@ fn can_get_tag_names_system() {
 }
 
 #[test]
+fn can_get_tag_names_none() {
+    let database = Database(Connection::open_in_memory().unwrap());
+    database.migrate().unwrap();
+    database.tag_name_create("name", None).unwrap();
+    let names = database.tag_names().unwrap();
+    assert_eq!(names["name"].values, 0);
+    assert_eq!(names["name"].system, false);
+    assert_eq!(names["name"].display, "name");
+}
+
+#[test]
 fn can_get_tag_names_single() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
