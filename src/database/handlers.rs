@@ -52,9 +52,11 @@ impl<T: Handle> Database<T> {
     }
 
     /// Add tag to database.
-    pub fn tag_add(&self, tag: &str, value: &str) -> Result<()> {
-        let mut query =
-            self.prepare_cached("INSERT OR IGNORE INTO tags(name, value) VALUES (?, ?)")?;
+    pub fn tag_value_create(&self, tag: &str, value: &str) -> Result<()> {
+        let mut query = self.prepare_cached(
+            "INSERT OR IGNORE INTO tag_values(tag_id, value)
+            VALUES ((SELECT id FROM tag_names WHERE name = ?), ?)",
+        )?;
         query.execute([&tag, &value])?;
         Ok(())
     }
@@ -107,6 +109,13 @@ impl<T: Handle> Database<T> {
             AND tag_id = (SELECT id FROM tag_names WHERE name = ?)",
         )?;
         query.execute([display, value, name])?;
+        Ok(())
+    }
+
+    pub fn tag_name_create(&self, name: &str, display: Option<&str>) -> Result<()> {
+        let mut query =
+            self.prepare_cached("INSERT OR IGNORE INTO tag_names(name, display) VALUES (?, ?)")?;
+        query.execute((name, display))?;
         Ok(())
     }
 

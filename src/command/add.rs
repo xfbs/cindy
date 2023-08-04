@@ -48,7 +48,7 @@ fn add_file<H: Handle>(
     database.hash_add(hash)?;
 
     for tag in tags {
-        database.tag_add(tag.name(), tag.value())?;
+        database.tag_value_create(tag.name(), tag.value())?;
         database.hash_tag_add(hash, tag.name(), tag.value())?;
     }
 
@@ -64,7 +64,7 @@ fn add_path_tags<H: Handle>(
 ) -> Result<()> {
     for path in paths {
         for tag in path_tags(path) {
-            database.tag_add(tag.name(), tag.value())?;
+            database.tag_value_create(tag.name(), tag.value())?;
             database.hash_tag_add(hash, tag.name(), tag.value())?;
         }
     }

@@ -1,8 +1,6 @@
-use serde::{Deserialize, Serialize};
 use super::*;
-use std::{
-    borrow::{Borrow, Cow},
-};
+use serde::{Deserialize, Serialize};
+use std::borrow::{Borrow, Cow};
 
 pub trait PostRequest {
     type Request: RequestEncoding;
@@ -161,4 +159,3 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
         Method::Delete
     }
 }
-

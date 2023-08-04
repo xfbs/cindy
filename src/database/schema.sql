@@ -24,17 +24,18 @@ CREATE TABLE IF NOT EXISTS tag_names(
     UNIQUE (name)
 );
 
-INSERT INTO tag_names(name, system) VALUES ('filesize', true);
+INSERT INTO tag_names(name, system) VALUES ('ancestor', true);
 INSERT INTO tag_names(name, system) VALUES ('directory', true);
-INSERT INTO tag_names(name, system) VALUES ('ancestors', true);
-INSERT INTO tag_names(name, system) VALUES ('filename', true);
-INSERT INTO tag_names(name, system) VALUES ('media', true);
-INSERT INTO tag_names(name, system) VALUES ('format', true);
-INSERT INTO tag_names(name, system) VALUES ('width', true);
-INSERT INTO tag_names(name, system) VALUES ('height', true);
-INSERT INTO tag_names(name, system) VALUES ('resolution', true);
 INSERT INTO tag_names(name, system) VALUES ('duration', true);
 INSERT INTO tag_names(name, system) VALUES ('durationgroup', true);
+INSERT INTO tag_names(name, system) VALUES ('filename', true);
+INSERT INTO tag_names(name, system) VALUES ('filesize', true);
+INSERT INTO tag_names(name, system) VALUES ('format', true);
+INSERT INTO tag_names(name, system) VALUES ('height', true);
+INSERT INTO tag_names(name, system) VALUES ('media', true);
+INSERT INTO tag_names(name, system) VALUES ('path', true);
+INSERT INTO tag_names(name, system) VALUES ('resolution', true);
+INSERT INTO tag_names(name, system) VALUES ('width', true);
 
 CREATE TABLE IF NOT EXISTS tag_values(
     id INTEGER NOT NULL,
@@ -62,10 +63,6 @@ CREATE VIEW IF NOT EXISTS tags AS
 CREATE TRIGGER tags_insert
 INSTEAD OF INSERT ON tags
 BEGIN
-    -- create tag name if it does not exist
-    INSERT OR IGNORE INTO tag_names(name)
-        VALUES (NEW.name);
-
     -- create tag value
     INSERT INTO tag_values(tag_id, value)
         VALUES (

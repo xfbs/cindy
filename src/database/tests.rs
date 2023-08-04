@@ -33,7 +33,8 @@ fn can_tags_list_all_one() {
     database.migrate().unwrap();
 
     // add tags
-    database.tag_add("test", "label").unwrap();
+    database.tag_name_create("test", None).unwrap();
+    database.tag_value_create("test", "label").unwrap();
 
     // get all tags
     let list = database.tag_list(None, None).unwrap();
@@ -53,7 +54,8 @@ fn can_tags_value_set_display() {
     database.migrate().unwrap();
 
     // add tags
-    database.tag_add("test", "label").unwrap();
+    database.tag_name_create("test", None).unwrap();
+    database.tag_value_create("test", "label").unwrap();
     database
         .tag_value_display("test", "label", "Label Name")
         .unwrap();
@@ -75,11 +77,15 @@ fn can_tags_list_all_multiple() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("name", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("name", "zero").unwrap();
-    database.tag_add("name", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("name", "zero").unwrap();
+    database.tag_value_create("name", "other").unwrap();
 
     // get all tags
     let list = database.tag_list(None, None).unwrap();
@@ -123,11 +129,15 @@ fn can_tags_set_display_multiple() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("name", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("name", "zero").unwrap();
-    database.tag_add("name", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("name", "zero").unwrap();
+    database.tag_value_create("name", "other").unwrap();
 
     // set display
     database
@@ -185,11 +195,15 @@ fn can_tags_list_by_name() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("foo", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("height", "zero").unwrap();
-    database.tag_add("height", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("foo", "zero").unwrap();
+    database.tag_value_create("foo", "other").unwrap();
 
     // list by name
     let list = database.tag_list(Some("test"), None).unwrap();
@@ -203,17 +217,21 @@ fn can_tags_list_by_value() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("foo", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("height", "zero").unwrap();
-    database.tag_add("height", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("foo", "zero").unwrap();
+    database.tag_value_create("foo", "other").unwrap();
 
     // list by value
     let list = database.tag_list(None, Some("other")).unwrap();
     assert_eq!(list.len(), 2);
     assert!(list.contains_key(&Tag::new("test".into(), "other".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "other".into())));
+    assert!(list.contains_key(&Tag::new("foo".into(), "other".into())));
 }
 
 #[test]
@@ -221,22 +239,26 @@ fn can_tags_rename_by_name() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("bar", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("height", "zero").unwrap();
-    database.tag_add("height", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("bar", "zero").unwrap();
+    database.tag_value_create("bar", "other").unwrap();
 
     // rename test to foorbar
-    database.tag_name_rename("test", "foobar").unwrap();
+    database.tag_name_rename("test", "foo").unwrap();
 
     // get all tags
     let list = database.tag_list(None, None).unwrap();
     assert_eq!(list.len(), 4);
-    assert!(list.contains_key(&Tag::new("foobar".into(), "label".into())));
-    assert!(list.contains_key(&Tag::new("foobar".into(), "other".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "zero".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "other".into())));
+    assert!(list.contains_key(&Tag::new("foo".into(), "label".into())));
+    assert!(list.contains_key(&Tag::new("foo".into(), "other".into())));
+    assert!(list.contains_key(&Tag::new("bar".into(), "zero".into())));
+    assert!(list.contains_key(&Tag::new("bar".into(), "other".into())));
 }
 
 #[test]
@@ -244,22 +266,26 @@ fn can_tags_rename_by_value() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("foo", None).unwrap();
+    database.tag_name_create("bar", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("height", "zero").unwrap();
-    database.tag_add("height", "other").unwrap();
+    database.tag_value_create("foo", "label").unwrap();
+    database.tag_value_create("foo", "other").unwrap();
+    database.tag_value_create("bar", "zero").unwrap();
+    database.tag_value_create("bar", "other").unwrap();
 
     // rename test to foorbar
-    database.tag_value_rename("height", "other", "new").unwrap();
+    database.tag_value_rename("bar", "other", "new").unwrap();
 
     // get all tags
     let list = database.tag_list(None, None).unwrap();
     assert_eq!(list.len(), 4);
-    assert!(list.contains_key(&Tag::new("test".into(), "label".into())));
-    assert!(list.contains_key(&Tag::new("test".into(), "other".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "zero".into())));
-    assert!(list.contains_key(&Tag::new("height".into(), "new".into())));
+    assert!(list.contains_key(&Tag::new("foo".into(), "label".into())));
+    assert!(list.contains_key(&Tag::new("foo".into(), "other".into())));
+    assert!(list.contains_key(&Tag::new("bar".into(), "zero".into())));
+    assert!(list.contains_key(&Tag::new("bar".into(), "new".into())));
 }
 
 #[test]
@@ -268,10 +294,10 @@ fn can_tags_delete_all() {
     database.migrate().unwrap();
 
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("value", "zero").unwrap();
-    database.tag_add("value", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("value", "zero").unwrap();
+    database.tag_value_create("value", "other").unwrap();
 
     database.tag_delete(None, None).unwrap();
 
@@ -285,12 +311,17 @@ fn can_tags_delete_by_name() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
-    // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("value", "zero").unwrap();
-    database.tag_add("value", "other").unwrap();
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("value", None).unwrap();
 
+    // add tags values
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("value", "zero").unwrap();
+    database.tag_value_create("value", "other").unwrap();
+
+    // delete tag
     database.tag_delete(Some("test"), None).unwrap();
 
     // get all tags
@@ -305,11 +336,15 @@ fn can_tags_delete_by_value() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
 
+    // add tag names
+    database.tag_name_create("test", None).unwrap();
+    database.tag_name_create("value", None).unwrap();
+
     // add tags
-    database.tag_add("test", "label").unwrap();
-    database.tag_add("test", "other").unwrap();
-    database.tag_add("value", "zero").unwrap();
-    database.tag_add("value", "other").unwrap();
+    database.tag_value_create("test", "label").unwrap();
+    database.tag_value_create("test", "other").unwrap();
+    database.tag_value_create("value", "zero").unwrap();
+    database.tag_value_create("value", "other").unwrap();
 
     // delete tags by value
     database.tag_delete(None, Some("other")).unwrap();
@@ -329,8 +364,9 @@ fn can_manage_file_tags() {
     let hash2 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0x01]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
-    database.tag_add("name", "value").unwrap();
-    database.tag_add("name", "other").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
+    database.tag_value_create("name", "other").unwrap();
     database.hash_tag_add(&hash1, "name", "value").unwrap();
     let tags = database.hash_tags(&hash1, None, None).unwrap();
     assert_eq!(tags, [Tag::new("name".into(), "value".into()),].into());
@@ -343,10 +379,12 @@ fn can_delete_file_tags_all() {
     database.migrate().unwrap();
     let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
-    database.tag_add("name", "value").unwrap();
-    database.tag_add("name", "other").unwrap();
-    database.tag_add("other", "value").unwrap();
-    database.tag_add("other", "that").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_name_create("other", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
+    database.tag_value_create("name", "other").unwrap();
+    database.tag_value_create("other", "value").unwrap();
+    database.tag_value_create("other", "that").unwrap();
     database.hash_tag_add(&hash1, "name", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "that").unwrap();
@@ -361,10 +399,12 @@ fn can_delete_file_tags_name() {
     database.migrate().unwrap();
     let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
-    database.tag_add("name", "value").unwrap();
-    database.tag_add("name", "other").unwrap();
-    database.tag_add("other", "value").unwrap();
-    database.tag_add("other", "that").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_name_create("other", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
+    database.tag_value_create("name", "other").unwrap();
+    database.tag_value_create("other", "value").unwrap();
+    database.tag_value_create("other", "that").unwrap();
     database.hash_tag_add(&hash1, "name", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "that").unwrap();
@@ -392,10 +432,12 @@ fn can_delete_file_tags_individual() {
     database.migrate().unwrap();
     let hash1 = Hash::new(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
     database.hash_add(&hash1).unwrap();
-    database.tag_add("name", "value").unwrap();
-    database.tag_add("name", "other").unwrap();
-    database.tag_add("other", "value").unwrap();
-    database.tag_add("other", "that").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_name_create("other", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
+    database.tag_value_create("name", "other").unwrap();
+    database.tag_value_create("other", "value").unwrap();
+    database.tag_value_create("other", "that").unwrap();
     database.hash_tag_add(&hash1, "name", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "value").unwrap();
     database.hash_tag_add(&hash1, "other", "that").unwrap();
@@ -445,8 +487,10 @@ fn can_query_files_by_tag_name() {
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
     database.hash_add(&hash3).unwrap();
-    database.tag_add("a", "value").unwrap();
-    database.tag_add("b", "value").unwrap();
+    database.tag_name_create("a", None).unwrap();
+    database.tag_name_create("b", None).unwrap();
+    database.tag_value_create("a", "value").unwrap();
+    database.tag_value_create("b", "value").unwrap();
     database.hash_tag_add(&hash1, "a", "value").unwrap();
     database.hash_tag_add(&hash2, "b", "value").unwrap();
     database.hash_tag_add(&hash3, "a", "value").unwrap();
@@ -504,9 +548,10 @@ fn can_query_files_by_tag_name_value() {
     let hash2 = Hash::new(&[0x02]);
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
-    database.tag_add("name", "a").unwrap();
-    database.tag_add("name", "b").unwrap();
-    database.tag_add("name", "c").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "a").unwrap();
+    database.tag_value_create("name", "b").unwrap();
+    database.tag_value_create("name", "c").unwrap();
     database.hash_tag_add(&hash1, "name", "a").unwrap();
     database.hash_tag_add(&hash1, "name", "b").unwrap();
     database.hash_tag_add(&hash2, "name", "b").unwrap();
@@ -626,8 +671,9 @@ fn stress_test() {
         })
         .collect::<Vec<_>>();
     for (name, values) in tags.iter() {
+        database.tag_name_create(name, None).unwrap();
         for value in values.iter() {
-            database.tag_add(name, &value).unwrap();
+            database.tag_value_create(name, &value).unwrap();
         }
         for (hash, value) in hash.iter().zip(values.iter().cycle()) {
             database
@@ -669,7 +715,8 @@ fn can_label_add_rect() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     database
         .label_add(
@@ -691,7 +738,8 @@ fn can_label_add_seq() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     database
         .label_add(
@@ -709,7 +757,7 @@ fn can_label_remove_rect() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     let label = Rectangle {
         start: Point::new(0, 0),
@@ -728,7 +776,8 @@ fn can_label_remove_sequence() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     let label = Sequence { start: 11, end: 99 }.into();
     database.label_add(&hash, "name", "value", &label).unwrap();
@@ -751,7 +800,8 @@ fn can_label_get_rect() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     let label = Rectangle {
         start: Point::new(0, 0),
@@ -772,7 +822,8 @@ fn can_label_get_seq() {
     database.migrate().unwrap();
     let hash = Hash::new(&[0x01]);
     database.hash_add(&hash).unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.hash_tag_add(&hash, "name", "value").unwrap();
     let label = Sequence { start: 0, end: 15 }.into();
     database.label_add(&hash, "name", "value", &label).unwrap();
@@ -800,19 +851,21 @@ fn can_get_tag_names_system() {
     assert_eq!(names["filesize"].system, true);
     assert_eq!(names["filename"].system, true);
     assert_eq!(names["directory"].system, true);
-    assert_eq!(names["ancestors"].system, true);
+    assert_eq!(names["ancestor"].system, true);
     assert_eq!(names["media"].system, true);
     assert_eq!(names["format"].system, true);
     assert_eq!(names["duration"].system, true);
     assert_eq!(names["width"].system, true);
     assert_eq!(names["height"].system, true);
+    assert_eq!(names["path"].system, true);
 }
 
 #[test]
 fn can_get_tag_names_single() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     let names = database.tag_names().unwrap();
     assert_eq!(names["name"].values, 1);
     assert_eq!(names["name"].system, false);
@@ -823,9 +876,11 @@ fn can_get_tag_names_single() {
 fn can_get_tag_names_multiple() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    database.tag_add("name", "value").unwrap();
-    database.tag_add("name", "other").unwrap();
-    database.tag_add("kind", "car").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_name_create("kind", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
+    database.tag_value_create("name", "other").unwrap();
+    database.tag_value_create("kind", "car").unwrap();
     let names = database.tag_names().unwrap();
     assert_eq!(names["name"].values, 2);
     assert_eq!(names["name"].system, false);
@@ -839,7 +894,8 @@ fn can_get_tag_names_multiple() {
 fn can_get_tag_name_display_custom() {
     let database = Database(Connection::open_in_memory().unwrap());
     database.migrate().unwrap();
-    database.tag_add("name", "value").unwrap();
+    database.tag_name_create("name", None).unwrap();
+    database.tag_value_create("name", "value").unwrap();
     database.tag_name_display("name", "My Name").unwrap();
     let names = database.tag_names().unwrap();
     assert_eq!(names["name"].values, 1);

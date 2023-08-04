@@ -1,5 +1,5 @@
 use crate::{
-    api::{Json, RequestEncoding, PostRequest},
+    api::{Json, PostRequest, RequestEncoding},
     hash::*,
 };
 use serde::{Deserialize, Serialize};
@@ -13,13 +13,43 @@ pub struct TagCreateBody<'a> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TagCreate<S: Borrow<str>> {
+pub struct TagNameCreateRequest<'a> {
+    pub name: Cow<'a, str>,
+    pub display: Option<Cow<'a, str>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TagNameCreate<S: Borrow<str>> {
+    pub name: S,
+    pub display: Option<S>,
+}
+
+impl<S: Borrow<str>> PostRequest for TagNameCreate<S> {
+    type Request = Json<TagNameCreateRequest<'static>>;
+
+    fn path(&self) -> Cow<'_, str> {
+        "api/v1/tags/names".into()
+    }
+
+    fn body(&self) -> Self::Request {
+        Json(TagNameCreateRequest {
+            name: self.name.borrow().to_string().into(),
+            display: self
+                .display
+                .as_ref()
+                .map(|value| value.borrow().to_string().into()),
+        })
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TagValueCreate<S: Borrow<str>> {
     pub name: S,
     pub value: S,
     pub display: Option<S>,
 }
 
-impl<S: Borrow<str>> PostRequest for TagCreate<S> {
+impl<S: Borrow<str>> PostRequest for TagValueCreate<S> {
     type Request = Json<TagCreateBody<'static>>;
 
     fn path(&self) -> Cow<'_, str> {
@@ -30,7 +60,10 @@ impl<S: Borrow<str>> PostRequest for TagCreate<S> {
         Json(TagCreateBody {
             name: self.name.borrow().to_string().into(),
             value: self.value.borrow().to_string().into(),
-            display: self.display.as_ref().map(|value| value.borrow().to_string().into()),
+            display: self
+                .display
+                .as_ref()
+                .map(|value| value.borrow().to_string().into()),
         })
     }
 }
@@ -59,7 +92,7 @@ impl<H: Borrow<Hash>, S: Borrow<str>> PostRequest for FileTagCreate<H, S> {
     fn body(&self) -> Self::Request {
         Json(FileTagCreateBody {
             name: self.name.borrow().to_string().into(),
-            value: self.value.borrow().to_string().into()
+            value: self.value.borrow().to_string().into(),
         })
     }
 }

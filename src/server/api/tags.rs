@@ -11,14 +11,14 @@ use cindy_common::{
 use std::collections::BTreeMap;
 use tokio::task::spawn_blocking;
 
-async fn tag_names(
+async fn tag_name_list(
     State(cindy): State<Cindy>,
 ) -> Result<Json<BTreeMap<String, TagNameInfo>>, Error> {
     let database = cindy.database().await;
     spawn_blocking(move || database.tag_names().map(Json).map_err(Into::into)).await?
 }
 
-async fn tag_list(
+async fn tag_value_list(
     State(cindy): State<Cindy>,
     Query(query): Query<TagQuery<String>>,
 ) -> Result<Json<BTreeMap<Tag, TagValueInfo>>, Error> {
@@ -32,13 +32,13 @@ async fn tag_list(
     .await?
 }
 
-async fn tag_create(
+async fn tag_value_create(
     State(cindy): State<Cindy>,
     Json(query): Json<TagCreateBody<'static>>,
 ) -> Result<(), Error> {
     let database = cindy.database().await;
     spawn_blocking(move || {
-        database.tag_add(&query.name, &query.value)?;
+        database.tag_value_create(&query.name, &query.value)?;
         if let Some(display) = &query.display {
             database.tag_value_display(&query.name, &query.value, display)?;
         }
@@ -47,7 +47,7 @@ async fn tag_create(
     .await?
 }
 
-async fn tag_delete(
+async fn tag_value_delete(
     State(cindy): State<Cindy>,
     Query(query): Query<TagQuery<String>>,
 ) -> Result<(), Error> {
@@ -60,8 +60,25 @@ async fn tag_delete(
     .await?
 }
 
+async fn tag_name_create(
+    State(cindy): State<Cindy>,
+    Json(query): Json<TagNameCreateRequest<'static>>,
+) -> Result<(), Error> {
+    let database = cindy.database().await;
+    spawn_blocking(move || {
+        database.tag_name_create(&query.name, query.display.as_deref())?;
+        Ok(())
+    })
+    .await?
+}
+
 pub fn router() -> Router<Cindy> {
     Router::new()
-        .route("/values", get(tag_list).delete(tag_delete).post(tag_create))
-        .route("/names", get(tag_names))
+        .route(
+            "/values",
+            get(tag_value_list)
+                .delete(tag_value_delete)
+                .post(tag_value_create),
+        )
+        .route("/names", get(tag_name_list).post(tag_name_create))
 }

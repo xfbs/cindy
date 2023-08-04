@@ -14,10 +14,8 @@ mod query;
 pub use query::*;
 
 mod traits;
-pub use traits::*;
-
 pub use crate::cache::*;
+pub use traits::*;
 
 #[cfg(test)]
 mod tests;
-

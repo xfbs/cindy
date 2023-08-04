@@ -82,7 +82,7 @@ fn TagValueCreateRow(props: &TagValueCreateRowProps) -> Html {
     let name = use_state(String::new);
     let slug = use_state(String::new);
 
-    let request = use_post(TagCreate {
+    let request = use_post(TagValueCreate {
         name: props.name.clone(),
         value: (*slug).clone(),
         display: Some((*name).clone()),

@@ -147,8 +147,17 @@ async fn tag_create() {
     let cindy = Cindy::initialize(&dir.path(), &config).await.unwrap();
 
     let router = cindy.router();
+
     router
-        .post(TagCreate {
+        .post(TagNameCreate {
+            name: "name",
+            display: None,
+        })
+        .await
+        .unwrap();
+
+    router
+        .post(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -182,7 +191,15 @@ async fn tag_delete_one() {
 
     let router = cindy.router();
     router
-        .post(TagCreate {
+        .post(TagNameCreate {
+            name: "name",
+            display: None,
+        })
+        .await
+        .unwrap();
+
+    router
+        .post(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -190,7 +207,7 @@ async fn tag_delete_one() {
         .await
         .unwrap();
     router
-        .post(TagCreate {
+        .post(TagValueCreate {
             name: "name",
             value: "other",
             display: Some("Other Value"),
@@ -232,7 +249,15 @@ async fn tag_delete_all_labels() {
 
     let router = cindy.router();
     router
-        .post(TagCreate {
+        .post(TagNameCreate {
+            name: "name",
+            display: None,
+        })
+        .await
+        .unwrap();
+
+    router
+        .post(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -240,7 +265,7 @@ async fn tag_delete_all_labels() {
         .await
         .unwrap();
     router
-        .post(TagCreate {
+        .post(TagValueCreate {
             name: "name",
             value: "other",
             display: Some("Other Value"),
@@ -482,7 +507,15 @@ async fn file_tag_create() {
 
     let router = cindy.router();
     router
-        .post(TagCreate {
+        .post(TagNameCreate {
+            name: "name",
+            display: None,
+        })
+        .await
+        .unwrap();
+
+    router
+        .post(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -535,7 +568,7 @@ async fn file_tag_delete() {
 
     let router = cindy.router();
     router
-        .post(TagCreate {
+        .post(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),

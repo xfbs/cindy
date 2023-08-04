@@ -29,7 +29,8 @@ impl Cindy {
         let command = command.clone();
         tokio::task::spawn_blocking(move || {
             for tag in command.tags {
-                database.tag_add(tag.name(), tag.value())?;
+                database.tag_name_create(tag.name(), None)?;
+                database.tag_value_create(tag.name(), tag.value())?;
             }
             Ok(()) as Result<()>
         })

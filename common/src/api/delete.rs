@@ -1,4 +1,7 @@
-use crate::{api::{DeleteRequest, TagQuery}, hash::*};
+use crate::{
+    api::{DeleteRequest, TagQuery},
+    hash::*,
+};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
