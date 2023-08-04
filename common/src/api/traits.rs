@@ -9,6 +9,13 @@ pub trait PostRequest {
     fn body(&self) -> Self::Request;
 }
 
+pub trait PatchRequest {
+    type Request: RequestEncoding;
+
+    fn path(&self) -> Cow<'_, str>;
+    fn body(&self) -> Self::Request;
+}
+
 pub trait DeleteRequest {
     type Query: Serialize;
 

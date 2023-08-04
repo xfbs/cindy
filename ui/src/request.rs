@@ -1,7 +1,7 @@
 use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{DeleteRequest, GetRequest, Json, PostRequest, RequestEncoding, ResponseEncoding},
+    api::*,
     cache::RcValue,
 };
 use gloo_net::{
@@ -109,6 +109,23 @@ impl<T: DeleteRequest> GlooRequest for Delete<T> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Patch<T: PatchRequest>(pub T);
+
+#[async_trait(?Send)]
+impl<T: PatchRequest> GlooRequest for Patch<T>
+where
+    T::Request: GlooEncodable,
+{
+    type Response = ();
+    async fn send(&self) -> Result<Self::Response, Error> {
+        let path = format!("/{}", self.0.path());
+        let builder = Request::patch(&path);
+        self.0.body().gloo_encode(builder)?.send().await?;
+        Ok(())
+    }
+}
+
 #[hook]
 pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
     let cache = use_context::<Cache>().expect("Cache not present");
@@ -126,6 +143,14 @@ where
     R::Request: GlooEncodable,
 {
     use_request(Post(request))
+}
+
+#[hook]
+pub fn use_patch<R: PatchRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>>
+where
+    R::Request: GlooEncodable,
+{
+    use_request(Patch(request))
 }
 
 #[hook]

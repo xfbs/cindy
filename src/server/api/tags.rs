@@ -1,7 +1,7 @@
 use crate::{server::Error, Cindy};
 use axum::{
-    extract::{Query, State},
-    routing::get,
+    extract::{Path, Query, State},
+    routing::{get, patch},
     Json, Router,
 };
 use cindy_common::{
@@ -34,7 +34,7 @@ async fn tag_value_list(
 
 async fn tag_value_create(
     State(cindy): State<Cindy>,
-    Json(query): Json<TagCreateBody<'static>>,
+    Json(query): Json<TagValueCreateRequest<'static>>,
 ) -> Result<(), Error> {
     let database = cindy.database().await;
     spawn_blocking(move || {
@@ -72,13 +72,34 @@ async fn tag_name_create(
     .await?
 }
 
+async fn tag_name_edit(
+    State(cindy): State<Cindy>,
+    Path(name): Path<String>,
+    Json(query): Json<TagNameEditRequest<'static>>,
+) -> Result<(), Error> {
+    let mut database = cindy.database().await;
+    spawn_blocking(move || {
+        let transaction = database.transaction()?;
+        if let Some(display) = &query.display {
+            transaction.tag_name_display(&name, &display)?;
+        }
+        if let Some(name_new) = &query.name {
+            transaction.tag_name_rename(&name, &name_new)?;
+        }
+        transaction.commit()?;
+        Ok(())
+    })
+    .await?
+}
+
 pub fn router() -> Router<Cindy> {
     Router::new()
         .route(
-            "/values",
+            "/tags/values",
             get(tag_value_list)
                 .delete(tag_value_delete)
                 .post(tag_value_create),
         )
-        .route("/names", get(tag_name_list).post(tag_name_create))
+        .route("/tag/:name", patch(tag_name_edit))
+        .route("/tags", get(tag_name_list).post(tag_name_create))
 }

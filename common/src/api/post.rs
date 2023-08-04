@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TagCreateBody<'a> {
+pub struct TagValueCreateRequest<'a> {
     pub name: Cow<'a, str>,
     pub value: Cow<'a, str>,
     pub display: Option<Cow<'a, str>>,
@@ -28,7 +28,7 @@ impl<S: Borrow<str>> PostRequest for TagNameCreate<S> {
     type Request = Json<TagNameCreateRequest<'static>>;
 
     fn path(&self) -> Cow<'_, str> {
-        "api/v1/tags/names".into()
+        "api/v1/tags".into()
     }
 
     fn body(&self) -> Self::Request {
@@ -50,14 +50,14 @@ pub struct TagValueCreate<S: Borrow<str>> {
 }
 
 impl<S: Borrow<str>> PostRequest for TagValueCreate<S> {
-    type Request = Json<TagCreateBody<'static>>;
+    type Request = Json<TagValueCreateRequest<'static>>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/values".into()
     }
 
     fn body(&self) -> Self::Request {
-        Json(TagCreateBody {
+        Json(TagValueCreateRequest {
             name: self.name.borrow().to_string().into(),
             value: self.value.borrow().to_string().into(),
             display: self

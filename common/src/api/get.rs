@@ -95,7 +95,7 @@ impl GetRequest for TagNames {
     type Query = ();
 
     fn path(&self) -> Cow<'_, str> {
-        "api/v1/tags/names".into()
+        "api/v1/tags".into()
     }
 
     fn query(&self) -> Self::Query {

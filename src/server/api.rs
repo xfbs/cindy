@@ -13,6 +13,6 @@ pub fn router() -> Router<Cindy> {
     Router::new()
         .nest("/file", file::router())
         .nest("/query", query::router())
-        .nest("/tags", tags::router())
+        .merge(tags::router())
         .fallback(not_found)
 }

@@ -10,6 +10,9 @@ pub use delete::*;
 mod encoding;
 pub use encoding::*;
 
+mod patch;
+pub use patch::*;
+
 mod query;
 pub use query::*;
 

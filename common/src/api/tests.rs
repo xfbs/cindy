@@ -21,7 +21,7 @@ fn test_uri() {
             },
             "index.html",
         ),
-        (&TagNames, "api/v1/tags/names"),
+        (&TagNames, "api/v1/tags"),
         (
             &FileContent {
                 hash: Hash::new(&[0xab]),
