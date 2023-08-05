@@ -1,6 +1,5 @@
-use super::{Json, ResponseEncoding};
 use crate::{
-    api::{query::TagQuery, GetRequest},
+    api::{query::TagQuery, GetRequest, Json},
     cache::*,
     tag::{TagNameInfo, TagValueInfo},
     BoxHash, Hash, Tag, TagPredicate,
@@ -9,7 +8,7 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::{Borrow, Cow},
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     path::Path,
 };
 
@@ -32,9 +31,7 @@ impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     type Response = Bytes;
     type Query = ();
 
-    fn query(&self) -> Self::Query {
-        ()
-    }
+    fn query(&self) -> Self::Query {}
 
     fn path(&self) -> Cow<'_, str> {
         format!("api/v1/file/{}", self.hash.borrow()).into()
@@ -98,9 +95,7 @@ impl GetRequest for TagNames {
         "api/v1/tags".into()
     }
 
-    fn query(&self) -> Self::Query {
-        ()
-    }
+    fn query(&self) -> Self::Query {}
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -142,7 +137,56 @@ impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
         self.path.borrow().display().to_string().into()
     }
 
+    fn query(&self) -> Self::Query {}
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct QueryTagsResponse {
+    pub tags: BTreeSet<Tag>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct QueryTagsUnion {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub value: Option<String>,
+    #[serde(default)]
+    pub query: Vec<TagPredicate<'static>>,
+}
+
+impl GetRequest for QueryTagsUnion {
+    type Response = Json<QueryTagsResponse>;
+    type Query = Self;
+
+    fn path(&self) -> Cow<'_, str> {
+        "api/v1/query/tags/union".into()
+    }
+
     fn query(&self) -> Self::Query {
-        ()
+        self.clone()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct QueryTagsIntersection {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub value: Option<String>,
+    #[serde(default)]
+    pub query: Vec<TagPredicate<'static>>,
+}
+
+impl GetRequest for QueryTagsIntersection {
+    type Response = Json<QueryTagsResponse>;
+    type Query = Self;
+
+    fn path(&self) -> Cow<'_, str> {
+        "api/v1/query/tags/intersection".into()
+    }
+
+    fn query(&self) -> Self::Query {
+        self.clone()
     }
 }

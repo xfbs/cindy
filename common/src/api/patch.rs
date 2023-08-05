@@ -1,7 +1,4 @@
-use crate::{
-    api::{Json, PatchRequest, RequestEncoding},
-    hash::*,
-};
+use crate::api::{Json, PatchRequest};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 

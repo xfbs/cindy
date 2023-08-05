@@ -116,6 +116,7 @@ dependencies = [
  "cindy-common",
  "gloo-net",
  "log",
+ "prokio",
  "serde",
  "thiserror",
  "uuid",

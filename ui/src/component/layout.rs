@@ -31,3 +31,12 @@ pub fn SidebarLayoutContent(props: &ChildrenProps) -> Html {
         </div>
     }
 }
+
+#[function_component]
+pub fn Grid(props: &ChildrenProps) -> Html {
+    html! {
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 p-3">
+        { for props.children.iter() }
+        </div>
+    }
+}

@@ -1,6 +1,6 @@
 use super::*;
-use serde::{Deserialize, Serialize};
-use std::borrow::{Borrow, Cow};
+use serde::Serialize;
+use std::borrow::Cow;
 
 pub trait PostRequest: Sized {
     type Request: RequestEncoding;
@@ -133,9 +133,7 @@ impl<T: GetRequest> HttpRequest for Get<T> {
         self.0.path()
     }
 
-    fn body(&self) -> Self::Request {
-        ()
-    }
+    fn body(&self) -> Self::Request {}
 
     fn query(&self) -> Self::Query {
         self.0.query()
@@ -159,9 +157,7 @@ impl<T: PostRequest> HttpRequest for Post<T> {
         self.0.body()
     }
 
-    fn query(&self) -> Self::Query {
-        ()
-    }
+    fn query(&self) -> Self::Query {}
 
     fn method(&self) -> Method {
         Method::Post
@@ -177,9 +173,7 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
         self.0.path()
     }
 
-    fn body(&self) -> Self::Request {
-        ()
-    }
+    fn body(&self) -> Self::Request {}
 
     fn query(&self) -> Self::Query {
         self.0.query()
@@ -203,9 +197,7 @@ impl<T: PatchRequest> HttpRequest for Patch<T> {
         self.0.body()
     }
 
-    fn query(&self) -> Self::Query {
-        ()
-    }
+    fn query(&self) -> Self::Query {}
 
     fn method(&self) -> Method {
         Method::Patch

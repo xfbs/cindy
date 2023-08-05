@@ -1,13 +1,20 @@
 use crate::request::GlooRequest;
 use cindy_common::cache::{CacheKey, RcValue};
-use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex};
+use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex, time::Duration};
 use yew::{
     functional::{UseStateHandle, UseStateSetter},
     prelude::*,
 };
+use prokio::time::sleep;
 
-#[derive(Clone)]
+const DELAY_INITIAL: Duration = Duration::from_millis(100);
+const DELAY_MULTIPLIER: f64 = 1.5;
+
+#[derive(Clone, Default)]
 pub struct Entry {
+    /// Delay to use for next request
+    pub delay: Option<Duration>,
+    /// Fetch in-progress
     pub progress: bool,
     /// Current cached value.
     pub value: RcValue,
@@ -33,6 +40,22 @@ impl Entry {
     /// Unsubscribe for updates
     pub fn unsubscribe(&mut self, setter: &UseStateSetter<RcValue>) {
         self.subscriptions.retain(|s| s != setter);
+    }
+
+    /// Get current delay and update.
+    pub fn delay_update(&mut self) {
+        self.delay = match self.delay {
+            Some(current) => Some(Duration::from_secs_f64(current.as_secs_f64() * DELAY_MULTIPLIER)),
+            None => Some(DELAY_INITIAL),
+        };
+    }
+
+    pub fn delay_reset(&mut self) {
+        self.delay = None;
+    }
+
+    pub fn needs_fetch(&self) -> bool {
+        !self.value.valid() && !self.progress
     }
 }
 
@@ -84,6 +107,10 @@ impl BTreeCache {
         let key = Box::new(data);
         self.entries.insert(key, entry);
     }
+
+    pub fn get<T: CacheKey>(&self, data: &T) -> Option<&Entry> {
+        self.entries.get(data as &dyn CacheKey)
+    }
 }
 
 impl Cache {
@@ -114,26 +141,30 @@ impl Cache {
                     request.clone(),
                     Entry {
                         progress: true,
-                        value: RcValue::default(),
                         subscriptions: vec![setter.clone()],
+                        ..Default::default()
                     },
                 );
                 drop(cache);
-                self.fetch(request);
+                self.fetch(request, None);
             }
-            Some(entry) if !entry.value.valid() && !entry.progress => {
+            Some(entry) if entry.needs_fetch() => {
+                let delay = entry.delay;
                 drop(cache);
-                self.fetch(request);
+                self.fetch(request, delay);
             }
             _ => {}
         }
     }
 
     /// Trigger a fetch of this data.
-    fn fetch<T: GlooRequest + CacheItem>(&self, data: &T) {
+    fn fetch<T: GlooRequest + CacheItem>(&self, data: &T, delay: Option<Duration>) {
         let data = data.clone();
         let cache = self.clone();
         wasm_bindgen_futures::spawn_local(async move {
+            if let Some(delay) = delay {
+                sleep(delay).await;
+            }
             match data.send().await {
                 Ok(result) => cache.cache(&data, Rc::new(result)),
                 Err(error) => cache.failure(&data, error),
@@ -147,6 +178,7 @@ impl Cache {
             .lock()
             .expect("Failure to lock cache")
             .mutate(data, move |entry| {
+                entry.delay_update();
                 entry.progress = false;
                 entry.broadcast();
             });
@@ -158,6 +190,7 @@ impl Cache {
             .lock()
             .expect("Failure to lock cache")
             .mutate(data, move |entry| {
+                entry.delay_reset();
                 entry.value = RcValue::new(value as Rc<dyn Any>);
                 entry.progress = false;
                 entry.broadcast();

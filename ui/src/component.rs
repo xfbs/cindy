@@ -4,9 +4,6 @@ pub use navigation::*;
 mod sidebar;
 pub use sidebar::*;
 
-mod search_results;
-pub use search_results::*;
-
 mod inspect;
 pub use inspect::*;
 
@@ -15,3 +12,6 @@ pub use search::*;
 
 mod layout;
 pub use layout::*;
+
+mod icons;
+pub use icons::*;
