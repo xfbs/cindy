@@ -35,11 +35,14 @@ pub struct FileCardLoaderProps {
 
 #[function_component]
 pub fn FileCardLoader(props: &FileCardLoaderProps) -> Html {
-    let tags = use_get_cached(FileTags {
-        hash: props.hash.clone(),
-        name: None::<String>,
-        value: None::<String>,
-    });
+    let tags = use_cached(
+        FileTags {
+            hash: props.hash.clone(),
+            name: None::<String>,
+            value: None::<String>,
+        }
+        .request(),
+    );
     let tags = tags
         .data()
         .map(|tags| tags[..].to_vec())
@@ -100,9 +103,12 @@ pub struct FilesGridLoaderProps {
 
 #[function_component]
 pub fn FilesGridLoader(props: &FilesGridLoaderProps) -> Html {
-    let data = use_get_cached(FileQuery {
-        query: props.query.clone().into(),
-    });
+    let data = use_cached(
+        FileQuery {
+            query: props.query.clone().into(),
+        }
+        .request(),
+    );
 
     html! {
         if let Some(data) = data.data() {

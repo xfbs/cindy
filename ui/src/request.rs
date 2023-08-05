@@ -2,7 +2,7 @@ use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{api::*, cache::RcValue};
 use gloo_net::{
-    http::{Request, RequestBuilder, Response},
+    http::{Method as GlooMethod, Request, RequestBuilder, Response},
     Error as GlooError,
 };
 use serde::{de::DeserializeOwned, Serialize};
@@ -59,112 +59,47 @@ pub trait GlooRequest {
     async fn send(&self) -> Result<Self::Response, Error>;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Get<T: GetRequest>(pub T);
-
 #[async_trait(?Send)]
-impl<T: GetRequest> GlooRequest for Get<T>
+impl<T: HttpRequest> GlooRequest for T
 where
     T::Response: GlooDecodable,
     <T::Response as ResponseEncoding>::Target: Clone + 'static,
+    T::Request: GlooEncodable,
 {
     type Response = <T::Response as ResponseEncoding>::Target;
     async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.0.uri());
-        let response = Request::get(&path).send().await?;
+        let path = format!("/{}", self.uri());
+        let method = match self.method() {
+            Method::Post => GlooMethod::POST,
+            Method::Get => GlooMethod::GET,
+            Method::Patch => GlooMethod::PATCH,
+            Method::Delete => GlooMethod::DELETE,
+        };
+        let request = RequestBuilder::new(&path).method(method);
+        let response = self.body().gloo_encode(request)?.send().await?;
         <T::Response as GlooDecodable>::decode(&response).await
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Post<T: PostRequest>(pub T);
-
-#[async_trait(?Send)]
-impl<T: PostRequest> GlooRequest for Post<T>
-where
-    T::Request: GlooEncodable,
-{
-    type Response = ();
-    async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.0.path());
-        let builder = Request::post(&path);
-        self.0.body().gloo_encode(builder)?.send().await?;
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Delete<T: DeleteRequest>(pub T);
-
-#[async_trait(?Send)]
-impl<T: DeleteRequest> GlooRequest for Delete<T> {
-    type Response = ();
-    async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.0.uri());
-        Request::delete(&path).send().await?;
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Patch<T: PatchRequest>(pub T);
-
-#[async_trait(?Send)]
-impl<T: PatchRequest> GlooRequest for Patch<T>
-where
-    T::Request: GlooEncodable,
-{
-    type Response = ();
-    async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.0.path());
-        let builder = Request::patch(&path);
-        self.0.body().gloo_encode(builder)?.send().await?;
-        Ok(())
-    }
-}
-
 #[hook]
-pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
+pub fn use_request_then<R: GlooRequest + 'static, F: Fn(&Result<R::Response, Error>) + 'static>(
+    request: R,
+    after: F,
+) -> UseAsyncHandle<R::Response, Rc<Error>> {
     let cache = use_context::<Cache>().expect("Cache not present");
     let handle = use_async(async move {
-        let result = request.send().await.map_err(Rc::new);
+        let result = request.send().await;
         if let Err(error) = &result {
             log::error!("Error: {error:?}");
         }
-        log::info!("Invalidating cache");
         cache.invalidate_all();
-        result
+        after(&result);
+        result.map_err(Rc::new)
     });
     handle
 }
 
 #[hook]
-pub fn use_post<R: PostRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>>
-where
-    R::Request: GlooEncodable,
-{
-    use_request(Post(request))
-}
-
-#[hook]
-pub fn use_patch<R: PatchRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>>
-where
-    R::Request: GlooEncodable,
-{
-    use_request(Patch(request))
-}
-
-#[hook]
-pub fn use_delete<R: DeleteRequest + 'static>(request: R) -> UseAsyncHandle<(), Rc<Error>> {
-    use_request(Delete(request))
-}
-
-#[hook]
-pub fn use_get_cached<R: GetRequest>(data: R) -> RcValue<<R::Response as ResponseEncoding>::Target>
-where
-    R::Response: GlooDecodable,
-    <R::Response as ResponseEncoding>::Target: PartialEq + Clone + 'static,
-    Get<R>: CacheItem,
-{
-    use_cached(Get(data))
+pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
+    use_request_then(request, |_| ())
 }

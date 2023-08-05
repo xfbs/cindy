@@ -65,6 +65,7 @@ pub trait GetRequest: Sized {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Get<T: GetRequest>(T);
 
 impl<T: GetRequest> From<T> for Get<T> {
@@ -73,6 +74,7 @@ impl<T: GetRequest> From<T> for Get<T> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Post<T: PostRequest>(T);
 
 impl<T: PostRequest> From<T> for Post<T> {
@@ -81,6 +83,7 @@ impl<T: PostRequest> From<T> for Post<T> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Delete<T: DeleteRequest>(T);
 
 impl<T: DeleteRequest> From<T> for Delete<T> {
@@ -89,7 +92,8 @@ impl<T: DeleteRequest> From<T> for Delete<T> {
     }
 }
 
-pub struct Patch<T>(T);
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Patch<T: PatchRequest>(T);
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Method {
@@ -183,5 +187,27 @@ impl<T: DeleteRequest> HttpRequest for Delete<T> {
 
     fn method(&self) -> Method {
         Method::Delete
+    }
+}
+
+impl<T: PatchRequest> HttpRequest for Patch<T> {
+    type Request = T::Request;
+    type Response = ();
+    type Query = ();
+
+    fn path(&self) -> Cow<'_, str> {
+        self.0.path()
+    }
+
+    fn body(&self) -> Self::Request {
+        self.0.body()
+    }
+
+    fn query(&self) -> Self::Query {
+        ()
+    }
+
+    fn method(&self) -> Method {
+        Method::Patch
     }
 }

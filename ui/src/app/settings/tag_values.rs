@@ -82,11 +82,14 @@ fn TagValueCreateRow(props: &TagValueCreateRowProps) -> Html {
     let name = use_state(String::new);
     let slug = use_state(String::new);
 
-    let request = use_post(TagValueCreate {
-        name: props.name.clone(),
-        value: (*slug).clone(),
-        display: Some((*name).clone()),
-    });
+    let request = use_request(
+        TagValueCreate {
+            name: props.name.clone(),
+            value: (*slug).clone(),
+            display: Some((*name).clone()),
+        }
+        .request(),
+    );
 
     let name_oninput = {
         let name = name.clone();
@@ -141,10 +144,13 @@ pub struct SettingsTagProps {
 
 #[function_component]
 pub fn SettingsTag(props: &SettingsTagProps) -> Html {
-    let tags = use_get_cached(TagList {
-        name: Some(props.name.clone()),
-        value: None::<String>,
-    });
+    let tags = use_cached(
+        TagList {
+            name: Some(props.name.clone()),
+            value: None::<String>,
+        }
+        .request(),
+    );
     html! {
         <>
             <p>{format!("Tag for {}", &props.name)}</p>

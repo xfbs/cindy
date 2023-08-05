@@ -77,10 +77,13 @@ pub struct TagsListRowProps {
 
 #[function_component]
 pub fn TagsListRow(props: &TagsListRowProps) -> Html {
-    let tag_value = use_get_cached(TagList {
-        name: props.tag.name().to_string().into(),
-        value: props.tag.value().to_string().into(),
-    });
+    let tag_value = use_cached(
+        TagList {
+            name: props.tag.name().to_string().into(),
+            value: props.tag.value().to_string().into(),
+        }
+        .request(),
+    );
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
@@ -106,15 +109,21 @@ pub struct FileTagsRowProps {
 
 #[function_component]
 pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
-    let tag_value = use_get_cached(TagList {
-        name: props.tag.name().to_string().into(),
-        value: props.tag.value().to_string().into(),
-    });
-    let delete = use_delete(FileTagDelete {
-        hash: props.file.clone(),
-        name: Some(props.tag.name().to_string()),
-        value: Some(props.tag.value().to_string()),
-    });
+    let tag_value = use_cached(
+        TagList {
+            name: props.tag.name().to_string().into(),
+            value: props.tag.value().to_string().into(),
+        }
+        .request(),
+    );
+    let delete = use_request(
+        FileTagDelete {
+            hash: props.file.clone(),
+            name: Some(props.tag.name().to_string()),
+            value: Some(props.tag.value().to_string()),
+        }
+        .request(),
+    );
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
@@ -144,7 +153,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
     let name = use_state(String::new);
     let value = use_state(String::new);
 
-    let tag_names = use_get_cached(TagNames);
+    let tag_names = use_cached(TagNames.request());
 
     if let Some(tag_names) = tag_names.data() {
         if !tag_names.contains_key(&*name) {
@@ -154,16 +163,23 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
         }
     }
 
-    let tag_values = use_get_cached(TagList {
-        name: Some((**name).to_string()),
-        value: None::<String>,
-    });
+    let tag_values = use_cached(
+        TagList {
+            name: Some((**name).to_string()),
+            value: None::<String>,
+        }
+        .request(),
+    );
 
-    let create = use_post(FileTagCreate {
-        hash: props.file.clone(),
-        name: (**name).to_string(),
-        value: (**value).to_string(),
-    });
+    let create = use_request(
+        FileTagCreate {
+            hash: props.file.clone(),
+            name: (**name).to_string(),
+            value: (**value).to_string(),
+        }
+        .request(),
+    );
+
     let onkeydown = {
         let create = create.clone();
         move |event: KeyboardEvent| {
@@ -260,7 +276,7 @@ pub struct FileTagsListProps {
 
 #[function_component]
 pub fn FileTagsList(props: &FileTagsListProps) -> Html {
-    let names = use_get_cached(TagNames);
+    let names = use_cached(TagNames.request());
     let inputs = use_list(Vec::<Uuid>::new());
     html! {
         <div class="relative overflow-x-auto py-3">
@@ -367,11 +383,14 @@ pub struct FileSidebarProps {
 
 #[function_component]
 pub fn FileSidebar(props: &FileSidebarProps) -> Html {
-    let tags = use_get_cached(FileTags {
-        hash: props.file.clone(),
-        name: None::<String>,
-        value: None::<String>,
-    });
+    let tags = use_cached(
+        FileTags {
+            hash: props.file.clone(),
+            name: None::<String>,
+            value: None::<String>,
+        }
+        .request(),
+    );
     log::info!("RENDERING FILE SIDEBAR");
     html! {
         <Sidebar>
