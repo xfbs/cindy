@@ -19,14 +19,16 @@ mod prelude {
         request::*,
     };
     pub use cindy_common::{api::*, hash::*, label::*, tag::*};
+    pub use implicit_clone::unsync::IString;
     pub use std::borrow::Cow;
+    pub use std::rc::Rc;
     pub use web_sys::HtmlInputElement;
     pub use yew::{
         events::{InputEvent, TargetCast},
         prelude::*,
     };
     pub use yew_hooks::prelude::*;
-    pub use yew_router::prelude::*;
+    pub use yew_router::prelude::{use_location, *};
 }
 
 fn main() {

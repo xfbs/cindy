@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct FilterProps {
-    pub filter: TagPredicate<'static>,
+    pub filter: Rc<TagPredicate<'static>>,
     #[prop_or_default]
     pub ondelete: Callback<()>,
 }
@@ -25,13 +25,17 @@ fn Filter(props: &FilterProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct SearchProps {
     #[prop_or_default]
-    pub onchange: Callback<Vec<TagPredicate<'static>>>,
+    pub onchange: Callback<Vec<Rc<TagPredicate<'static>>>>,
+
+    #[prop_or_default]
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
 }
 
 #[function_component]
 pub fn Search(props: &SearchProps) -> Html {
     // current active tag filters
-    let filters = use_state_eq(|| Vec::<TagPredicate<'static>>::new());
+    let filters = props.query.clone();
+    //use_state_eq(|| Vec::<TagPredicate<'static>>::new());
 
     // current search bar input
     let input = use_state_eq(|| String::new());
@@ -45,8 +49,7 @@ pub fn Search(props: &SearchProps) -> Html {
         move |event: SubmitEvent| {
             if let Ok(filter) = input.parse() {
                 let mut current = (*filters).clone();
-                current.push(filter);
-                filters.set(current.clone());
+                current.push(Rc::new(filter));
                 input.set(String::new());
                 onchange.emit(current);
             }
@@ -83,7 +86,6 @@ pub fn Search(props: &SearchProps) -> Html {
             let mut filters_current = (*filters).clone();
             if let Some(filter) = filters_current.pop() {
                 input.set(filter.to_string());
-                filters.set(filters_current.clone());
                 onchange.emit(filters_current);
             }
         }
@@ -109,7 +111,6 @@ pub fn Search(props: &SearchProps) -> Html {
                             let ondelete = move |()| {
                                 let mut current = (*filters).clone();
                                 current.remove(index);
-                                filters.set(current.clone());
                                 onchange.emit(current);
                             };
 

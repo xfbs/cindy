@@ -115,9 +115,11 @@ dependencies = [
  "async-trait",
  "cindy-common",
  "gloo-net",
+ "implicit-clone 0.4.0",
  "log",
  "prokio",
  "serde",
+ "serde_json",
  "thiserror",
  "uuid",
  "wasm-bindgen",
@@ -488,6 +490,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "implicit-clone"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73c84c395327945e71c6604eff15061c67849b9081318b4334b719bb2c11415f"
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -754,9 +762,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.103"
+version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d03b412469450d4404fe8499a268edd7f8b79fecb074b0d812ad64ca21f4031b"
+checksum = "076066c5f1078eac5b722a31827a8832fe108bed65dfa75e233c89f8206e976c"
 dependencies = [
  "itoa",
  "ryu",
@@ -1015,7 +1023,7 @@ dependencies = [
  "console_error_panic_hook",
  "futures",
  "gloo",
- "implicit-clone",
+ "implicit-clone 0.3.5",
  "indexmap",
  "js-sys",
  "prokio",

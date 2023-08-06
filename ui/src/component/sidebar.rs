@@ -73,6 +73,8 @@ fn RowSubmitButton(props: &RowSubmitButtonProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct TagsListRowProps {
     pub tag: Tag,
+    #[prop_or_default]
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
 }
 
 #[function_component]
@@ -84,17 +86,30 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
         }
         .request(),
     );
+
+    let delete = use_request(
+        QueryTagRemove {
+            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
+            name: Some(props.tag.name().to_string()),
+            value: Some(props.tag.value().to_string()),
+        }
+        .request(),
+    );
+
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
+            <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
                 {props.tag.name()}
             </th>
-            <td class="px-6 py-4 pr-1">
+            <td class="px-3 py-4">
             if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
                 {&info.display}
             } else {
                 {props.tag.value()}
             }
+            </td>
+            <td class="px-3 py-4 pr-1">
+                <RowDeleteButton onclick={move |_| delete.run()} />
             </td>
         </tr>
     }
@@ -103,7 +118,7 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct FileTagsRowProps {
     pub file: RcHash,
-    pub name: String,
+    pub info: Option<TagNameInfo>,
     pub tag: Tag,
 }
 
@@ -127,7 +142,11 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
-                {&props.name}
+                if let Some(info) = &props.info {
+                    {&info.display}
+                } else {
+                    {props.tag.name()}
+                }
             </th>
             <td class="px-3 py-4">
                 if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
@@ -137,7 +156,9 @@ pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
                 }
             </td>
             <td class="px-3 py-4 pr-1">
-                <RowDeleteButton onclick={move |_| delete.run()} />
+                if props.info.as_ref().map(|info| !info.system).unwrap_or(false) {
+                    <RowDeleteButton onclick={move |_| delete.run()} />
+                }
             </td>
         </tr>
     }
@@ -277,7 +298,6 @@ pub struct FileTagsListProps {
 #[function_component]
 pub fn FileTagsList(props: &FileTagsListProps) -> Html {
     let names = use_cached(TagNames.request());
-    let inputs = use_list(Vec::<Uuid>::new());
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -285,14 +305,12 @@ pub fn FileTagsList(props: &FileTagsListProps) -> Html {
                 <tbody>
                 {
                     props.tags.iter().cloned().map(|tag| {
-                        let name = names
+                        let info = names
                             .data()
                             .and_then(|names| names.get(tag.name()))
-                            .map(|info| &info.display as &str)
-                            .unwrap_or(tag.name())
-                            .to_string();
+                            .cloned();
                         html! {
-                        <FileTagsRow {tag} {name} file={props.file.clone()} />
+                        <FileTagsRow {tag} {info} file={props.file.clone()} />
                     }}).collect::<Html>()
                 }
                 <FileTagsCreateRow file={props.file.clone()} />
@@ -305,7 +323,7 @@ pub fn FileTagsList(props: &FileTagsListProps) -> Html {
 #[derive(Properties, PartialEq)]
 pub struct CommonTagsListProps {
     #[prop_or_default]
-    pub tags: Vec<Tag>,
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
 }
 
 #[function_component]
@@ -314,7 +332,7 @@ pub fn CommonTagsList(props: &CommonTagsListProps) -> Html {
         QueryTags {
             name: None,
             value: None,
-            query: vec![],
+            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
             mode: QueryTagsMode::Intersection,
         }
         .request(),
@@ -322,16 +340,118 @@ pub fn CommonTagsList(props: &CommonTagsListProps) -> Html {
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <TagsListHeader actions=false />
+                <TagsListHeader actions=true />
                 <tbody>
                 {
                     tags.data().iter().flat_map(|tags| tags.iter()).cloned().map(|tag| html! {
-                        <TagsListRow {tag} />
+                        <TagsListRow {tag} query={props.query.clone()} />
                     }).collect::<Html>()
                 }
+                <CommonTagsCreateRow query={props.query.clone()} />
                 </tbody>
             </table>
         </div>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct CommonTagsCreateRowProps {
+    #[prop_or_default]
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
+}
+
+#[function_component]
+pub fn CommonTagsCreateRow(props: &CommonTagsCreateRowProps) -> Html {
+    let name = use_state(String::new);
+    let value = use_state(String::new);
+
+    let tag_names = use_cached(TagNames.request());
+
+    if let Some(tag_names) = tag_names.data() {
+        if !tag_names.contains_key(&*name) {
+            if let Some((first_name, _)) = tag_names.iter().find(|(_, info)| !info.system) {
+                name.set(first_name.clone());
+            }
+        }
+    }
+
+    let tag_values = use_cached(
+        TagList {
+            name: Some((**name).to_string()),
+            value: None::<String>,
+        }
+        .request(),
+    );
+
+    let create = use_request(
+        QueryTagCreate {
+            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
+            name: (**name).to_string(),
+            value: (**value).to_string(),
+        }
+        .request(),
+    );
+
+    let onkeydown = {
+        let create = create.clone();
+        move |event: KeyboardEvent| {
+            if event.key() == "Enter" {
+                create.run();
+                event.prevent_default();
+            }
+        }
+    };
+
+    let name_onchange = {
+        let name = name.clone();
+        move |event: Event| {
+            let target: HtmlSelectElement = event.target_dyn_into().unwrap();
+            name.set(target.value());
+        }
+    };
+
+    let value_onchange = {
+        let value = value.clone();
+        move |event: Event| {
+            let target: HtmlSelectElement = event.target_dyn_into().unwrap();
+            value.set(target.value());
+        }
+    };
+    html! {
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+            <th scope="row" class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
+                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onchange={name_onchange}>
+                {
+                    tag_names.data()
+                        .iter()
+                        .flat_map(|v| v.iter())
+                        .filter(|(_, info)| !info.system)
+                        .map(|(tag, info)| html!{
+                            <option selected={tag == &*name} value={tag.clone()}>
+                                {&info.display}
+                            </option>
+                        }).collect::<Html>()
+                }
+                </select>
+            </th>
+            <td class="px-3 py-4">
+                <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onchange={value_onchange}>
+                {
+                    tag_values.data()
+                        .iter()
+                        .flat_map(|v| v.iter())
+                        .map(|(tag, info)| html!{
+                            <option selected={tag.value() == &*value} value={tag.value().to_string()}>
+                                {&info.display}
+                            </option>
+                        }).collect::<Html>()
+                }
+                </select>
+            </td>
+            <td class="px-3 py-4 pr-1">
+                <RowSubmitButton onclick={move |_| create.run()} />
+            </td>
+        </tr>
     }
 }
 
@@ -368,14 +488,17 @@ pub fn SidebarHeading(props: &SidebarHeadingProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct QuerySidebarProps {}
+pub struct QuerySidebarProps {
+    #[prop_or_default]
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
+}
 
 #[function_component]
-pub fn QuerySidebar(_props: &QuerySidebarProps) -> Html {
+pub fn QuerySidebar(props: &QuerySidebarProps) -> Html {
     html! {
         <Sidebar>
             <SidebarHeading>{"Common tags"}</SidebarHeading>
-            <CommonTagsList />
+            <CommonTagsList query={props.query.clone()} />
             <SidebarHeading>{"Settings"}</SidebarHeading>
             <div class="py-2">
                 <ToggleEntry text="Show tags" />

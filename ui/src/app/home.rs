@@ -1,25 +1,85 @@
 use crate::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RawQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub sort: Option<String>,
+    #[serde(default)]
+    pub group: Option<String>,
+}
+
+impl RawQuery {
+    fn decode(self) -> Query {
+        Query {
+            sort: self.sort,
+            group: self.group,
+            query: match self.query.as_deref().map(serde_json::from_str) {
+                Some(Ok(result)) => result,
+                Some(Err(error)) => {
+                    log::error!("Failed to parse query: {error}");
+                    Default::default()
+                }
+                None => Default::default(),
+            },
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Query {
+    #[serde(default)]
+    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
+    #[serde(default)]
+    pub sort: Option<String>,
+    #[serde(default)]
+    pub group: Option<String>,
+}
+
+impl Query {
+    fn encode(self) -> RawQuery {
+        RawQuery {
+            sort: self.sort,
+            group: self.group,
+            query: match self.query.len() {
+                0 => None,
+                _ => Some(serde_json::to_string(&self.query).unwrap()),
+            },
+        }
+    }
+}
 
 #[function_component]
 pub fn HomeView() -> Html {
-    let filters = use_state(|| vec![]);
+    let location = use_location().unwrap();
+    let navigator = use_navigator().unwrap();
+    let query: RawQuery = location.query().unwrap();
+    let query = query.decode();
+
     let onchange = {
-        let filters = filters.clone();
-        move |new: Vec<TagPredicate<'static>>| {
-            filters.set(new);
+        let query = query.clone();
+        move |new: Vec<Rc<TagPredicate<'static>>>| {
+            let mut query = query.clone();
+            query.query = Rc::new(new);
+            if let Err(error) = navigator.replace_with_query(&Route::Home, &query.encode()) {
+                log::error!("{error:?}");
+            }
         }
     };
+
     html! {
         <div>
             <NavBar>
-                <Search {onchange} />
+                <Search {onchange} query={query.query.clone()} />
             </NavBar>
             <SidebarLayout>
                 <SidebarLayoutSidebar>
-                    <QuerySidebar />
+                    <QuerySidebar query={query.query.clone()} />
                 </SidebarLayoutSidebar>
                 <SidebarLayoutContent>
-                    <FilesGrid query={(*filters).clone()} />
+                    <FilesGrid query={query.query.clone()} />
                 </SidebarLayoutContent>
             </SidebarLayout>
         </div>
@@ -86,9 +146,9 @@ struct FileTagProps {
 #[function_component]
 fn FileTag(props: &FileTagProps) -> Html {
     html! {
-        <span class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1">
+        <button class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1 pointer-events-auto">
             {props.tag.name()}{":"}{props.tag.value()}
-        </span>
+        </button>
     }
 }
 
@@ -108,7 +168,7 @@ fn FileCard(props: &FileCardProps) -> Html {
         <Link<Route> to={Route::file(props.hash.clone().into())}>
             <img class="rounded-lg" src={content.uri()} alt="" />
         </Link<Route>>
-        <div class="absolute bottom-0 left-0 p-2 min-w-full">
+        <div class="absolute bottom-0 left-0 p-2 min-w-full pointer-events-none">
             <div class="flex flex-wrap">
                 {
                     props.tags.iter().cloned().map(|tag| html!{
@@ -124,14 +184,19 @@ fn FileCard(props: &FileCardProps) -> Html {
 #[derive(Properties, PartialEq)]
 struct FilesGridProps {
     #[prop_or_default]
-    query: Vec<TagPredicate<'static>>,
+    query: Rc<Vec<Rc<TagPredicate<'static>>>>,
 }
 
 #[function_component]
 fn FilesGrid(props: &FilesGridProps) -> Html {
     let files = use_cached(
         QueryFiles {
-            query: props.query.clone().into(),
+            query: props
+                .query
+                .iter()
+                .map(|pred| (**pred).clone())
+                .collect::<Vec<TagPredicate<'static>>>()
+                .into(),
         }
         .request(),
     );
