@@ -151,14 +151,14 @@ fn querying(c: &mut Criterion) {
 
     group.bench_function("all", |b| {
         b.iter(|| {
-            database.hash_query(&mut [].iter()).unwrap();
+            database.query_hashes(&mut [].iter()).unwrap();
         });
     });
 
     group.bench_function("tag0:*", |b| {
         b.iter(|| {
             let tags = database
-                .hash_query(&mut [TagFilter::new(Some("tag0"), None).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("tag0"), None).exists()].iter())
                 .unwrap();
             assert_eq!(tags.len(), count as usize);
         });
@@ -167,7 +167,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("tag0:value0", |b| {
         b.iter(|| {
             database
-                .hash_query(&mut [TagFilter::new(Some("tag0"), Some("value0")).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("tag0"), Some("value0")).exists()].iter())
                 .unwrap();
         });
     });
@@ -175,7 +175,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("tag1:value0", |b| {
         b.iter(|| {
             database
-                .hash_query(&mut [TagFilter::new(Some("tag1"), Some("value0")).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("tag1"), Some("value0")).exists()].iter())
                 .unwrap();
         });
     });
@@ -183,7 +183,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("tag0:value0+tag1:value0", |b| {
         b.iter(|| {
             database
-                .hash_query(
+                .query_hashes(
                     &mut [
                         TagFilter::new(Some("tag0"), Some("value0")).exists(),
                         TagFilter::new(Some("tag1"), Some("value0")).exists(),
@@ -197,7 +197,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("random:half", |b| {
         b.iter(|| {
             database
-                .hash_query(&mut [TagFilter::new(Some("random"), Some("half")).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("random"), Some("half")).exists()].iter())
                 .unwrap();
         });
     });
@@ -205,7 +205,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("random:rare", |b| {
         b.iter(|| {
             database
-                .hash_query(&mut [TagFilter::new(Some("random"), Some("rare")).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("random"), Some("rare")).exists()].iter())
                 .unwrap();
         });
     });
@@ -213,7 +213,7 @@ fn querying(c: &mut Criterion) {
     group.bench_function("random:common", |b| {
         b.iter(|| {
             database
-                .hash_query(&mut [TagFilter::new(Some("random"), Some("common")).exists()].iter())
+                .query_hashes(&mut [TagFilter::new(Some("random"), Some("common")).exists()].iter())
                 .unwrap();
         });
     });

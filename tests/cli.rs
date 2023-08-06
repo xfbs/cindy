@@ -185,7 +185,7 @@ async fn test_add_files_recursively() {
 
     let database = cindy.database().await;
     let hashes = database
-        .hash_query(&mut [TagFilter::new(Some("ancestor"), Some("/folder")).into()].iter())
+        .query_hashes(&mut [TagFilter::new(Some("ancestor"), Some("/folder")).exists()].iter())
         .unwrap();
     drop(database);
 
@@ -193,7 +193,7 @@ async fn test_add_files_recursively() {
 
     let database = cindy.database().await;
     let hashes = database
-        .hash_query(&mut [TagFilter::new(Some("filename"), Some("file2.txt")).into()].iter())
+        .query_hashes(&mut [TagFilter::new(Some("filename"), Some("file2.txt")).exists()].iter())
         .unwrap();
     drop(database);
 
@@ -223,7 +223,7 @@ async fn test_media_info_tags() {
 
     let database = cindy.database().await;
     let hashes = database
-        .hash_query(&mut [TagFilter::new(Some("media"), Some("image")).into()].iter())
+        .query_hashes(&mut [TagFilter::new(Some("media"), Some("image")).exists()].iter())
         .unwrap();
     drop(database);
     assert_eq!(hashes.len(), 2);

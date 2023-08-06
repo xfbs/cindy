@@ -199,7 +199,7 @@ impl<T: Handle> Database<T> {
         Ok(())
     }
 
-    pub fn hash_query(
+    pub fn query_hashes(
         &self,
         query: &mut dyn Iterator<Item = &TagPredicate<'_>>,
     ) -> Result<BTreeSet<BoxHash>> {
@@ -242,7 +242,7 @@ impl<T: Handle> Database<T> {
         name: Option<&str>,
         value: Option<&str>,
     ) -> Result<BTreeSet<Tag>> {
-        let hashes = self.hash_query(query)?;
+        let hashes = self.query_hashes(query)?;
         let mut union = BTreeSet::new();
         for hash in &hashes {
             let hashes = self.hash_tags(&hash, name.as_deref(), value.as_deref())?;
@@ -260,7 +260,7 @@ impl<T: Handle> Database<T> {
         name: Option<&str>,
         value: Option<&str>,
     ) -> Result<BTreeSet<Tag>> {
-        let hashes = self.hash_query(query)?;
+        let hashes = self.query_hashes(query)?;
         let mut intersection: Option<BTreeSet<_>> = None;
         for hash in &hashes {
             let hashes = self.hash_tags(&hash, name, value)?;
@@ -286,7 +286,7 @@ impl<T: Handle> Database<T> {
         name: &str,
         value: &str,
     ) -> Result<()> {
-        let hashes = self.hash_query(query)?;
+        let hashes = self.query_hashes(query)?;
         for hash in &hashes {
             self.hash_tag_add(hash, name, value)?;
         }
@@ -300,7 +300,7 @@ impl<T: Handle> Database<T> {
         name: Option<&str>,
         value: Option<&str>,
     ) -> Result<()> {
-        let hashes = self.hash_query(query)?;
+        let hashes = self.query_hashes(query)?;
         for hash in &hashes {
             self.hash_tag_remove(hash, name, value)?;
         }

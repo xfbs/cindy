@@ -1,6 +1,7 @@
 use crate::{
     api::{Json, PostRequest},
     hash::*,
+    TagPredicate,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
@@ -93,6 +94,29 @@ impl<H: Borrow<Hash>, S: Borrow<str>> PostRequest for FileTagCreate<H, S> {
         Json(FileTagCreateBody {
             name: self.name.borrow().to_string().into(),
             value: self.value.borrow().to_string().into(),
+        })
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct QueryTagCreate<S: Borrow<str>> {
+    pub query: Vec<TagPredicate<'static>>,
+    pub name: S,
+    pub value: S,
+}
+
+impl<S: Borrow<str>> PostRequest for QueryTagCreate<S> {
+    type Request = Json<QueryTagCreate<String>>;
+
+    fn path(&self) -> Cow<'_, str> {
+        "api/v1/query/tags".into()
+    }
+
+    fn body(&self) -> Self::Request {
+        Json(QueryTagCreate {
+            query: self.query.clone(),
+            name: self.name.borrow().into(),
+            value: self.value.borrow().into(),
         })
     }
 }

@@ -9,15 +9,39 @@ async fn query(
     Query(query): Query<QueryFiles<'static>>,
 ) -> Result<Json<BTreeSet<BoxHash>>, Error> {
     let database = cindy.database().await;
-    spawn_blocking(move || database.hash_query(&mut query.query.iter()))
+    spawn_blocking(move || database.query_hashes(&mut query.query.iter()))
         .await?
         .map(Json)
         .map_err(Into::into)
 }
 
-async fn query_tag_create() {}
+async fn query_tag_create(
+    State(cindy): State<Cindy>,
+    Json(request): Json<QueryTagCreate<String>>,
+) -> Result<(), Error> {
+    let database = cindy.database().await;
+    spawn_blocking(move || {
+        database.query_tag_add(&mut request.query.iter(), &request.name, &request.value)
+    })
+    .await?
+    .map_err(Into::into)
+}
 
-async fn query_tag_delete() {}
+async fn query_tag_delete(
+    State(cindy): State<Cindy>,
+    Query(query): Query<QueryTagRemove<String>>,
+) -> Result<(), Error> {
+    let database = cindy.database().await;
+    spawn_blocking(move || {
+        database.query_tag_remove(
+            &mut query.query.iter(),
+            query.name.as_deref(),
+            query.value.as_deref(),
+        )
+    })
+    .await?
+    .map_err(Into::into)
+}
 
 async fn query_tags(
     State(cindy): State<Cindy>,

@@ -474,7 +474,7 @@ fn empty_query_list_returns_all() {
     database.hash_add(&hash1).unwrap();
     database.hash_add(&hash2).unwrap();
 
-    let hashes = database.hash_query(&mut [].iter()).unwrap();
+    let hashes = database.query_hashes(&mut [].iter()).unwrap();
     assert_eq!(hashes, [hash1.into(), hash2.into()].into());
 }
 
@@ -498,17 +498,17 @@ fn can_query_files_by_tag_name() {
     database.hash_tag_add(&hash3, "b", "value").unwrap();
 
     let hashes = database
-        .hash_query(&mut [TagPredicate::Exists(TagFilter::new(Some("a"), None))].iter())
+        .query_hashes(&mut [TagPredicate::Exists(TagFilter::new(Some("a"), None))].iter())
         .unwrap();
     assert_eq!(hashes, [hash1.into(), hash3.into()].into());
 
     let hashes = database
-        .hash_query(&mut [TagPredicate::Exists(TagFilter::new(Some("b"), None))].iter())
+        .query_hashes(&mut [TagPredicate::Exists(TagFilter::new(Some("b"), None))].iter())
         .unwrap();
     assert_eq!(hashes, [hash2.into(), hash3.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Exists(TagFilter::new(Some("a"), None)),
                 TagPredicate::Exists(TagFilter::new(Some("b"), None)),
@@ -519,7 +519,7 @@ fn can_query_files_by_tag_name() {
     assert_eq!(hashes, [hash3.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Exists(TagFilter::new(Some("a"), None)),
                 TagPredicate::Missing(TagFilter::new(Some("b"), None)),
@@ -530,7 +530,7 @@ fn can_query_files_by_tag_name() {
     assert_eq!(hashes, [hash1.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Missing(TagFilter::new(Some("a"), None)),
                 TagPredicate::Exists(TagFilter::new(Some("b"), None)),
@@ -559,7 +559,7 @@ fn can_query_files_by_tag_name_value() {
     database.hash_tag_add(&hash2, "name", "c").unwrap();
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [TagPredicate::Exists(TagFilter::new(
                 Some("name"),
                 Some("a"),
@@ -570,7 +570,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [hash1.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [TagPredicate::Exists(TagFilter::new(
                 Some("name"),
                 Some("b"),
@@ -581,7 +581,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [hash1.into(), hash2.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [TagPredicate::Exists(TagFilter::new(
                 Some("name"),
                 Some("c"),
@@ -592,7 +592,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [hash2.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("a"))),
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("b"))),
@@ -603,7 +603,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [hash1.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("b"))),
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("c"))),
@@ -614,7 +614,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [hash2.into()].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("a"))),
                 TagPredicate::Exists(TagFilter::new(Some("name"), Some("b"))),
@@ -626,7 +626,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [TagPredicate::Missing(TagFilter::new(
                 Some("name"),
                 Some("b"),
@@ -637,7 +637,7 @@ fn can_query_files_by_tag_name_value() {
     assert_eq!(hashes, [].into());
 
     let hashes = database
-        .hash_query(
+        .query_hashes(
             &mut [TagPredicate::Missing(TagFilter::new(
                 Some("name"),
                 Some("a"),
@@ -682,12 +682,12 @@ fn stress_test() {
                 .unwrap();
         }
     }
-    let hashes = database.hash_query(&mut [].iter()).unwrap();
+    let hashes = database.query_hashes(&mut [].iter()).unwrap();
     assert_eq!(hashes.len(), hash.len());
 
     for (name, values) in tags.iter() {
         let hashes = database
-            .hash_query(
+            .query_hashes(
                 &mut [TagPredicate::Exists(TagFilter::new(
                     Some(*name),
                     Some(&values[0]),
@@ -706,7 +706,7 @@ fn stress_test() {
     }
 
     let _hashes = database
-        .hash_query(&mut [TagPredicate::Exists(TagFilter::new(None, Some("value-3")))].iter())
+        .query_hashes(&mut [TagPredicate::Exists(TagFilter::new(None, Some("value-3")))].iter())
         .unwrap();
 }
 
