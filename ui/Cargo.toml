@@ -20,4 +20,9 @@ uuid = { version = "1.4.1", features = ["v4", "wasm-bindgen", "js"] }
 wasm-bindgen-futures = "0.4.37"
 prokio = "0.1.0"
 
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+
 [workspace]
