@@ -130,7 +130,7 @@ struct FilesGridProps {
 #[function_component]
 fn FilesGrid(props: &FilesGridProps) -> Html {
     let files = use_cached(
-        FileQuery {
+        QueryFiles {
             query: props.query.clone().into(),
         }
         .request(),

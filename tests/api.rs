@@ -349,7 +349,7 @@ async fn test_query_empty() {
     // query
     let router = cindy.router();
     let tags = router
-        .get(FileQuery {
+        .get(QueryFiles {
             query: vec![].into(),
         })
         .await
@@ -383,7 +383,7 @@ async fn test_query_filename() {
     // query
     let router = cindy.router();
     let tags = router
-        .get(FileQuery {
+        .get(QueryFiles {
             query: vec![TagPredicate::Exists(TagFilter::new(
                 Some("filename"),
                 Some("file1.txt"),

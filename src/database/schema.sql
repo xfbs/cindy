@@ -24,18 +24,18 @@ CREATE TABLE IF NOT EXISTS tag_names(
     UNIQUE (name)
 );
 
-INSERT INTO tag_names(name, system) VALUES ('ancestor', true);
-INSERT INTO tag_names(name, system) VALUES ('directory', true);
-INSERT INTO tag_names(name, system) VALUES ('duration', true);
-INSERT INTO tag_names(name, system) VALUES ('durationgroup', true);
-INSERT INTO tag_names(name, system) VALUES ('filename', true);
-INSERT INTO tag_names(name, system) VALUES ('filesize', true);
-INSERT INTO tag_names(name, system) VALUES ('format', true);
-INSERT INTO tag_names(name, system) VALUES ('height', true);
-INSERT INTO tag_names(name, system) VALUES ('media', true);
-INSERT INTO tag_names(name, system) VALUES ('path', true);
-INSERT INTO tag_names(name, system) VALUES ('resolution', true);
-INSERT INTO tag_names(name, system) VALUES ('width', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('ancestor', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('directory', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('duration', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('durationgroup', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('filename', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('filesize', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('format', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('height', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('media', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('path', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('resolution', true);
+INSERT OR IGNORE INTO tag_names(name, system) VALUES ('width', true);
 
 CREATE TABLE IF NOT EXISTS tag_values(
     id INTEGER NOT NULL,

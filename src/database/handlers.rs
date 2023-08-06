@@ -235,6 +235,78 @@ impl<T: Handle> Database<T> {
             .map_err(Into::into)
     }
 
+    /// For a given query, compute the union of all tags of all results.
+    pub fn query_tag_union(
+        &self,
+        query: &mut dyn Iterator<Item = &TagPredicate<'_>>,
+        name: Option<&str>,
+        value: Option<&str>,
+    ) -> Result<BTreeSet<Tag>> {
+        let hashes = self.hash_query(query)?;
+        let mut union = BTreeSet::new();
+        for hash in &hashes {
+            let hashes = self.hash_tags(&hash, name.as_deref(), value.as_deref())?;
+            for hash in hashes {
+                union.insert(hash);
+            }
+        }
+        Ok(union)
+    }
+
+    /// For a given query, compute the intersection of tags of the results.
+    pub fn query_tag_intersection(
+        &self,
+        query: &mut dyn Iterator<Item = &TagPredicate<'_>>,
+        name: Option<&str>,
+        value: Option<&str>,
+    ) -> Result<BTreeSet<Tag>> {
+        let hashes = self.hash_query(query)?;
+        let mut intersection: Option<BTreeSet<_>> = None;
+        for hash in &hashes {
+            let hashes = self.hash_tags(&hash, name, value)?;
+            if let Some(list) = &mut intersection {
+                if list.is_empty() {
+                    break;
+                }
+                let difference: Vec<_> = list.difference(&hashes).cloned().collect();
+                for hash in &difference {
+                    list.remove(hash);
+                }
+            } else {
+                intersection = Some(hashes);
+            }
+        }
+        Ok(intersection.unwrap_or_default())
+    }
+
+    /// For a given query, add a tag to all results.
+    pub fn query_tag_add(
+        &self,
+        query: &mut dyn Iterator<Item = &TagPredicate<'_>>,
+        name: &str,
+        value: &str,
+    ) -> Result<()> {
+        let hashes = self.hash_query(query)?;
+        for hash in &hashes {
+            self.hash_tag_add(hash, name, value)?;
+        }
+        Ok(())
+    }
+
+    /// For a given query, remove tags from all results.
+    pub fn query_tag_remove(
+        &self,
+        query: &mut dyn Iterator<Item = &TagPredicate<'_>>,
+        name: Option<&str>,
+        value: Option<&str>,
+    ) -> Result<()> {
+        let hashes = self.hash_query(query)?;
+        for hash in &hashes {
+            self.hash_tag_remove(hash, name, value)?;
+        }
+        Ok(())
+    }
+
     /// Add a label to a tagged file.
     pub fn label_add(&self, file: &Hash, name: &str, value: &str, label: &Label) -> Result<()> {
         match label {

@@ -1,11 +1,11 @@
 use crate::request::GlooRequest;
 use cindy_common::cache::{CacheKey, RcValue};
+use prokio::time::sleep;
 use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex, time::Duration};
 use yew::{
     functional::{UseStateHandle, UseStateSetter},
     prelude::*,
 };
-use prokio::time::sleep;
 
 const DELAY_INITIAL: Duration = Duration::from_millis(100);
 const DELAY_MULTIPLIER: f64 = 1.5;
@@ -45,7 +45,9 @@ impl Entry {
     /// Get current delay and update.
     pub fn delay_update(&mut self) {
         self.delay = match self.delay {
-            Some(current) => Some(Duration::from_secs_f64(current.as_secs_f64() * DELAY_MULTIPLIER)),
+            Some(current) => Some(Duration::from_secs_f64(
+                current.as_secs_f64() * DELAY_MULTIPLIER,
+            )),
             None => Some(DELAY_INITIAL),
         };
     }

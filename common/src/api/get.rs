@@ -66,12 +66,12 @@ impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
 impl<H: Borrow<Hash>, S: Borrow<str>> Invalidatable for FileTags<H, S> {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FileQuery<'a> {
+pub struct QueryFiles<'a> {
     #[serde(default)]
     pub query: Cow<'a, [TagPredicate<'a>]>,
 }
 
-impl<'a> GetRequest for FileQuery<'a> {
+impl<'a> GetRequest for QueryFiles<'a> {
     type Response = Json<Vec<BoxHash>>;
     type Query = Self;
 
@@ -141,49 +141,29 @@ impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct QueryTagsResponse {
-    pub tags: BTreeSet<Tag>,
+#[serde(rename_all = "snake_case")]
+pub enum QueryTagsMode {
+    Union,
+    Intersection,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct QueryTagsUnion {
+pub struct QueryTags {
     #[serde(default)]
     pub name: Option<String>,
     #[serde(default)]
     pub value: Option<String>,
     #[serde(default)]
     pub query: Vec<TagPredicate<'static>>,
+    pub mode: QueryTagsMode,
 }
 
-impl GetRequest for QueryTagsUnion {
-    type Response = Json<QueryTagsResponse>;
+impl GetRequest for QueryTags {
+    type Response = Json<BTreeSet<Tag>>;
     type Query = Self;
 
     fn path(&self) -> Cow<'_, str> {
-        "api/v1/query/tags/union".into()
-    }
-
-    fn query(&self) -> Self::Query {
-        self.clone()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct QueryTagsIntersection {
-    #[serde(default)]
-    pub name: Option<String>,
-    #[serde(default)]
-    pub value: Option<String>,
-    #[serde(default)]
-    pub query: Vec<TagPredicate<'static>>,
-}
-
-impl GetRequest for QueryTagsIntersection {
-    type Response = Json<QueryTagsResponse>;
-    type Query = Self;
-
-    fn path(&self) -> Cow<'_, str> {
-        "api/v1/query/tags/intersection".into()
+        "api/v1/query/tags".into()
     }
 
     fn query(&self) -> Self::Query {

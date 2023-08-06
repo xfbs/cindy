@@ -310,18 +310,22 @@ pub struct CommonTagsListProps {
 
 #[function_component]
 pub fn CommonTagsList(props: &CommonTagsListProps) -> Html {
-    let tags = use_cached(QueryTagsIntersection {
-        name: None,
-        value: None,
-        query: vec![],
-    }.request());
+    let tags = use_cached(
+        QueryTags {
+            name: None,
+            value: None,
+            query: vec![],
+            mode: QueryTagsMode::Intersection,
+        }
+        .request(),
+    );
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <TagsListHeader actions=false />
                 <tbody>
                 {
-                    tags.data().iter().flat_map(|tags| tags.tags.iter()).cloned().map(|tag| html! {
+                    tags.data().iter().flat_map(|tags| tags.iter()).cloned().map(|tag| html! {
                         <TagsListRow {tag} />
                     }).collect::<Html>()
                 }
