@@ -1,6 +1,7 @@
 use super::*;
 use crate::tag::{TagFilter, TagPredicate, TagValueInfo};
 use cindy_common::{Point, Rectangle, Sequence};
+use proptest::prelude::*;
 
 #[test]
 fn test_migrate() {
@@ -912,4 +913,166 @@ fn can_get_tag_name_display_custom() {
     assert_eq!(names["name"].values, 1);
     assert_eq!(names["name"].system, false);
     assert_eq!(names["name"].display, "My Name");
+}
+
+fn arb_tag() -> impl Strategy<Value = Tag> {
+    ("[a-z]{4}", "[a-z]{4}").prop_map(|(name, value)| Tag::new(name, value))
+}
+
+fn arb_tag_filter() -> impl Strategy<Value = TagFilter<'static>> {
+    prop_oneof![
+        Just(TagFilter::new::<&str>(None, None)),
+        "[a-z]{4}".prop_map(|string| TagFilter::new::<String>(Some(string), None)),
+        "[a-z]{4}".prop_map(|string| TagFilter::new::<String>(None, Some(string))),
+        ("[a-z]{4}", "[a-z]{4}")
+            .prop_map(|(name, value)| TagFilter::new::<String>(Some(name), Some(value))),
+    ]
+    .boxed()
+}
+
+fn arb_tag_predicate() -> impl Strategy<Value = TagPredicate<'static>> {
+    prop_oneof![
+        arb_tag_filter().prop_map(TagPredicate::Exists),
+        arb_tag_filter().prop_map(TagPredicate::Missing),
+    ]
+}
+
+proptest! {
+    #[test]
+    fn query_tag_union_single(tags in proptest::collection::btree_set(arb_tag(), 0..20)) {
+        let database = Database(Connection::open_in_memory().unwrap());
+        database.migrate().unwrap();
+        let hash = Hash::new(&[0x01]);
+        database.hash_add(&hash).unwrap();
+        for tag in tags.iter() {
+            database.tag_name_create(tag.name(), None).unwrap();
+            database.tag_value_create(tag.name(), tag.value()).unwrap();
+            database
+                .hash_tag_add(&hash, tag.name(), tag.value())
+                .unwrap();
+        }
+        let result = database
+            .query_tag_union(&mut [].iter(), None, None)
+            .unwrap();
+        assert_eq!(result, tags);
+    }
+
+    #[test]
+    fn query_tag_union_two(
+        tags1 in proptest::collection::btree_set(arb_tag(), 0..20),
+        tags2 in proptest::collection::btree_set(arb_tag(), 0..20))
+    {
+        let database = Database(Connection::open_in_memory().unwrap());
+        database.migrate().unwrap();
+
+        // create tags
+        for tag in tags1.union(&tags2) {
+            database.tag_name_create(tag.name(), None).unwrap();
+            database.tag_value_create(tag.name(), tag.value()).unwrap();
+        }
+
+        // tag file1
+        let hash1 = Hash::new(&[0x01]);
+        database.hash_add(&hash1).unwrap();
+        for tag in tags1.iter() {
+            database
+                .hash_tag_add(&hash1, tag.name(), tag.value())
+                .unwrap();
+        }
+
+        // tag file2
+        let hash2 = Hash::new(&[0x02]);
+        database.hash_add(&hash2).unwrap();
+        for tag in tags2.iter() {
+            database
+                .hash_tag_add(&hash2, tag.name(), tag.value())
+                .unwrap();
+        }
+
+        // empty query returns all, so the union of both tags.
+        let expected = tags1.union(&tags2).cloned().collect();
+        let result = database
+            .query_tag_union(&mut [].iter(), None, None)
+            .unwrap();
+        assert_eq!(result, expected);
+
+        // any tag which is only present in file 1 only returns tags from file1.
+        for tag in tags1.difference(&tags2) {
+            let result = database
+                .query_tag_union(&mut [
+                    tag.filter().exists()
+                ].iter(), None, None)
+                .unwrap();
+            assert_eq!(result, tags1);
+        }
+
+        // any tag which is only present in file 1 only returns tags from file1.
+        for tag in tags2.difference(&tags1) {
+            let result = database
+                .query_tag_union(&mut [
+                    tag.filter().exists()
+                ].iter(), None, None)
+                .unwrap();
+            assert_eq!(result, tags2);
+        }
+    }
+
+    #[test]
+    fn query_tag_union_intersection(tags in proptest::collection::btree_set(arb_tag(), 0..20)) {
+        let database = Database(Connection::open_in_memory().unwrap());
+        database.migrate().unwrap();
+        let hash = Hash::new(&[0x01]);
+        database.hash_add(&hash).unwrap();
+        for tag in tags.iter() {
+            database.tag_name_create(tag.name(), None).unwrap();
+            database.tag_value_create(tag.name(), tag.value()).unwrap();
+            database
+                .hash_tag_add(&hash, tag.name(), tag.value())
+                .unwrap();
+        }
+        let result = database
+            .query_tag_intersection(&mut [].iter(), None, None)
+            .unwrap();
+        assert_eq!(result, tags);
+    }
+
+    #[test]
+    fn query_tag_intersection_two(
+        tags1 in proptest::collection::btree_set(arb_tag(), 0..20),
+        tags2 in proptest::collection::btree_set(arb_tag(), 0..20))
+    {
+        let database = Database(Connection::open_in_memory().unwrap());
+        database.migrate().unwrap();
+
+        // create tags
+        for tag in tags1.union(&tags2) {
+            database.tag_name_create(tag.name(), None).unwrap();
+            database.tag_value_create(tag.name(), tag.value()).unwrap();
+        }
+
+        // tag file1
+        let hash1 = Hash::new(&[0x01]);
+        database.hash_add(&hash1).unwrap();
+        for tag in tags1.iter() {
+            database
+                .hash_tag_add(&hash1, tag.name(), tag.value())
+                .unwrap();
+        }
+
+        // tag file2
+        let hash2 = Hash::new(&[0x02]);
+        database.hash_add(&hash2).unwrap();
+        for tag in tags2.iter() {
+            database
+                .hash_tag_add(&hash2, tag.name(), tag.value())
+                .unwrap();
+        }
+
+        // empty query returns all, so the union of both tags.
+        let expected = tags1.intersection(&tags2).cloned().collect();
+        let result = database
+            .query_tag_intersection(&mut [].iter(), None, None)
+            .unwrap();
+        assert_eq!(result, expected);
+    }
 }

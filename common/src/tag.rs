@@ -20,6 +20,10 @@ impl Tag {
     pub fn value(&self) -> &str {
         &self.1
     }
+
+    pub fn filter(&self) -> TagFilter<'_> {
+        TagFilter::new(Some(&self.0), Some(&self.1))
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
@@ -36,6 +40,12 @@ impl<'a> TagFilter<'a> {
 
     pub fn value(&self) -> Option<&str> {
         self.1.as_ref().map(|v| v.borrow())
+    }
+
+    pub fn matches(&self, tag: &Tag) -> bool {
+        let name_matches = self.name().map(|name| name == tag.name()).unwrap_or(true);
+        let value_matches = self.value().map(|value| value == tag.value()).unwrap_or(true);
+        name_matches && value_matches
     }
 
     pub fn exists(self) -> TagPredicate<'a> {
@@ -56,6 +66,13 @@ pub enum TagPredicate<'a> {
 impl<'a> TagPredicate<'a> {
     pub fn exists(&self) -> bool {
         matches!(self, TagPredicate::Exists(_))
+    }
+
+    pub fn matches(&mut self, tags: &[Tag]) -> bool {
+        match self {
+            Self::Exists(filter) => tags.iter().any(|tag| filter.matches(tag)),
+            Self::Missing(filter) => tags.iter().all(|tag| !filter.matches(tag)),
+        }
     }
 
     pub fn filter(&self) -> &TagFilter<'a> {
