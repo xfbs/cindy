@@ -5,6 +5,7 @@ list:
 # Run unit tests
 test:
     cargo test --all
+    cd ui && cargo test --all
 
 # Format source with rustfmt nightly
 format:

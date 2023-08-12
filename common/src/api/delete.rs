@@ -3,6 +3,7 @@ use crate::{
     hash::*,
     tag::TagPredicate,
 };
+use restless::query::Qs;
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
@@ -13,7 +14,7 @@ pub struct TagDelete<S: Borrow<str>> {
 }
 
 impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
-    type Query = TagQuery<String>;
+    type Query = Qs<TagQuery<String>>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/values".into()
@@ -24,6 +25,7 @@ impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
             name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
             value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
         }
+        .into()
     }
 }
 
@@ -35,7 +37,7 @@ pub struct FileTagDelete<H: Borrow<Hash>, S: Borrow<str>> {
 }
 
 impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
-    type Query = TagQuery<String>;
+    type Query = Qs<TagQuery<String>>;
 
     fn path(&self) -> Cow<'_, str> {
         let hash = self.hash.borrow();
@@ -47,6 +49,7 @@ impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
             name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
             value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
         }
+        .into()
     }
 }
 
@@ -58,7 +61,7 @@ pub struct QueryTagRemove<S: Borrow<str>> {
 }
 
 impl<S: Borrow<str>> DeleteRequest for QueryTagRemove<S> {
-    type Query = QueryTagRemove<String>;
+    type Query = Qs<QueryTagRemove<String>>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query/tags".into()
@@ -70,5 +73,6 @@ impl<S: Borrow<str>> DeleteRequest for QueryTagRemove<S> {
             name: self.name.as_ref().map(|n| n.borrow().into()),
             value: self.value.as_ref().map(|n| n.borrow().into()),
         }
+        .into()
     }
 }

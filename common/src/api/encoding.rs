@@ -1,4 +1,5 @@
 use bytes::Bytes;
+pub use restless::data::*;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{convert::Infallible, error::Error};
 
@@ -8,9 +9,6 @@ pub trait ResponseEncoding: Sized {
 
     fn decode(data: Bytes) -> Result<Self::Target, Self::Error>;
 }
-
-#[derive(Clone, Debug)]
-pub struct Json<T>(pub T);
 
 impl<T: DeserializeOwned> ResponseEncoding for Json<T> {
     type Target = T;

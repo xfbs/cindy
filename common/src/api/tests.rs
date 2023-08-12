@@ -8,7 +8,7 @@ trait IntoUri {
 
 impl<T: GetRequest> IntoUri for T {
     fn uri(&self) -> String {
-        <T as GetRequest>::uri(self)
+        restless::methods::Get::from(self).uri()
     }
 }
 

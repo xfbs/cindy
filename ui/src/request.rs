@@ -1,6 +1,9 @@
 use crate::cache::*;
 use async_trait::async_trait;
-use cindy_common::{api::*, cache::RcValue};
+use cindy_common::{
+    api::{Request as HttpRequest, *},
+    cache::RcValue,
+};
 use gloo_net::{
     http::{Method as GlooMethod, Request, RequestBuilder, Response},
     Error as GlooError,
@@ -74,6 +77,7 @@ where
             Method::Get => GlooMethod::GET,
             Method::Patch => GlooMethod::PATCH,
             Method::Delete => GlooMethod::DELETE,
+            _ => unimplemented!(),
         };
         let request = RequestBuilder::new(&path).method(method);
         let response = self.body().gloo_encode(request)?.send().await?;

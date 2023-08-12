@@ -5,7 +5,11 @@ use axum::{
     Router,
 };
 use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config};
-use cindy_common::{api::*, tag::*, ErrorResponse};
+use cindy_common::{
+    api::{Request as HttpRequest, *},
+    tag::*,
+    ErrorResponse,
+};
 use hyper::{Body, StatusCode};
 use std::{fs::*, path::PathBuf};
 use tempfile::tempdir;
@@ -13,21 +17,15 @@ use tower::ServiceExt;
 
 #[async_trait(?Send)]
 trait RouterExt {
-    async fn get<R: GetRequest>(
-        &self,
-        request: R,
-    ) -> Result<<R::Response as ResponseEncoding>::Target>;
+    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target>;
     async fn post<R: PostRequest>(&self, request: R) -> Result<()>;
     async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()>;
 }
 
 #[async_trait(?Send)]
 impl RouterExt for Router {
-    async fn get<R: GetRequest>(
-        &self,
-        request: R,
-    ) -> Result<<R::Response as ResponseEncoding>::Target> {
-        let path = format!("/{}", request.uri());
+    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target> {
+        let path = format!("/{}", (&request).request().uri());
         println!("GET {path}");
         let response = self
             .clone()
@@ -49,7 +47,7 @@ impl RouterExt for Router {
             panic!("Error in GET request");
         }
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-        R::Response::decode(body).map_err(Into::into)
+        R::Response::decode(&body[..]).map_err(Into::into)
     }
 
     async fn post<R: PostRequest>(&self, request: R) -> Result<()> {
@@ -80,7 +78,7 @@ impl RouterExt for Router {
     }
 
     async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()> {
-        let path = format!("/{}", request.uri());
+        let path = format!("/{}", (&request).request().uri());
         println!("DELETE {path}");
         let response = self
             .clone()

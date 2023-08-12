@@ -5,6 +5,7 @@ use crate::{
     BoxHash, Hash, Tag, TagPredicate,
 };
 use bytes::Bytes;
+use restless::{methods::Get, query::Qs, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::{Borrow, Cow},
@@ -38,6 +39,10 @@ impl<H: Borrow<Hash>> GetRequest for FileContent<H> {
     }
 }
 
+impl<H: Borrow<Hash>> RequestMethod for FileContent<H> {
+    type Method = Get<Self>;
+}
+
 impl<H: Borrow<Hash>> Invalidatable for FileContent<H> {}
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -49,7 +54,7 @@ pub struct FileTags<H: Borrow<Hash> = BoxHash, S: Borrow<str> = String> {
 
 impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
     type Response = Json<Vec<Tag>>;
-    type Query = TagQuery<String>;
+    type Query = Qs<TagQuery<String>>;
 
     fn path(&self) -> Cow<'_, str> {
         format!("api/v1/file/{}/tags", self.hash.borrow(),).into()
@@ -60,10 +65,15 @@ impl<H: Borrow<Hash>, S: Borrow<str>> GetRequest for FileTags<H, S> {
             name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
             value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
         }
+        .into()
     }
 }
 
 impl<H: Borrow<Hash>, S: Borrow<str>> Invalidatable for FileTags<H, S> {}
+
+impl<H: Borrow<Hash>, S: Borrow<str>> RequestMethod for FileTags<H, S> {
+    type Method = Get<Self>;
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryFiles<'a> {
@@ -73,15 +83,19 @@ pub struct QueryFiles<'a> {
 
 impl<'a> GetRequest for QueryFiles<'a> {
     type Response = Json<Vec<BoxHash>>;
-    type Query = Self;
+    type Query = Qs<Self>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query".into()
     }
 
     fn query(&self) -> Self::Query {
-        self.clone()
+        self.clone().into()
     }
+}
+
+impl<'a> RequestMethod for QueryFiles<'a> {
+    type Method = Get<Self>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -98,6 +112,10 @@ impl GetRequest for TagNames {
     fn query(&self) -> Self::Query {}
 }
 
+impl RequestMethod for TagNames {
+    type Method = Get<Self>;
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TagList<N: Borrow<str> = String, V: Borrow<str> = String> {
     pub name: Option<N>,
@@ -110,7 +128,7 @@ where
     V: Borrow<str>,
 {
     type Response = Json<BTreeMap<Tag, TagValueInfo>>;
-    type Query = TagQuery<String>;
+    type Query = Qs<TagQuery<String>>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/tags/values".into()
@@ -121,7 +139,12 @@ where
             name: self.name.as_ref().map(Borrow::borrow).map(Into::into),
             value: self.value.as_ref().map(Borrow::borrow).map(Into::into),
         }
+        .into()
     }
+}
+
+impl<N: Borrow<str>, V: Borrow<str>> RequestMethod for TagList<N, V> {
+    type Method = Get<Self>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -160,13 +183,13 @@ pub struct QueryTags {
 
 impl GetRequest for QueryTags {
     type Response = Json<BTreeSet<Tag>>;
-    type Query = Self;
+    type Query = Qs<Self>;
 
     fn path(&self) -> Cow<'_, str> {
         "api/v1/query/tags".into()
     }
 
     fn query(&self) -> Self::Query {
-        self.clone()
+        self.clone().into()
     }
 }
