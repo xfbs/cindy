@@ -163,6 +163,10 @@ impl<P: Borrow<Path>> GetRequest for FrontendFile<P> {
     fn query(&self) -> Self::Query {}
 }
 
+impl<P: Borrow<Path>> RequestMethod for FrontendFile<P> {
+    type Method = Get<Self>;
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryTagsMode {
@@ -192,4 +196,8 @@ impl GetRequest for QueryTags {
     fn query(&self) -> Self::Query {
         self.clone().into()
     }
+}
+
+impl RequestMethod for QueryTags {
+    type Method = Get<Self>;
 }

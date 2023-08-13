@@ -3,6 +3,7 @@ use crate::{
     hash::*,
     TagPredicate,
 };
+use restless::{methods::Post, query::Qs, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
@@ -43,6 +44,10 @@ impl<S: Borrow<str>> PostRequest for TagNameCreate<S> {
     }
 }
 
+impl<S: Borrow<str>> RequestMethod for TagNameCreate<S> {
+    type Method = Post<Self>;
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TagValueCreate<S: Borrow<str>> {
     pub name: S,
@@ -67,6 +72,10 @@ impl<S: Borrow<str>> PostRequest for TagValueCreate<S> {
                 .map(|value| value.borrow().to_string().into()),
         })
     }
+}
+
+impl<S: Borrow<str>> RequestMethod for TagValueCreate<S> {
+    type Method = Post<Self>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -98,6 +107,10 @@ impl<H: Borrow<Hash>, S: Borrow<str>> PostRequest for FileTagCreate<H, S> {
     }
 }
 
+impl<H: Borrow<Hash>, S: Borrow<str>> RequestMethod for FileTagCreate<H, S> {
+    type Method = Post<Self>;
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryTagCreate<S: Borrow<str>> {
     pub query: Vec<TagPredicate<'static>>,
@@ -119,4 +132,8 @@ impl<S: Borrow<str>> PostRequest for QueryTagCreate<S> {
             value: self.value.borrow().into(),
         })
     }
+}
+
+impl<S: Borrow<str>> RequestMethod for QueryTagCreate<S> {
+    type Method = Post<Self>;
 }

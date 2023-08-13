@@ -3,7 +3,7 @@ use crate::{
     hash::*,
     tag::TagPredicate,
 };
-use restless::query::Qs;
+use restless::{methods::Delete, query::Qs, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
@@ -27,6 +27,10 @@ impl<S: Borrow<str>> DeleteRequest for TagDelete<S> {
         }
         .into()
     }
+}
+
+impl<S: Borrow<str>> RequestMethod for TagDelete<S> {
+    type Method = Delete<Self>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -53,6 +57,10 @@ impl<H: Borrow<Hash>, S: Borrow<str>> DeleteRequest for FileTagDelete<H, S> {
     }
 }
 
+impl<H: Borrow<Hash>, S: Borrow<str>> RequestMethod for FileTagDelete<H, S> {
+    type Method = Delete<Self>;
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryTagRemove<S: Borrow<str>> {
     pub query: Vec<TagPredicate<'static>>,
@@ -75,4 +83,8 @@ impl<S: Borrow<str>> DeleteRequest for QueryTagRemove<S> {
         }
         .into()
     }
+}
+
+impl<S: Borrow<str>> RequestMethod for QueryTagRemove<S> {
+    type Method = Delete<Self>;
 }

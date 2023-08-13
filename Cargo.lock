@@ -377,6 +377,7 @@ dependencies = [
  "proptest",
  "rand",
  "reflink",
+ "restless",
  "rusqlite",
  "serde",
  "serde_json",
@@ -1485,13 +1486,15 @@ checksum = "e5ea92a5b6195c6ef2a0295ea818b312502c6fc94dde986c5553242e18fd4ce2"
 [[package]]
 name = "restless"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1bd8ab49b8503fb0b7c4096bd6d700ec6b8f1664caf0888c95824cd36aebc89"
+source = "git+https://gitlab.com/xfbs/restless#b5ca0d591e932bdce81d341f87de2c6f5b33fb35"
 dependencies = [
  "bytes",
+ "http",
+ "hyper",
  "serde",
  "serde_json",
  "serde_qs",
+ "thiserror",
  "url",
 ]
 

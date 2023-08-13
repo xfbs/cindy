@@ -11,31 +11,23 @@ use cindy_common::{
     ErrorResponse,
 };
 use hyper::{Body, StatusCode};
+use restless::clients::HyperRequest;
 use std::{fs::*, path::PathBuf};
 use tempfile::tempdir;
 use tower::ServiceExt;
 
 #[async_trait(?Send)]
 trait RouterExt {
-    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target>;
-    async fn post<R: PostRequest>(&self, request: R) -> Result<()>;
-    async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()>;
+    async fn send<R: HttpRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target>;
 }
 
 #[async_trait(?Send)]
 impl RouterExt for Router {
-    async fn get<R: GetRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target> {
-        let path = format!("/{}", (&request).request().uri());
-        println!("GET {path}");
+    async fn send<R: HttpRequest>(&self, request: R) -> Result<<R::Response as Decodable>::Target> {
+        println!("{:?} {}", request.method(), request.uri());
         let response = self
             .clone()
-            .oneshot(
-                Request::builder()
-                    .uri(&path)
-                    .method(Method::GET)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(request.to_hyper_request().unwrap())
             .await?;
         let status = response.status();
         if !status.is_success() {
@@ -48,58 +40,6 @@ impl RouterExt for Router {
         }
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         R::Response::decode(&body[..]).map_err(Into::into)
-    }
-
-    async fn post<R: PostRequest>(&self, request: R) -> Result<()> {
-        let path = format!("/{}", request.path());
-        println!("POST {path}");
-        let body: Body = request.body().encode().into();
-        let response = self
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .uri(&path)
-                    .method(Method::POST)
-                    .header("Content-Type", "application/json")
-                    .body(body)
-                    .unwrap(),
-            )
-            .await?;
-        let status = response.status();
-        if !status.is_success() {
-            println!("Unsuccessful status: {status}");
-            let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-            if let Ok(string) = std::str::from_utf8(&body) {
-                println!("Body: {string}");
-            }
-            panic!("Error in GET request");
-        }
-        Ok(())
-    }
-
-    async fn delete<R: DeleteRequest>(&self, request: R) -> Result<()> {
-        let path = format!("/{}", (&request).request().uri());
-        println!("DELETE {path}");
-        let response = self
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .uri(&path)
-                    .method(Method::DELETE)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await?;
-        let status = response.status();
-        if !status.is_success() {
-            println!("Unsuccessful status: {status}");
-            let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-            if let Ok(string) = std::str::from_utf8(&body) {
-                println!("Body: {string}");
-            }
-            panic!("Error in GET request");
-        }
-        Ok(())
     }
 }
 
@@ -126,7 +66,7 @@ async fn test_file_list_tags() {
     let hash = cindy.hasher().hash_data(&content.as_bytes());
     let router = cindy.router();
     let tags = router
-        .get(FileTags {
+        .send(FileTags {
             hash: hash,
             name: None,
             value: None::<String>,
@@ -147,7 +87,7 @@ async fn tag_create() {
     let router = cindy.router();
 
     router
-        .post(TagNameCreate {
+        .send(TagNameCreate {
             name: "name",
             display: None,
         })
@@ -155,7 +95,7 @@ async fn tag_create() {
         .unwrap();
 
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -164,7 +104,7 @@ async fn tag_create() {
         .unwrap();
 
     let tags = router
-        .get(TagList {
+        .send(TagList {
             name: None::<&str>,
             value: None::<&str>,
         })
@@ -189,7 +129,7 @@ async fn tag_delete_one() {
 
     let router = cindy.router();
     router
-        .post(TagNameCreate {
+        .send(TagNameCreate {
             name: "name",
             display: None,
         })
@@ -197,7 +137,7 @@ async fn tag_delete_one() {
         .unwrap();
 
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -205,7 +145,7 @@ async fn tag_delete_one() {
         .await
         .unwrap();
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "other",
             display: Some("Other Value"),
@@ -214,7 +154,7 @@ async fn tag_delete_one() {
         .unwrap();
 
     router
-        .delete(TagDelete {
+        .send(TagDelete {
             name: Some("name"),
             value: Some("value"),
         })
@@ -222,7 +162,7 @@ async fn tag_delete_one() {
         .unwrap();
 
     let tags = router
-        .get(TagList {
+        .send(TagList {
             name: None::<&str>,
             value: None::<&str>,
         })
@@ -247,7 +187,7 @@ async fn tag_delete_all_labels() {
 
     let router = cindy.router();
     router
-        .post(TagNameCreate {
+        .send(TagNameCreate {
             name: "name",
             display: None,
         })
@@ -255,7 +195,7 @@ async fn tag_delete_all_labels() {
         .unwrap();
 
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -263,7 +203,7 @@ async fn tag_delete_all_labels() {
         .await
         .unwrap();
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "other",
             display: Some("Other Value"),
@@ -272,7 +212,7 @@ async fn tag_delete_all_labels() {
         .unwrap();
 
     router
-        .delete(TagDelete {
+        .send(TagDelete {
             name: Some("name"),
             value: None,
         })
@@ -280,7 +220,7 @@ async fn tag_delete_all_labels() {
         .unwrap();
 
     let tags = router
-        .get(TagList {
+        .send(TagList {
             name: None::<&str>,
             value: None::<&str>,
         })
@@ -319,7 +259,7 @@ async fn test_file_content() {
         .unwrap();
     let hash = cindy.hasher().hash_data(&content.as_bytes());
     let router = cindy.router();
-    let receiver = router.get(FileContent { hash: hash }).await.unwrap();
+    let receiver = router.send(FileContent { hash: hash }).await.unwrap();
 
     assert_eq!(receiver, content);
 }
@@ -347,7 +287,7 @@ async fn test_query_empty() {
     // query
     let router = cindy.router();
     let tags = router
-        .get(QueryFiles {
+        .send(QueryFiles {
             query: vec![].into(),
         })
         .await
@@ -381,7 +321,7 @@ async fn test_query_filename() {
     // query
     let router = cindy.router();
     let tags = router
-        .get(QueryFiles {
+        .send(QueryFiles {
             query: vec![TagPredicate::Exists(TagFilter::new(
                 Some("filename"),
                 Some("file1.txt"),
@@ -416,7 +356,7 @@ async fn test_list_tag_names() {
         .await
         .unwrap();
     let router = cindy.router();
-    let tags = router.get(TagNames).await.unwrap();
+    let tags = router.send(TagNames).await.unwrap();
 
     // validate tags
     assert!(!tags.is_empty());
@@ -449,7 +389,7 @@ async fn test_list_tags() {
         .unwrap();
     let router = cindy.router();
     let tags = router
-        .get(TagList {
+        .send(TagList {
             name: Some("filename"),
             value: None::<&str>,
         })
@@ -470,7 +410,7 @@ async fn test_frontend_index() {
     // query
     let router = cindy.router();
     let index = router
-        .get(FrontendFile {
+        .send(FrontendFile {
             path: PathBuf::from("index.html"),
         })
         .await
@@ -488,7 +428,7 @@ async fn test_frontend_nonexisting() {
     // query
     let router = cindy.router();
     let index = router
-        .get(FrontendFile {
+        .send(FrontendFile {
             path: PathBuf::from("file/abc"),
         })
         .await
@@ -505,7 +445,7 @@ async fn file_tag_create() {
 
     let router = cindy.router();
     router
-        .post(TagNameCreate {
+        .send(TagNameCreate {
             name: "name",
             display: None,
         })
@@ -513,7 +453,7 @@ async fn file_tag_create() {
         .unwrap();
 
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -538,7 +478,7 @@ async fn file_tag_create() {
     let router = cindy.router();
     let hash = cindy.hasher().hash_data(&content.as_bytes());
     router
-        .post(FileTagCreate {
+        .send(FileTagCreate {
             hash: hash.clone(),
             name: "name",
             value: "value",
@@ -547,7 +487,7 @@ async fn file_tag_create() {
         .unwrap();
 
     let tags = router
-        .get(FileTags {
+        .send(FileTags {
             hash: hash,
             name: None,
             value: None::<String>,
@@ -566,7 +506,7 @@ async fn file_tag_delete() {
 
     let router = cindy.router();
     router
-        .post(TagValueCreate {
+        .send(TagValueCreate {
             name: "name",
             value: "value",
             display: Some("Name Value"),
@@ -591,7 +531,7 @@ async fn file_tag_delete() {
     let router = cindy.router();
     let hash = cindy.hasher().hash_data(&content.as_bytes());
     router
-        .post(FileTagCreate {
+        .send(FileTagCreate {
             hash: hash.clone(),
             name: "name",
             value: "value",
@@ -600,7 +540,7 @@ async fn file_tag_delete() {
         .unwrap();
 
     router
-        .delete(FileTagDelete {
+        .send(FileTagDelete {
             hash: hash.clone(),
             name: Some("name"),
             value: Some("value"),
@@ -609,7 +549,7 @@ async fn file_tag_delete() {
         .unwrap();
 
     let tags = router
-        .get(FileTags {
+        .send(FileTags {
             hash: hash,
             name: None,
             value: None::<String>,
