@@ -1,9 +1,5 @@
-use crate::{
-    api::{Json, PostRequest},
-    hash::*,
-    TagPredicate,
-};
-use restless::{methods::Post, query::Qs, RequestMethod};
+use crate::{hash::*, TagPredicate};
+use restless::{data::Json, methods::Post, PostRequest, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 

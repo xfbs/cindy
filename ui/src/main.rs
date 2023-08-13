@@ -18,7 +18,7 @@ mod prelude {
         hooks::*,
         request::*,
     };
-    pub use cindy_common::{api::*, hash::*, label::*, tag::*};
+    pub use cindy_common::{api::*, hash::*, label::*, restless::Request, tag::*};
     pub use implicit_clone::unsync::IString;
     pub use std::borrow::Cow;
     pub use std::rc::Rc;

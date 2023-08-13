@@ -1,8 +1,9 @@
 use crate::cache::*;
 use async_trait::async_trait;
 use cindy_common::{
-    api::{Request as HttpRequest, *},
+    api::*,
     cache::RcValue,
+    restless::{Request as HttpRequest, *},
 };
 use gloo_net::{
     http::{Method as GlooMethod, Request, RequestBuilder, Response},

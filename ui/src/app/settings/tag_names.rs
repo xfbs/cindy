@@ -49,14 +49,11 @@ fn TagNameRow(props: &TagNameRowProps) -> Html {
     let name = use_state(|| None::<String>);
     let display = use_state(|| None::<String>);
 
-    let save = use_request(
-        TagNameEdit {
-            name: props.name.clone(),
-            name_new: (*name).clone(),
-            display_new: (*display).clone(),
-        }
-        .request(),
-    );
+    let save = use_request(TagNameEdit {
+        name: props.name.clone(),
+        name_new: (*name).clone(),
+        display_new: (*display).clone(),
+    });
 
     let onclick_name = {
         let name = name.clone();
@@ -155,7 +152,7 @@ fn TagNameRow(props: &TagNameRowProps) -> Html {
 
 #[function_component]
 pub fn SettingsTags() -> Html {
-    let tags = use_cached(TagNames.request());
+    let tags = use_cached(TagNames);
     html! {
         <>
             <SidebarHeading>{"Tags"}</SidebarHeading>
@@ -181,13 +178,10 @@ fn TagNameCreateRow() -> Html {
     let name = use_state(String::new);
     let slug = use_state(String::new);
 
-    let request = use_request(
-        TagNameCreate {
-            name: (*slug).clone(),
-            display: Some((*name).clone()),
-        }
-        .request(),
-    );
+    let request = use_request(TagNameCreate {
+        name: (*slug).clone(),
+        display: Some((*name).clone()),
+    });
 
     let name_oninput = {
         let name = name.clone();

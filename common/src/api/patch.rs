@@ -1,4 +1,4 @@
-use crate::api::{Json, PatchRequest};
+use restless::{data::Json, methods::Patch, PatchRequest, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 
@@ -34,4 +34,8 @@ impl<S: Borrow<str>> PatchRequest for TagNameEdit<S> {
                 .map(|value| value.borrow().to_string().into()),
         })
     }
+}
+
+impl<S: Borrow<str>> RequestMethod for TagNameEdit<S> {
+    type Method = Patch<Self>;
 }

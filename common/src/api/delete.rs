@@ -1,9 +1,5 @@
-use crate::{
-    api::{DeleteRequest, TagQuery},
-    hash::*,
-    tag::TagPredicate,
-};
-use restless::{methods::Delete, query::Qs, RequestMethod};
+use crate::{api::TagQuery, hash::*, tag::TagPredicate};
+use restless::{methods::Delete, query::Qs, DeleteRequest, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 

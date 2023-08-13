@@ -1,5 +1,6 @@
 use super::*;
 use crate::hash::Hash;
+use restless::*;
 use std::path::Path;
 
 trait IntoUri {

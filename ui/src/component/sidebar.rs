@@ -79,22 +79,16 @@ pub struct TagsListRowProps {
 
 #[function_component]
 pub fn TagsListRow(props: &TagsListRowProps) -> Html {
-    let tag_value = use_cached(
-        TagList {
-            name: props.tag.name().to_string().into(),
-            value: props.tag.value().to_string().into(),
-        }
-        .request(),
-    );
+    let tag_value = use_cached(TagList {
+        name: props.tag.name().to_string().into(),
+        value: props.tag.value().to_string().into(),
+    });
 
-    let delete = use_request(
-        QueryTagRemove {
-            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
-            name: Some(props.tag.name().to_string()),
-            value: Some(props.tag.value().to_string()),
-        }
-        .request(),
-    );
+    let delete = use_request(QueryTagRemove {
+        query: props.query.iter().map(|pred| (**pred).clone()).collect(),
+        name: Some(props.tag.name().to_string()),
+        value: Some(props.tag.value().to_string()),
+    });
 
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
@@ -124,21 +118,15 @@ pub struct FileTagsRowProps {
 
 #[function_component]
 pub fn FileTagsRow(props: &FileTagsRowProps) -> Html {
-    let tag_value = use_cached(
-        TagList {
-            name: props.tag.name().to_string().into(),
-            value: props.tag.value().to_string().into(),
-        }
-        .request(),
-    );
-    let delete = use_request(
-        FileTagDelete {
-            hash: props.file.clone(),
-            name: Some(props.tag.name().to_string()),
-            value: Some(props.tag.value().to_string()),
-        }
-        .request(),
-    );
+    let tag_value = use_cached(TagList {
+        name: props.tag.name().to_string().into(),
+        value: props.tag.value().to_string().into(),
+    });
+    let delete = use_request(FileTagDelete {
+        hash: props.file.clone(),
+        name: Some(props.tag.name().to_string()),
+        value: Some(props.tag.value().to_string()),
+    });
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
@@ -174,7 +162,7 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
     let name = use_state(String::new);
     let value = use_state(String::new);
 
-    let tag_names = use_cached(TagNames.request());
+    let tag_names = use_cached(TagNames);
 
     if let Some(tag_names) = tag_names.data() {
         if !tag_names.contains_key(&*name) {
@@ -184,22 +172,16 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
         }
     }
 
-    let tag_values = use_cached(
-        TagList {
-            name: Some((**name).to_string()),
-            value: None::<String>,
-        }
-        .request(),
-    );
+    let tag_values = use_cached(TagList {
+        name: Some((**name).to_string()),
+        value: None::<String>,
+    });
 
-    let create = use_request(
-        FileTagCreate {
-            hash: props.file.clone(),
-            name: (**name).to_string(),
-            value: (**value).to_string(),
-        }
-        .request(),
-    );
+    let create = use_request(FileTagCreate {
+        hash: props.file.clone(),
+        name: (**name).to_string(),
+        value: (**value).to_string(),
+    });
 
     let onkeydown = {
         let create = create.clone();
@@ -297,7 +279,7 @@ pub struct FileTagsListProps {
 
 #[function_component]
 pub fn FileTagsList(props: &FileTagsListProps) -> Html {
-    let names = use_cached(TagNames.request());
+    let names = use_cached(TagNames);
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -328,15 +310,12 @@ pub struct CommonTagsListProps {
 
 #[function_component]
 pub fn CommonTagsList(props: &CommonTagsListProps) -> Html {
-    let tags = use_cached(
-        QueryTags {
-            name: None,
-            value: None,
-            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
-            mode: QueryTagsMode::Intersection,
-        }
-        .request(),
-    );
+    let tags = use_cached(QueryTags {
+        name: None,
+        value: None,
+        query: props.query.iter().map(|pred| (**pred).clone()).collect(),
+        mode: QueryTagsMode::Intersection,
+    });
     html! {
         <div class="relative overflow-x-auto py-3">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -365,7 +344,7 @@ pub fn CommonTagsCreateRow(props: &CommonTagsCreateRowProps) -> Html {
     let name = use_state(String::new);
     let value = use_state(String::new);
 
-    let tag_names = use_cached(TagNames.request());
+    let tag_names = use_cached(TagNames);
 
     if let Some(tag_names) = tag_names.data() {
         if !tag_names.contains_key(&*name) {
@@ -375,22 +354,16 @@ pub fn CommonTagsCreateRow(props: &CommonTagsCreateRowProps) -> Html {
         }
     }
 
-    let tag_values = use_cached(
-        TagList {
-            name: Some((**name).to_string()),
-            value: None::<String>,
-        }
-        .request(),
-    );
+    let tag_values = use_cached(TagList {
+        name: Some((**name).to_string()),
+        value: None::<String>,
+    });
 
-    let create = use_request(
-        QueryTagCreate {
-            query: props.query.iter().map(|pred| (**pred).clone()).collect(),
-            name: (**name).to_string(),
-            value: (**value).to_string(),
-        }
-        .request(),
-    );
+    let create = use_request(QueryTagCreate {
+        query: props.query.iter().map(|pred| (**pred).clone()).collect(),
+        name: (**name).to_string(),
+        value: (**value).to_string(),
+    });
 
     let onkeydown = {
         let create = create.clone();
@@ -515,14 +488,11 @@ pub struct FileSidebarProps {
 
 #[function_component]
 pub fn FileSidebar(props: &FileSidebarProps) -> Html {
-    let tags = use_cached(
-        FileTags {
-            hash: props.file.clone(),
-            name: None::<String>,
-            value: None::<String>,
-        }
-        .request(),
-    );
+    let tags = use_cached(FileTags {
+        hash: props.file.clone(),
+        name: None::<String>,
+        value: None::<String>,
+    });
     log::info!("RENDERING FILE SIDEBAR");
     html! {
         <Sidebar>

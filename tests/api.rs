@@ -5,13 +5,9 @@ use axum::{
     Router,
 };
 use cindy::{cli::AddCommand, hash::DataHasher, Cindy, Command, Config};
-use cindy_common::{
-    api::{Request as HttpRequest, *},
-    tag::*,
-    ErrorResponse,
-};
+use cindy_common::{api::*, tag::*, ErrorResponse};
 use hyper::{Body, StatusCode};
-use restless::clients::HyperRequest;
+use restless::{clients::HyperRequest, Request as HttpRequest};
 use std::{fs::*, path::PathBuf};
 use tempfile::tempdir;
 use tower::ServiceExt;

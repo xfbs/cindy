@@ -14,11 +14,8 @@ mod patch;
 pub use patch::*;
 
 mod query;
-pub use query::*;
-
-mod traits;
 pub use crate::cache::*;
-pub use traits::*;
+pub use query::*;
 
 #[cfg(test)]
 mod tests;

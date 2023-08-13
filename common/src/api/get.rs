@@ -1,11 +1,11 @@
 use crate::{
-    api::{query::TagQuery, GetRequest, Json},
+    api::query::TagQuery,
     cache::*,
     tag::{TagNameInfo, TagValueInfo},
     BoxHash, Hash, Tag, TagPredicate,
 };
 use bytes::Bytes;
-use restless::{methods::Get, query::Qs, RequestMethod};
+use restless::{data::Json, methods::Get, query::Qs, GetRequest, RequestMethod};
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::{Borrow, Cow},
