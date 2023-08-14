@@ -7,9 +7,9 @@ stages:
   - build
   - publish
 
-# Build and publish utility Docker container. This is only rebuilt whenever
-# the Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
-# This utility Docker container contains all dependencies (ffmpeg, gtk4, rust)
+# Build and publish utility Docker container. This is only rebuilt whenever the
+# Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
+# This utility Docker container contains all dependencies (ffmpeg, sqlite, rust)
 # needed to test and build Cindy.
 docker:
   stage: docker
@@ -88,4 +88,6 @@ pages:
   artifacts:
     paths:
       - public
+  only:
+    - main
 
