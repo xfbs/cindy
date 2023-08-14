@@ -113,6 +113,30 @@ website:
     paths:
       - website/public
 
+# Determine test coverage
+coverage:
+  stage: build
+  image: "$CI_REGISTRY_IMAGE/backend-builder"
+  dependencies:
+    - ui
+  script:
+    - cargo llvm-cov --html --all
+  artifacts:
+    paths:
+      - target/llvm-cov
+
+# Build rustdoc
+coverage:
+  stage: build
+  image: "$CI_REGISTRY_IMAGE/backend-builder"
+  dependencies:
+    - ui
+  script:
+    - cargo doc --all --all-features
+  artifacts:
+    paths:
+      - target/doc
+
 # Publish all build binaries for Cindy on GitLab Pages.
 pages:
   stage: publish
@@ -120,9 +144,13 @@ pages:
   dependencies:
     - build-amd64
     - website
+    - coverage
+    - rustdoc
   script:
     - mv website/public public
     - mv target/release/cindy public/releases/cindy-linux-amd64
+    - mv target/llvm-cov/html public/coverage
+    - mv target/doc public/rustdoc
   artifacts:
     paths:
       - public
