@@ -21,6 +21,7 @@ wasm-bindgen-futures = "0.4.37"
 prokio = "0.1.0"
 implicit-clone = "0.4.0"
 serde_json = "1.0.104"
+restless = { git = "https://github.com/xfbs/restless", version = "0.1.0", features = ["gloo", "yew"] }
 
 [profile.release]
 opt-level = "z"

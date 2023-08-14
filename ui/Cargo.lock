@@ -119,6 +119,7 @@ dependencies = [
  "implicit-clone 0.4.0",
  "log",
  "prokio",
+ "restless",
  "serde",
  "serde_json",
  "thiserror",
@@ -704,14 +705,19 @@ dependencies = [
 [[package]]
 name = "restless"
 version = "0.1.0"
-source = "git+https://gitlab.com/xfbs/restless#b5ca0d591e932bdce81d341f87de2c6f5b33fb35"
+source = "git+https://github.com/xfbs/restless#b02878dbca2a351b570b515bfdd75b56602ad06a"
 dependencies = [
+ "async-trait",
  "bytes",
+ "gloo-net",
+ "http",
  "serde",
  "serde_json",
  "serde_qs",
  "thiserror",
  "url",
+ "yew",
+ "yew-hooks",
 ]
 
 [[package]]

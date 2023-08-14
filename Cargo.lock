@@ -1486,7 +1486,7 @@ checksum = "e5ea92a5b6195c6ef2a0295ea818b312502c6fc94dde986c5553242e18fd4ce2"
 [[package]]
 name = "restless"
 version = "0.1.0"
-source = "git+https://gitlab.com/xfbs/restless#b5ca0d591e932bdce81d341f87de2c6f5b33fb35"
+source = "git+https://github.com/xfbs/restless#b02878dbca2a351b570b515bfdd75b56602ad06a"
 dependencies = [
  "bytes",
  "http",

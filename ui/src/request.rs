@@ -1,110 +1,37 @@
-use crate::cache::*;
-use async_trait::async_trait;
-use cindy_common::{
-    api::*,
-    cache::RcValue,
-    restless::{Request as HttpRequest, *},
+use crate::cache::Cache;
+use restless::clients::{
+    gloo::GlooRequest,
+    yew::{UseRequestHandle, use_request as use_restless_request},
 };
-use gloo_net::{
-    http::{Method as GlooMethod, Request, RequestBuilder, Response},
-    Error as GlooError,
-};
-use serde::{de::DeserializeOwned, Serialize};
-use std::{fmt::Debug, rc::Rc};
 use yew::functional::{hook, use_context};
-use yew_hooks::prelude::{use_async, UseAsyncHandle};
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    Request(#[from] gloo_net::Error),
-}
-
-#[async_trait(?Send)]
-pub trait GlooDecodable: ResponseEncoding {
-    async fn decode(response: &Response) -> Result<Self::Target, Error>;
-}
-
-#[async_trait(?Send)]
-impl<T: DeserializeOwned + Clone + 'static> GlooDecodable for Json<T> {
-    async fn decode(response: &Response) -> Result<Self::Target, Error> {
-        response.json::<T>().await.map_err(Error::from)
-    }
-}
-
-#[async_trait(?Send)]
-impl GlooDecodable for () {
-    async fn decode(_response: &Response) -> Result<Self::Target, Error> {
-        Ok(())
-    }
-}
-
-pub trait GlooEncodable: RequestEncoding {
-    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError>;
-}
-
-impl GlooEncodable for () {
-    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError> {
-        builder.build()
-    }
-}
-
-impl<T: Serialize> GlooEncodable for Json<T> {
-    fn gloo_encode(&self, builder: RequestBuilder) -> Result<Request, GlooError> {
-        builder
-            .header("Content-Type", "application/json")
-            .json(&self.0)
-    }
-}
-
-#[async_trait(?Send)]
-pub trait GlooRequest {
-    type Response: Clone + 'static;
-    async fn send(&self) -> Result<Self::Response, Error>;
-}
-
-#[async_trait(?Send)]
-impl<T: HttpRequest> GlooRequest for T
-where
-    T::Response: GlooDecodable,
-    <T::Response as ResponseEncoding>::Target: Clone + 'static,
-    T::Request: GlooEncodable,
-{
-    type Response = <T::Response as ResponseEncoding>::Target;
-    async fn send(&self) -> Result<Self::Response, Error> {
-        let path = format!("/{}", self.uri());
-        let method = match self.method() {
-            Method::Post => GlooMethod::POST,
-            Method::Get => GlooMethod::GET,
-            Method::Patch => GlooMethod::PATCH,
-            Method::Delete => GlooMethod::DELETE,
-            _ => unimplemented!(),
-        };
-        let request = RequestBuilder::new(&path).method(method);
-        let response = self.body().gloo_encode(request)?.send().await?;
-        <T::Response as GlooDecodable>::decode(&response).await
-    }
-}
 
 #[hook]
-pub fn use_request_then<R: GlooRequest + 'static, F: Fn(&Result<R::Response, Error>) + 'static>(
+pub fn use_request_then<R: GlooRequest + 'static, F: Fn(&Result<R::Response, R::Error>) + 'static>(
     request: R,
     after: F,
-) -> UseAsyncHandle<R::Response, Rc<Error>> {
+) -> UseRequestHandle<
+    R::Response,
+    R::Error,
+>
+where
+    R::Response: Clone + 'static,
+{
     let cache = use_context::<Cache>().expect("Cache not present");
-    let handle = use_async(async move {
-        let result = request.send().await;
+    use_restless_request(request, move |result| {
         if let Err(error) = &result {
             log::error!("Error: {error:?}");
         }
         cache.invalidate_all();
         after(&result);
-        result.map_err(Rc::new)
-    });
-    handle
+    }, false)
 }
 
 #[hook]
-pub fn use_request<R: GlooRequest + 'static>(request: R) -> UseAsyncHandle<R::Response, Rc<Error>> {
+pub fn use_request<R: GlooRequest + 'static>(
+    request: R,
+) -> UseRequestHandle<R::Response, R::Error>
+where
+    R::Response: Clone + 'static,
+{
     use_request_then(request, |_| ())
 }

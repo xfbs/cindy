@@ -1,4 +1,4 @@
-use crate::request::GlooRequest;
+use restless::clients::gloo::GlooRequest;
 use cindy_common::cache::{CacheKey, RcValue};
 use prokio::time::sleep;
 use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex, time::Duration};
@@ -169,13 +169,13 @@ impl Cache {
             }
             match data.send().await {
                 Ok(result) => cache.cache(&data, Rc::new(result)),
-                Err(error) => cache.failure(&data, error),
+                Err(error) => cache.failure(&data, &error),
             }
         });
     }
 
     /// Cache this data.
-    pub fn failure<T: GlooRequest + CacheItem>(&self, data: &T, error: crate::request::Error) {
+    pub fn failure<T: GlooRequest + CacheItem>(&self, data: &T, error: &dyn std::error::Error) {
         self.cache
             .lock()
             .expect("Failure to lock cache")
