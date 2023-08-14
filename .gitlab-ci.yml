@@ -126,7 +126,7 @@ coverage:
       - target/llvm-cov
 
 # Build rustdoc
-coverage:
+rustdoc:
   stage: build
   image: "$CI_REGISTRY_IMAGE/backend-builder"
   dependencies:
