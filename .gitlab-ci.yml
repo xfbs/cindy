@@ -54,9 +54,9 @@ ui:
 # Build Cindy for Linux amd64
 build-amd64:
   stage: build
+  image: "$CI_REGISTRY_IMAGE/builder"
   dependencies:
     - ui
-  image: "$CI_REGISTRY_IMAGE/builder"
   script:
     - cargo build --release
   interruptible: true
@@ -66,6 +66,7 @@ build-amd64:
 
 website:
   stage: build
+  image: "$CI_REGISTRY_IMAGE/builder"
   variables:
     GIT_SUBMODULE_STRATEGY: normal
   script:
