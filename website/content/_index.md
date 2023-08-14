@@ -4,7 +4,7 @@ title = "Cindy"
 
 # The homepage contents
 [extra]
-lead = '<b>Cindy</b> is a media tagging, labelling and querying tool written for use with Machine Learning. It can handle large datasets.'
+lead = '<b>Cindy</b> is a media tagging, labelling and querying tool written for use with Machine Learning. It is written in <b>Rust</b>, uses an <b>SQLite</b> database for metadata and is designed to be able to handle <b>large datasets</b>.'
 url = "/docs/getting-started/introduction/"
 url_button = "Get started"
 repo_version = "Repository"
