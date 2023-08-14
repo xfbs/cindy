@@ -1,5 +1,9 @@
 # Cindy
 
+[![ci status](https://gitlab.com/xfbs/cindy/badges/main/pipeline.svg)](https://gitlab.com/xfbs/cindy/-/pipelines)
+[![test coverage](https://img.shields.io/badge/coverage-nightly-blue)](https://cindy.pics/coverage/)
+[![docs nightly](https://img.shields.io/badge/docs-nightly-blue)](https://cindy.pics/rustdoc/cindy/)
+
 <div align="center">
 <img src="screenshot.png" width="50%" />
 </div>

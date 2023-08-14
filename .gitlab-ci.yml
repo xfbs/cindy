@@ -7,6 +7,10 @@ stages:
   - build
   - publish
 
+default:
+  # cancel running pipelines when new commit is pushed
+  interruptible: true
+
 # Build and publish utility Docker container. This is only rebuilt whenever the
 # Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
 # This utility Docker container contains all dependencies (ffmpeg, sqlite, rust)
@@ -20,7 +24,6 @@ docker:
     - docker build . -t "$CI_REGISTRY_IMAGE/builder"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - docker push "$CI_REGISTRY_IMAGE/builder"
-  interruptible: true
   only:
     refs:
       - main
@@ -33,7 +36,6 @@ docker:
 test:
   stage: test
   image: "$CI_REGISTRY_IMAGE/builder"
-  interruptible: true
   before_script:
     - mkdir -p ui/dist
     - touch ui/dist/index.html
@@ -46,7 +48,6 @@ ui:
   image: "$CI_REGISTRY_IMAGE/builder"
   script:
     - cd ui && trunk build --release
-  interruptible: true
   artifacts:
     paths:
       - ui/dist
@@ -59,7 +60,6 @@ build-amd64:
     - ui
   script:
     - cargo build --release
-  interruptible: true
   artifacts:
     paths:
       - target/release/cindy
