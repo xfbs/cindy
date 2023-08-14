@@ -15,21 +15,6 @@ default:
 # Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
 # This utility Docker container contains all dependencies (ffmpeg, sqlite, rust)
 # needed to test and build Cindy.
-docker:
-  stage: docker
-  image: docker
-  services:
-    - docker:dind
-  script:
-    - docker build . -t "$CI_REGISTRY_IMAGE/builder"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - docker push "$CI_REGISTRY_IMAGE/builder"
-  only:
-    refs:
-      - main
-    changes:
-      - Dockerfile
-
 backend-builder:
   stage: docker
   image: docker
@@ -45,6 +30,10 @@ backend-builder:
     changes:
       - docker/backend.dockerfile
 
+# Build and publish utility Docker container. This is only rebuilt whenever the
+# Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
+# This utility Docker container contains all dependencies (trunk, wasm32 target)
+# needed to test and build Cindy frontend.
 frontend-builder:
   stage: docker
   image: docker
@@ -65,7 +54,7 @@ frontend-builder:
 # the unit tests assume that the frontend exists, but we have not compiled it yet.
 test:
   stage: test
-  image: "$CI_REGISTRY_IMAGE/builder"
+  image: "$CI_REGISTRY_IMAGE/backend-builder"
   before_script:
     - mkdir -p ui/dist
     - touch ui/dist/index.html
@@ -75,7 +64,7 @@ test:
 # Build UI. This needs to be done first as the frontend is embedded into the binary.
 ui:
   stage: ui
-  image: "$CI_REGISTRY_IMAGE/builder"
+  image: "$CI_REGISTRY_IMAGE/frontend-builder"
   script:
     - cd ui && trunk build --release
   artifacts:
@@ -85,7 +74,7 @@ ui:
 # Build Cindy for Linux amd64
 build-amd64:
   stage: build
-  image: "$CI_REGISTRY_IMAGE/builder"
+  image: "$CI_REGISTRY_IMAGE/backend-builder"
   dependencies:
     - ui
   script:
