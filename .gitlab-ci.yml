@@ -64,15 +64,26 @@ build-amd64:
     paths:
       - target/release/cindy
 
+website:
+  stage: build
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - cd website && zola build
+  artifacts:
+    paths:
+      - website/public
+
 # Publish all build binaries for Cindy on GitLab Pages.
 pages:
   stage: publish
   image: alpine
   dependencies:
     - build-amd64
+    - website
   script:
-    - mkdir -p public
-    - mv target/release/cindy public/cindy-linux-amd64
+    - mv website/public public
+    - mv target/release/cindy public/releases/cindy-linux-amd64
   artifacts:
     paths:
       - public
