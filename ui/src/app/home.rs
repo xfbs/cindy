@@ -101,15 +101,37 @@ fn FileCardLoading() -> Html {
 
 #[function_component]
 fn FileCardPending(props: &FileCardLoaderProps) -> Html {
+    html! {
+        <div class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
+            <FileCardLoader hash={props.hash.clone()} />
+        </div>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+struct FileCardVisibilityProps {
+    hash: BoxHash,
+    #[prop_or_default]
+    callback: Callback<()>,
+}
+
+#[function_component]
+fn FileCardVisibility(props: &FileCardVisibilityProps) -> Html {
     let node = use_node_ref();
-    let visible = use_visible(node.clone(), true);
+    let visible_state = use_state_eq(|| false);
+    let visible = use_visible(node.clone(), false);
+
+    if visible && !*visible_state {
+        props.callback.emit(());
+    }
+
+    if *visible_state != visible {
+        visible_state.set(visible);
+    }
+
     html! {
         <div ref={node} class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:border-black shadow hover:shadow-lg relative">
-            if visible {
-                <FileCardLoader hash={props.hash.clone()} />
-            } else {
-                <FileCardLoading />
-            }
+            <FileCardLoader hash={props.hash.clone()} />
         </div>
     }
 }
@@ -163,7 +185,7 @@ fn FileCard(props: &FileCardProps) -> Html {
     html! {
         <>
         <Link<Route> to={Route::file(props.hash.clone().into())}>
-            <img class="rounded-lg" src={content.uri()} alt="" />
+            <img class="rounded-lg aspect-square w-full" src={content.uri()} alt="" />
         </Link<Route>>
         <div class="absolute bottom-0 left-0 p-2 min-w-full pointer-events-none">
             <div class="flex flex-wrap">
@@ -194,13 +216,39 @@ fn FilesGrid(props: &FilesGridProps) -> Html {
             .collect::<Vec<TagPredicate<'static>>>()
             .into(),
     });
+
+    // count, set to initial
+    let trailing = 32usize;
+    let initial = 64usize;
+    let count = use_state(|| initial);
+
+    log::info!("Count is {}", *count);
+
+    let callback = {
+        let files = files.data().map(|f| f.len()).unwrap_or_default();
+        let count = count.clone();
+        move |()| {
+            let new = (*count + initial).min(files).max(initial);
+            log::info!("Setting count to {new}");
+            count.set(new);
+        }
+    };
+
     html! {
         if let Some(files) = files.data() {
             <Grid>
             {
-                files.iter().cloned().map(|hash| {
+                files.iter().take(*count).map(|hash| {
                     html! {
-                        <FileCardPending {hash} />
+                        <FileCardPending key={hash.to_string()} hash={hash.clone()} />
+                    }
+                }).collect::<Html>()
+            }
+            {
+                files.iter().skip(*count + 1).take(trailing).map(|hash| {
+                    let callback = callback.clone();
+                    html! {
+                        <FileCardVisibility key={hash.to_string()} hash={hash.clone()} {callback} />
                     }
                 }).collect::<Html>()
             }

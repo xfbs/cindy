@@ -13,7 +13,8 @@ pub fn use_visible(node: NodeRef, sticky: bool) -> bool {
     // https://stackoverflow.com/questions/1462138/event-listener-for-when-element-becomes-visible
     let visible = use_state_eq(|| false);
     let visible_clone = visible.clone();
-    use_effect_once(move || {
+    use_effect(move || {
+        let visible = visible_clone.clone();
         let closure = Closure::<dyn Fn(Vec<IntersectionObserverEntry>, IntersectionObserver)>::new(
             move |entries: Vec<IntersectionObserverEntry>, observer: IntersectionObserver| {
                 // determine if any part of this node is visible.
@@ -35,7 +36,10 @@ pub fn use_visible(node: NodeRef, sticky: bool) -> bool {
         if let Some(node) = node.get() {
             observer.observe(&node.dyn_ref().unwrap());
         }
-        move || observer.disconnect()
+        move || {
+            visible.set(false);
+            observer.disconnect()
+        }
     });
     *visible
 }

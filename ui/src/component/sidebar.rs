@@ -83,7 +83,10 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
         name: props.tag.name().to_string().into(),
         value: props.tag.value().to_string().into(),
     });
-
+    let tag_names = use_cached(TagNames);
+    let tag_name = tag_names
+        .data()
+        .and_then(|names| names.get(props.tag.name()));
     let delete = use_request(QueryTagRemove {
         query: props.query.iter().map(|pred| (**pred).clone()).collect(),
         name: Some(props.tag.name().to_string()),
@@ -93,7 +96,11 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
     html! {
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="px-3 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white pl-1">
-                {props.tag.name()}
+                if let Some(info) = &tag_name {
+                    {&info.display}
+                } else {
+                    {props.tag.name()}
+                }
             </th>
             <td class="px-3 py-4">
             if let Some((_, info)) = tag_value.data().iter().flat_map(|d| d.iter()).next() {
@@ -103,7 +110,9 @@ pub fn TagsListRow(props: &TagsListRowProps) -> Html {
             }
             </td>
             <td class="px-3 py-4 pr-1">
-                <RowDeleteButton onclick={move |_| delete.run()} />
+                if tag_name.map(|info| !info.system).unwrap_or(false) {
+                    <RowDeleteButton onclick={move |_| delete.run()} />
+                }
             </td>
         </tr>
     }
