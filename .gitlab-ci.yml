@@ -43,7 +43,7 @@ backend-builder:
     refs:
       - main
     changes:
-      - Dockerfile
+      - docker/backend.dockerfile
 
 frontend-builder:
   stage: docker
@@ -58,7 +58,7 @@ frontend-builder:
     refs:
       - main
     changes:
-      - Dockerfile
+      - docker/frontend.dockerfile
 
 # Run unit tests on project. These should be fairly exhaustive.
 # FIXME: we create the ui/dist folder and place a mock index.html in there.
