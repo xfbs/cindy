@@ -49,6 +49,25 @@ frontend-builder:
     changes:
       - docker/frontend.dockerfile
 
+# Build and publish utility Docker container. This is only rebuilt whenever the
+# Dockerfile changes, or once weekly triggered by a scheduled pipeline run.
+# This utility Docker container contains all dependencies (trunk, wasm32 target)
+# needed to test and build Cindy website.
+website-builder:
+  stage: docker
+  image: docker
+  services:
+    - docker:dind
+  script:
+    - docker build . -t "$CI_REGISTRY_IMAGE/website-builder" -f docker/website.dockerfile
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker push "$CI_REGISTRY_IMAGE/website-builder"
+  only:
+    refs:
+      - main
+    changes:
+      - docker/website.dockerfile
+
 # Run unit tests on project. These should be fairly exhaustive.
 # FIXME: we create the ui/dist folder and place a mock index.html in there.
 # the unit tests assume that the frontend exists, but we have not compiled it yet.
@@ -85,7 +104,7 @@ build-amd64:
 
 website:
   stage: build
-  image: ghcr.io/getzola/zola:v0.17.2
+  image: "$CI_REGISTRY_IMAGE/website-builder"
   variables:
     GIT_SUBMODULE_STRATEGY: normal
   script:
