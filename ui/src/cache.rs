@@ -1,6 +1,6 @@
-use restless::clients::gloo::GlooRequest;
 use cindy_common::cache::{CacheKey, RcValue};
 use prokio::time::sleep;
+use restless::clients::gloo::GlooRequest;
 use std::{any::Any, collections::BTreeMap, fmt::Debug, rc::Rc, sync::Mutex, time::Duration};
 use yew::{
     functional::{UseStateHandle, UseStateSetter},
@@ -10,7 +10,7 @@ use yew::{
 const DELAY_INITIAL: Duration = Duration::from_millis(100);
 const DELAY_MULTIPLIER: f64 = 1.5;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Entry {
     /// Delay to use for next request
     pub delay: Option<Duration>,
@@ -151,6 +151,7 @@ impl Cache {
                 self.fetch(request, None);
             }
             Some(entry) if entry.needs_fetch() => {
+                log::debug!("{entry:?}");
                 let delay = entry.delay;
                 drop(cache);
                 self.fetch(request, delay);

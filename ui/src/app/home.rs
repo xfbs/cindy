@@ -1,87 +1,22 @@
 use crate::prelude::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct RawQuery {
-    #[serde(default)]
-    pub query: Option<String>,
-    #[serde(default)]
-    pub sort: Option<String>,
-    #[serde(default)]
-    pub group: Option<String>,
-}
-
-impl RawQuery {
-    fn decode(self) -> Query {
-        Query {
-            sort: self.sort,
-            group: self.group,
-            query: match self.query.as_deref().map(serde_json::from_str) {
-                Some(Ok(result)) => result,
-                Some(Err(error)) => {
-                    log::error!("Failed to parse query: {error}");
-                    Default::default()
-                }
-                None => Default::default(),
-            },
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Query {
-    #[serde(default)]
-    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
-    #[serde(default)]
-    pub sort: Option<String>,
-    #[serde(default)]
-    pub group: Option<String>,
-}
-
-impl Query {
-    fn encode(self) -> RawQuery {
-        RawQuery {
-            sort: self.sort,
-            group: self.group,
-            query: match self.query.len() {
-                0 => None,
-                _ => Some(serde_json::to_string(&self.query).unwrap()),
-            },
-        }
-    }
-}
 
 #[function_component]
 pub fn HomeView() -> Html {
-    let location = use_location().unwrap();
-    let navigator = use_navigator().unwrap();
-    let query: RawQuery = location.query().unwrap();
-    let query = query.decode();
-
-    let onchange = {
-        let query = query.clone();
-        move |new: Vec<Rc<TagPredicate<'static>>>| {
-            let mut query = query.clone();
-            query.query = Rc::new(new);
-            if let Err(error) = navigator.replace_with_query(&Route::Home, &query.encode()) {
-                log::error!("{error:?}");
-            }
-        }
-    };
-
     html! {
         <div>
-            <NavBar>
-                <Search {onchange} query={query.query.clone()} />
-            </NavBar>
-            <SidebarLayout>
-                <SidebarLayoutSidebar>
-                    <QuerySidebar query={query.query.clone()} />
-                </SidebarLayoutSidebar>
-                <SidebarLayoutContent>
-                    <FilesGrid query={query.query.clone()} />
-                </SidebarLayoutContent>
-            </SidebarLayout>
+            <QueryStateProvider>
+                <NavBar>
+                    <Search />
+                </NavBar>
+                <SidebarLayout>
+                    <SidebarLayoutSidebar>
+                        <QuerySidebar />
+                    </SidebarLayoutSidebar>
+                    <SidebarLayoutContent>
+                        <FilesGrid />
+                    </SidebarLayoutContent>
+                </SidebarLayout>
+            </QueryStateProvider>
         </div>
     }
 }
@@ -90,10 +25,7 @@ pub fn HomeView() -> Html {
 fn FileCardLoading() -> Html {
     html! {
         <div class="min-h-[16rem] m-auto object-center">
-            <svg aria-hidden="true" class="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
-                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
-            </svg>
+            <Spinner />
             <span class="sr-only">{"Loading..."}</span>
         </div>
     }
@@ -164,8 +96,13 @@ struct FileTagProps {
 
 #[function_component]
 fn FileTag(props: &FileTagProps) -> Html {
+    let query_state = use_query_state().unwrap();
+    let tag = props.tag.clone();
+    let onclick = move |_| {
+        query_state.predicate_append(tag.clone().into_filter().exists());
+    };
     html! {
-        <button class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1 pointer-events-auto">
+        <button class="bg-blue-200 rounded opacity-50 hover:opacity-80 cursor-default transition duration-100 m-1 p-1 pointer-events-auto" {onclick} >
             {props.tag.name()}{":"}{props.tag.value()}
         </button>
     }
@@ -179,14 +116,15 @@ struct FileCardProps {
 
 #[function_component]
 fn FileCard(props: &FileCardProps) -> Html {
+    let query = use_query_state().unwrap();
     let content = FileContent {
         hash: props.hash.clone(),
     };
     html! {
         <>
-        <Link<Route> to={Route::file(props.hash.clone().into())}>
+        <Link to={Route::file(props.hash.clone().into())} query={Some(query.raw.clone())}>
             <img class="rounded-lg aspect-square w-full" src={content.uri()} alt="" />
-        </Link<Route>>
+        </Link>
         <div class="absolute bottom-0 left-0 p-2 min-w-full pointer-events-none">
             <div class="flex flex-wrap">
                 {
@@ -200,16 +138,13 @@ fn FileCard(props: &FileCardProps) -> Html {
     }
 }
 
-#[derive(Properties, PartialEq)]
-struct FilesGridProps {
-    #[prop_or_default]
-    query: Rc<Vec<Rc<TagPredicate<'static>>>>,
-}
-
 #[function_component]
-fn FilesGrid(props: &FilesGridProps) -> Html {
+fn FilesGrid() -> Html {
+    let query = use_query_state().unwrap();
+
     let files = use_cached(QueryFiles {
-        query: props
+        query: query
+            .query
             .query
             .iter()
             .map(|pred| (**pred).clone())

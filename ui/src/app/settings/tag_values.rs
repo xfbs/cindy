@@ -1,6 +1,4 @@
 use super::*;
-use crate::prelude::*;
-use uuid::Uuid;
 
 #[derive(Properties, PartialEq)]
 struct TagValueTableProps {

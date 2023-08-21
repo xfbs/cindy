@@ -14,7 +14,8 @@ fn Filter(props: &FilterProps) -> Html {
         ondelete.emit(());
     };
     html! {
-        <span class="ml-2 px-1 bg-red-400 rounded block flex items-center whitespace-nowrap">{props.filter.to_string()}
+        <span class="ml-2 px-1 bg-red-400 rounded block flex items-center whitespace-nowrap">
+            {props.filter.to_string()}
             <svg class="w-4 h-4 bg-red-500 ml-1 rounded hover:border hover:border-red-600" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" {onclick}>
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M6.79289 7.49998L4.14645 4.85353L4.85355 4.14642L7.5 6.79287L10.1464 4.14642L10.8536 4.85353L8.20711 7.49998L10.8536 10.1464L10.1464 10.8535L7.5 8.20708L4.85355 10.8535L4.14645 10.1464L6.79289 7.49998Z" fill="#000000"/>
             </svg>
@@ -22,36 +23,24 @@ fn Filter(props: &FilterProps) -> Html {
     }
 }
 
-#[derive(Properties, PartialEq)]
-pub struct SearchProps {
-    #[prop_or_default]
-    pub onchange: Callback<Vec<Rc<TagPredicate<'static>>>>,
-
-    #[prop_or_default]
-    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
-}
-
 #[function_component]
-pub fn Search(props: &SearchProps) -> Html {
-    // current active tag filters
-    let filters = props.query.clone();
-    //use_state_eq(|| Vec::<TagPredicate<'static>>::new());
-
+pub fn Search() -> Html {
     // current search bar input
     let input = use_state_eq(|| String::new());
+
+    // current query
+    let query = use_query_state().unwrap();
+    let filters = query.query.query.clone();
 
     // run onsubmit callback, this will try to parse the filter from the search
     // bar and add it to the list of filters
     let onsubmit = {
-        let filters = filters.clone();
-        let onchange = props.onchange.clone();
         let input = input.clone();
+        let query = query.clone();
         move |event: SubmitEvent| {
             if let Ok(filter) = input.parse() {
-                let mut current = (*filters).clone();
-                current.push(Rc::new(filter));
+                query.predicate_append(filter);
                 input.set(String::new());
-                onchange.emit(current);
             }
             event.prevent_default();
         }
@@ -70,9 +59,8 @@ pub fn Search(props: &SearchProps) -> Html {
     // we pop that tag from the filter list and let you edit it. this makes the search bar behave
     // as if the tags are real text.
     let onkeydown = {
-        let filters = filters.clone();
         let input = input.clone();
-        let onchange = props.onchange.clone();
+        let query = query.clone();
         move |event: KeyboardEvent| {
             if !(*input).is_empty() {
                 return;
@@ -83,10 +71,8 @@ pub fn Search(props: &SearchProps) -> Html {
             }
 
             event.prevent_default();
-            let mut filters_current = (*filters).clone();
-            if let Some(filter) = filters_current.pop() {
+            if let Some(filter) = query.predicate_remove(query.query.query.len() - 1) {
                 input.set(filter.to_string());
-                onchange.emit(filters_current);
             }
         }
     };
@@ -106,12 +92,9 @@ pub fn Search(props: &SearchProps) -> Html {
                         .enumerate()
                         .map(|(index, predicate)| {
                             // callback to delete this predicate
-                            let filters = filters.clone();
-                            let onchange = props.onchange.clone();
+                            let query = query.clone();
                             let ondelete = move |()| {
-                                let mut current = (*filters).clone();
-                                current.remove(index);
-                                onchange.emit(current);
+                                query.predicate_remove(index);
                             };
 
                             html!{<Filter filter={predicate.clone()} {ondelete} />}

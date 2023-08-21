@@ -2,7 +2,6 @@ use crate::prelude::*;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{IntersectionObserver, IntersectionObserverEntry};
 use yew::functional::*;
-use yew_router::prelude::use_location;
 
 #[hook]
 /// Check if an element is visible.
@@ -42,11 +41,4 @@ pub fn use_visible(node: NodeRef, sticky: bool) -> bool {
         }
     });
     *visible
-}
-
-#[hook]
-pub fn use_query_state() -> QueryState {
-    let location = use_location().unwrap();
-    let query: QueryState = location.query().unwrap();
-    query
 }

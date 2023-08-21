@@ -9,7 +9,7 @@ use file::*;
 mod settings;
 use settings::*;
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Routable, PartialEq, Debug)]
 pub enum Route {
     #[at("/")]
     Home,

@@ -23,6 +23,10 @@ impl Tag {
     pub fn filter(&self) -> TagFilter<'_> {
         TagFilter::new(Some(&self.0), Some(&self.1))
     }
+
+    pub fn into_filter(self) -> TagFilter<'static> {
+        TagFilter::new(Some(self.0), Some(self.1))
+    }
 }
 
 impl FromStr for Tag {

@@ -7,6 +7,7 @@ mod app;
 mod cache;
 mod component;
 mod hooks;
+mod query;
 mod request;
 
 /// Commonly used imports, re-exported for convenience.
@@ -16,6 +17,7 @@ mod prelude {
         cache::{use_cached, CacheProvider},
         component::*,
         hooks::*,
+        query::*,
         request::*,
     };
     pub use cindy_common::{api::*, hash::*, label::*, restless::Request, tag::*};
@@ -29,6 +31,8 @@ mod prelude {
     };
     pub use yew_hooks::prelude::*;
     pub use yew_router::prelude::{use_location, *};
+
+    pub type Link<R = Route, Q = Rc<RawQuery>> = yew_router::prelude::Link<R, Q>;
 }
 
 fn main() {

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use uuid::Uuid;
-use web_sys::{HtmlElement, HtmlSelectElement};
+use web_sys::HtmlSelectElement;
 
 #[derive(Properties, PartialEq)]
 pub struct TagsListHeaderProps {
@@ -44,9 +44,7 @@ fn RowDeleteButton(props: &RowDeleteButtonProps) -> Html {
     let onclick = move |_| onclick.emit(());
     html! {
         <button class="w-4 h-4 bg-red-500 rounded hover:border hover:border-red-600" {onclick}>
-            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M6.79289 7.49998L4.14645 4.85353L4.85355 4.14642L7.5 6.79287L10.1464 4.14642L10.8536 4.85353L8.20711 7.49998L10.8536 10.1464L10.1464 10.8535L7.5 8.20708L4.85355 10.8535L4.14645 10.1464L6.79289 7.49998Z" fill="#000000"/>
-            </svg>
+            <Cross />
         </button>
     }
 }
@@ -63,9 +61,7 @@ fn RowSubmitButton(props: &RowSubmitButtonProps) -> Html {
     let onclick = move |_| onclick.emit(());
     html! {
         <button class="w-4 h-4 bg-green-500 rounded hover:border hover:border-green-600" {onclick}>
-            <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M6.79289 7.49998L4.14645 4.85353L4.85355 4.14642L7.5 6.79287L10.1464 4.14642L10.8536 4.85353L8.20711 7.49998L10.8536 10.1464L10.1464 10.8535L7.5 8.20708L4.85355 10.8535L4.14645 10.1464L6.79289 7.49998Z" fill="#000000"/>
-            </svg>
+            <Cross />
         </button>
     }
 }
@@ -256,30 +252,6 @@ pub fn FileTagsCreateRow(props: &FileTagsCreateRowProps) -> Html {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct FileTagCreateButtonProps {
-    #[prop_or_default]
-    pub onclick: Callback<()>,
-}
-
-#[function_component]
-pub fn FileTagCreateButton(props: &FileTagCreateButtonProps) -> Html {
-    let onclick = props.onclick.clone();
-    let onclick = move |_| onclick.emit(());
-    html! {
-        <tr class="bg-white dark:bg-gray-800 dark:border-gray-700">
-            <td colspan="3">
-                <button class="p-3 w-full flex items-center justify-center hover:text-blue-600" {onclick}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mx-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    {"Create tag"}
-                </button>
-            </td>
-        </tr>
-    }
-}
-
-#[derive(Properties, PartialEq)]
 pub struct FileTagsListProps {
     pub file: RcHash,
     #[prop_or_default]
@@ -447,10 +419,7 @@ pub fn ToggleEntry(props: &ToggleEntryProps) -> Html {
     html! {
         <div class="py-1 flex items-center justify-between">
             <span class="text-sm font-medium text-gray-900 dark:text-gray-300">{&props.text}</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" class="sr-only peer" checked=true />
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
+            <Toggle checked=true />
         </div>
     }
 }
@@ -469,22 +438,17 @@ pub fn SidebarHeading(props: &SidebarHeadingProps) -> Html {
     }
 }
 
-#[derive(Properties, PartialEq)]
-pub struct QuerySidebarProps {
-    #[prop_or_default]
-    pub query: Rc<Vec<Rc<TagPredicate<'static>>>>,
-}
-
 #[function_component]
-pub fn QuerySidebar(props: &QuerySidebarProps) -> Html {
+pub fn QuerySidebar() -> Html {
+    let query = use_query_state().unwrap();
     html! {
         <Sidebar>
             <SidebarHeading>{"Common tags"}</SidebarHeading>
-            <CommonTagsList query={props.query.clone()} />
+            <CommonTagsList query={query.query.query.clone()} />
             <SidebarHeading>{"Settings"}</SidebarHeading>
             <div class="py-2">
                 <ToggleEntry text="Show tags" />
-                <ToggleEntry text="Hive system tags" />
+                <ToggleEntry text="Show system tags" />
             </div>
         </Sidebar>
     }
@@ -502,7 +466,6 @@ pub fn FileSidebar(props: &FileSidebarProps) -> Html {
         name: None::<String>,
         value: None::<String>,
     });
-    log::info!("RENDERING FILE SIDEBAR");
     html! {
         <Sidebar>
             <SidebarHeading>{"Tags"}</SidebarHeading>
